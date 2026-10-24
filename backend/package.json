@@ -1,0 +1,17 @@
+{
+  "name": "dropify-backend",
+  "version": "1.0.0",
+  "description": "Dropify backend streaming proxy and local taste engine reverse-engineered from Echo Music",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "cors": "^2.8.5",
+    "axios": "^1.7.9",
+    "yt-search": "^2.13.1",
+    "@distube/ytdl-core": "^5.0.1"
+  }
+}

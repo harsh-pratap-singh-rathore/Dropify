@@ -1,0 +1,51 @@
+{
+  "audioQuality": "HIGH",
+  "crossfadeDuration": 4,
+  "crossfadeEnabled": true,
+  "automixEnabled": true,
+  "stereoWidenerEnabled": true,
+  "stereoWidth": 1.25,
+  "equalizerEnabled": true,
+  "eqBands": [
+    {
+      "frequency": 32,
+      "gain": 2
+    },
+    {
+      "frequency": 64,
+      "gain": 3
+    },
+    {
+      "frequency": 125,
+      "gain": 1.5
+    },
+    {
+      "frequency": 250,
+      "gain": 0
+    },
+    {
+      "frequency": 500,
+      "gain": -1
+    },
+    {
+      "frequency": 1000,
+      "gain": 0.5
+    },
+    {
+      "frequency": 2000,
+      "gain": 1.5
+    },
+    {
+      "frequency": 4000,
+      "gain": 2.5
+    },
+    {
+      "frequency": 8000,
+      "gain": 3
+    },
+    {
+      "frequency": 16000,
+      "gain": 2
+    }
+  ]
+}

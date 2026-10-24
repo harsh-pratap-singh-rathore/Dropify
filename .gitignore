@@ -1,0 +1,26 @@
+# Dependencies
+node_modules/
+*/node_modules/
+
+# Production build outputs
+dist/
+frontend/dist/
+build/
+
+# Vercel deployment cache
+.vercel/
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Scratch scripts and test artifacts
+scratch/
+*.log
+
+# System & IDE files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
