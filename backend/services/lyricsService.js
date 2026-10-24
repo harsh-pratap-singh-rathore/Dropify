@@ -256,7 +256,7 @@ async function getLyrics(trackName, artistName, durationSeconds = null, videoId 
         return resData;
       }
     }
-  } catch (e) {}
+  } catch (e) { }
 
   // --- Tier 2: LRCLIB Direct Match ---
   for (const title of candidateTitles) {
@@ -280,7 +280,7 @@ async function getLyrics(trackName, artistName, durationSeconds = null, videoId 
           lyricsCache.set(cacheKey, resData);
           return resData;
         }
-      } catch (e) {}
+      } catch (e) { }
     }
   }
 
@@ -310,7 +310,7 @@ async function getLyrics(trackName, artistName, durationSeconds = null, videoId 
         lyricsCache.set(cacheKey, resData);
         return resData;
       }
-    } catch (e) {}
+    } catch (e) { }
   }
 
   // --- Tier 4: YouLyPlus / LyricsPlus community mirrors (from Echo Music) ---
@@ -346,7 +346,7 @@ async function getLyrics(trackName, artistName, durationSeconds = null, videoId 
         lyricsCache.set(cacheKey, resData);
         return resData;
       }
-    } catch (e) {}
+    } catch (e) { }
   }
 
   // --- Tier 5: Lyrics.ovh Global Plain Lyrics Fallback ---
@@ -373,7 +373,7 @@ async function getLyrics(trackName, artistName, durationSeconds = null, videoId 
             return resData;
           }
         }
-      } catch (e) {}
+      } catch (e) { }
     }
   }
 

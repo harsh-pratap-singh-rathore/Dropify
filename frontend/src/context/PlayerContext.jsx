@@ -175,7 +175,7 @@ export function PlayerProvider({ children }) {
     listenedDurationRef.current = 0;
 
     const streamUrl = apiUrl(`/api/stream/${song.id}`);
-    await audioManager.playTrack(streamUrl, false);
+    await audioManager.playTrack(streamUrl, false, song.id);
     setIsPlaying(true);
   };
 
@@ -202,7 +202,7 @@ export function PlayerProvider({ children }) {
       const nextSong = queue[nextIndex];
       setCurrentSong(nextSong);
       const streamUrl = apiUrl(`/api/stream/${nextSong.id}`);
-      audioManager.playTrack(streamUrl, withCrossfade);
+      audioManager.playTrack(streamUrl, withCrossfade, nextSong.id);
       setIsPlaying(true);
     } else if (currentSong) {
       // Auto-Radio generation: fetch related recommendations
@@ -226,7 +226,7 @@ export function PlayerProvider({ children }) {
       setQueueIndex(prevIndex);
       const prevSong = queue[prevIndex];
       setCurrentSong(prevSong);
-      audioManager.playTrack(apiUrl(`/api/stream/${prevSong.id}`), false);
+      audioManager.playTrack(apiUrl(`/api/stream/${prevSong.id}`), false, prevSong.id);
       setIsPlaying(true);
     }
   };
