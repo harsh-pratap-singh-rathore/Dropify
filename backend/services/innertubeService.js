@@ -1,9 +1,21 @@
 const yts = require('yt-search');
-const { Ytdl } = require('@distube/ytdl-core');
 const axios = require('axios');
+const fs = require('fs');
+const path = require('path');
 
-// Initialize Ytdl instance
-const ytdl = new Ytdl();
+// Lazy Ytdl instance to prevent module load crash in serverless environments
+let ytdlInstance = null;
+function getYtdl() {
+  if (!ytdlInstance) {
+    try {
+      const { Ytdl } = require('@distube/ytdl-core');
+      ytdlInstance = new Ytdl();
+    } catch (e) {
+      console.warn('Ytdl init deferred:', e.message);
+    }
+  }
+  return ytdlInstance;
+}
 
 // In-memory format & metadata cache (TTL: 5 hours, similar to Echo Music's 21600s cache)
 const infoCache = new Map();
@@ -33,36 +45,151 @@ async function searchMusic(query) {
   }
 }
 
-const fs = require('fs');
-const path = require('path');
+// Guaranteed Default Home Feed in case disk cache or YouTube is delayed
+const DEFAULT_HOME_FEED = {
+  "Spotify Quick Picks": [
+    {
+      "id": "BddP6PYo2gs",
+      "title": "Kesariya - Brahmāstra",
+      "artist": "Arijit Singh, Pritam",
+      "duration": 268,
+      "durationFormatted": "4:28",
+      "thumbnail": "https://i.ytimg.com/vi/BddP6PYo2gs/mqdefault.jpg",
+      "thumbnailHigh": "https://i.ytimg.com/vi/BddP6PYo2gs/hqdefault.jpg"
+    },
+    {
+      "id": "V7LwfY5U5WI",
+      "title": "Chaleya - Jawan",
+      "artist": "Arijit Singh, Anirudh Ravichander",
+      "duration": 200,
+      "durationFormatted": "3:20",
+      "thumbnail": "https://i.ytimg.com/vi/V7LwfY5U5WI/mqdefault.jpg",
+      "thumbnailHigh": "https://i.ytimg.com/vi/V7LwfY5U5WI/hqdefault.jpg"
+    },
+    {
+      "id": "34Na4j8AVgA",
+      "title": "Starboy",
+      "artist": "The Weeknd ft. Daft Punk",
+      "duration": 230,
+      "durationFormatted": "3:50",
+      "thumbnail": "https://i.ytimg.com/vi/34Na4j8AVgA/mqdefault.jpg",
+      "thumbnailHigh": "https://i.ytimg.com/vi/34Na4j8AVgA/hqdefault.jpg"
+    },
+    {
+      "id": "JGwWNGJdvx8",
+      "title": "Shape of You",
+      "artist": "Ed Sheeran",
+      "duration": 233,
+      "durationFormatted": "3:53",
+      "thumbnail": "https://i.ytimg.com/vi/JGwWNGJdvx8/mqdefault.jpg",
+      "thumbnailHigh": "https://i.ytimg.com/vi/JGwWNGJdvx8/hqdefault.jpg"
+    },
+    {
+      "id": "cl0a3i2wFcc",
+      "title": "G.O.A.T.",
+      "artist": "Diljit Dosanjh",
+      "duration": 224,
+      "durationFormatted": "3:44",
+      "thumbnail": "https://i.ytimg.com/vi/cl0a3i2wFcc/mqdefault.jpg",
+      "thumbnailHigh": "https://i.ytimg.com/vi/cl0a3i2wFcc/hqdefault.jpg"
+    },
+    {
+      "id": "TUVcZfQe-Kw",
+      "title": "Levitating",
+      "artist": "Dua Lipa",
+      "duration": 203,
+      "durationFormatted": "3:23",
+      "thumbnail": "https://i.ytimg.com/vi/TUVcZfQe-Kw/mqdefault.jpg",
+      "thumbnailHigh": "https://i.ytimg.com/vi/TUVcZfQe-Kw/hqdefault.jpg"
+    }
+  ],
+  "Trending Tracks": [
+    {
+      "id": "BddP6PYo2gs",
+      "title": "Kesariya - Brahmāstra",
+      "artist": "Arijit Singh, Pritam",
+      "duration": 268,
+      "durationFormatted": "4:28",
+      "thumbnail": "https://i.ytimg.com/vi/BddP6PYo2gs/mqdefault.jpg",
+      "thumbnailHigh": "https://i.ytimg.com/vi/BddP6PYo2gs/hqdefault.jpg"
+    },
+    {
+      "id": "V7LwfY5U5WI",
+      "title": "Chaleya - Jawan",
+      "artist": "Arijit Singh, Anirudh Ravichander",
+      "duration": 200,
+      "durationFormatted": "3:20",
+      "thumbnail": "https://i.ytimg.com/vi/V7LwfY5U5WI/mqdefault.jpg",
+      "thumbnailHigh": "https://i.ytimg.com/vi/V7LwfY5U5WI/hqdefault.jpg"
+    },
+    {
+      "id": "7-x3uDFvHf4",
+      "title": "Apna Bana Le - Bhediya",
+      "artist": "Arijit Singh, Sachin-Jigar",
+      "duration": 261,
+      "durationFormatted": "4:21",
+      "thumbnail": "https://i.ytimg.com/vi/7-x3uDFvHf4/mqdefault.jpg",
+      "thumbnailHigh": "https://i.ytimg.com/vi/7-x3uDFvHf4/hqdefault.jpg"
+    },
+    {
+      "id": "34Na4j8AVgA",
+      "title": "Starboy",
+      "artist": "The Weeknd ft. Daft Punk",
+      "duration": 230,
+      "durationFormatted": "3:50",
+      "thumbnail": "https://i.ytimg.com/vi/34Na4j8AVgA/mqdefault.jpg",
+      "thumbnailHigh": "https://i.ytimg.com/vi/34Na4j8AVgA/hqdefault.jpg"
+    },
+    {
+      "id": "JGwWNGJdvx8",
+      "title": "Shape of You",
+      "artist": "Ed Sheeran",
+      "duration": 233,
+      "durationFormatted": "3:53",
+      "thumbnail": "https://i.ytimg.com/vi/JGwWNGJdvx8/mqdefault.jpg",
+      "thumbnailHigh": "https://i.ytimg.com/vi/JGwWNGJdvx8/hqdefault.jpg"
+    },
+    {
+      "id": "7wtfhZwyrcc",
+      "title": "Believer",
+      "artist": "Imagine Dragons",
+      "duration": 204,
+      "durationFormatted": "3:24",
+      "thumbnail": "https://i.ytimg.com/vi/7wtfhZwyrcc/mqdefault.jpg",
+      "thumbnailHigh": "https://i.ytimg.com/vi/7wtfhZwyrcc/hqdefault.jpg"
+    }
+  ]
+};
 
 // Home Feed Disk Cache Path
 const HOME_CACHE_FILE = path.join(__dirname, '..', 'data', 'home_feed_cache.json');
-let inMemoryHomeFeed = null;
+let inMemoryHomeFeed = DEFAULT_HOME_FEED;
 let lastHomeRefresh = 0;
 
 try {
   if (fs.existsSync(HOME_CACHE_FILE)) {
-    inMemoryHomeFeed = JSON.parse(fs.readFileSync(HOME_CACHE_FILE, 'utf-8'));
+    const parsed = JSON.parse(fs.readFileSync(HOME_CACHE_FILE, 'utf-8'));
+    if (parsed && Object.keys(parsed).length > 0) {
+      inMemoryHomeFeed = parsed;
+    }
   }
 } catch (e) {
-  console.warn('Failed to load initial home feed cache:', e.message);
+  console.warn('Using default home feed cache:', e.message);
 }
 
 /**
  * Gets curated home feed playlists and trending music
- * Returns in 0ms from cache, and triggers parallel background refresh
+ * Always returns instantly with zero chance of failure
  */
 async function getHomeFeed() {
-  // If we have cached feed, return instantly
   if (inMemoryHomeFeed && Object.keys(inMemoryHomeFeed).length > 0) {
     if (Date.now() - lastHomeRefresh > 3600000) {
-      refreshHomeFeedParallel();
+      refreshHomeFeedParallel().catch(() => {});
     }
     return inMemoryHomeFeed;
   }
 
-  return await refreshHomeFeedParallel();
+  return inMemoryHomeFeed || DEFAULT_HOME_FEED;
 }
 
 async function refreshHomeFeedParallel() {
@@ -242,6 +369,8 @@ async function streamAudio(videoId, req, res) {
   } catch (error) {
     console.warn(`Direct stream error for ${videoId}, falling back to ytdl.download:`, error.message);
     try {
+      const ytdl = getYtdl();
+      if (!ytdl) throw new Error('Ytdl not initialized');
       const audioStream = ytdl.download(videoId, {
         filter: f => f.hasAudio && !f.hasVideo,
         quality: 'highestaudio',

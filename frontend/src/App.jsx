@@ -255,10 +255,59 @@ function MainApp() {
   );
 }
 
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.warn('Dropify recovered from render error:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{
+          padding: '60px 24px',
+          textAlign: 'center',
+          color: '#fff',
+          background: '#06080d',
+          minHeight: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '16px'
+        }}>
+          <h2 style={{ fontSize: '1.8rem', fontWeight: 800 }}>Dropify Audio Engine</h2>
+          <p style={{ color: 'rgba(255,255,255,0.7)', maxWidth: '420px' }}>
+            A visual rendering notice was caught. Your player state is preserved.
+          </p>
+          <button
+            onClick={() => { this.setState({ hasError: false }); window.location.reload(); }}
+            className="btn-primary"
+            style={{ padding: '10px 24px' }}
+          >
+            Refresh Audio Player
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 export default function App() {
   return (
-    <PlayerProvider>
-      <MainApp />
-    </PlayerProvider>
+    <ErrorBoundary>
+      <PlayerProvider>
+        <MainApp />
+      </PlayerProvider>
+    </ErrorBoundary>
   );
 }

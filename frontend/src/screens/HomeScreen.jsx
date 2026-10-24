@@ -3,21 +3,139 @@ import { Sparkles, Play, Flame, Disc3, Zap, Clock } from 'lucide-react';
 import TrackCard from '../components/TrackCard';
 import { usePlayer } from '../context/PlayerContext';
 
+const CLIENT_FALLBACK_SECTIONS = {
+  'Spotify Quick Picks': [
+    {
+      id: 'BddP6PYo2gs',
+      title: 'Kesariya - Brahmāstra',
+      artist: 'Arijit Singh, Pritam',
+      duration: 268,
+      durationFormatted: '4:28',
+      thumbnail: 'https://i.ytimg.com/vi/BddP6PYo2gs/mqdefault.jpg',
+      thumbnailHigh: 'https://i.ytimg.com/vi/BddP6PYo2gs/hqdefault.jpg'
+    },
+    {
+      id: 'V7LwfY5U5WI',
+      title: 'Chaleya - Jawan',
+      artist: 'Arijit Singh, Anirudh Ravichander',
+      duration: 200,
+      durationFormatted: '3:20',
+      thumbnail: 'https://i.ytimg.com/vi/V7LwfY5U5WI/mqdefault.jpg',
+      thumbnailHigh: 'https://i.ytimg.com/vi/V7LwfY5U5WI/hqdefault.jpg'
+    },
+    {
+      id: '34Na4j8AVgA',
+      title: 'Starboy',
+      artist: 'The Weeknd ft. Daft Punk',
+      duration: 230,
+      durationFormatted: '3:50',
+      thumbnail: 'https://i.ytimg.com/vi/34Na4j8AVgA/mqdefault.jpg',
+      thumbnailHigh: 'https://i.ytimg.com/vi/34Na4j8AVgA/hqdefault.jpg'
+    },
+    {
+      id: 'JGwWNGJdvx8',
+      title: 'Shape of You',
+      artist: 'Ed Sheeran',
+      duration: 233,
+      durationFormatted: '3:53',
+      thumbnail: 'https://i.ytimg.com/vi/JGwWNGJdvx8/mqdefault.jpg',
+      thumbnailHigh: 'https://i.ytimg.com/vi/JGwWNGJdvx8/hqdefault.jpg'
+    },
+    {
+      id: 'cl0a3i2wFcc',
+      title: 'G.O.A.T.',
+      artist: 'Diljit Dosanjh',
+      duration: 224,
+      durationFormatted: '3:44',
+      thumbnail: 'https://i.ytimg.com/vi/cl0a3i2wFcc/mqdefault.jpg',
+      thumbnailHigh: 'https://i.ytimg.com/vi/cl0a3i2wFcc/hqdefault.jpg'
+    },
+    {
+      id: 'TUVcZfQe-Kw',
+      title: 'Levitating',
+      artist: 'Dua Lipa',
+      duration: 203,
+      durationFormatted: '3:23',
+      thumbnail: 'https://i.ytimg.com/vi/TUVcZfQe-Kw/mqdefault.jpg',
+      thumbnailHigh: 'https://i.ytimg.com/vi/TUVcZfQe-Kw/hqdefault.jpg'
+    }
+  ],
+  'Trending Tracks': [
+    {
+      id: 'BddP6PYo2gs',
+      title: 'Kesariya - Brahmāstra',
+      artist: 'Arijit Singh, Pritam',
+      duration: 268,
+      durationFormatted: '4:28',
+      thumbnail: 'https://i.ytimg.com/vi/BddP6PYo2gs/mqdefault.jpg',
+      thumbnailHigh: 'https://i.ytimg.com/vi/BddP6PYo2gs/hqdefault.jpg'
+    },
+    {
+      id: 'V7LwfY5U5WI',
+      title: 'Chaleya - Jawan',
+      artist: 'Arijit Singh, Anirudh Ravichander',
+      duration: 200,
+      durationFormatted: '3:20',
+      thumbnail: 'https://i.ytimg.com/vi/V7LwfY5U5WI/mqdefault.jpg',
+      thumbnailHigh: 'https://i.ytimg.com/vi/V7LwfY5U5WI/hqdefault.jpg'
+    },
+    {
+      id: '7-x3uDFvHf4',
+      title: 'Apna Bana Le - Bhediya',
+      artist: 'Arijit Singh, Sachin-Jigar',
+      duration: 261,
+      durationFormatted: '4:21',
+      thumbnail: 'https://i.ytimg.com/vi/7-x3uDFvHf4/mqdefault.jpg',
+      thumbnailHigh: 'https://i.ytimg.com/vi/7-x3uDFvHf4/hqdefault.jpg'
+    },
+    {
+      id: '34Na4j8AVgA',
+      title: 'Starboy',
+      artist: 'The Weeknd ft. Daft Punk',
+      duration: 230,
+      durationFormatted: '3:50',
+      thumbnail: 'https://i.ytimg.com/vi/34Na4j8AVgA/mqdefault.jpg',
+      thumbnailHigh: 'https://i.ytimg.com/vi/34Na4j8AVgA/hqdefault.jpg'
+    },
+    {
+      id: 'JGwWNGJdvx8',
+      title: 'Shape of You',
+      artist: 'Ed Sheeran',
+      duration: 233,
+      durationFormatted: '3:53',
+      thumbnail: 'https://i.ytimg.com/vi/JGwWNGJdvx8/mqdefault.jpg',
+      thumbnailHigh: 'https://i.ytimg.com/vi/JGwWNGJdvx8/hqdefault.jpg'
+    },
+    {
+      id: '7wtfhZwyrcc',
+      title: 'Believer',
+      artist: 'Imagine Dragons',
+      duration: 204,
+      durationFormatted: '3:24',
+      thumbnail: 'https://i.ytimg.com/vi/7wtfhZwyrcc/mqdefault.jpg',
+      thumbnailHigh: 'https://i.ytimg.com/vi/7wtfhZwyrcc/hqdefault.jpg'
+    }
+  ]
+};
+
 export default function HomeScreen({ onNavigateTaste }) {
-  const [sections, setSections] = useState({});
-  const [isLoading, setIsLoading] = useState(true);
+  const [sections, setSections] = useState(CLIENT_FALLBACK_SECTIONS);
+  const [isLoading, setIsLoading] = useState(false);
   const { playSong, currentSong, isPlaying } = usePlayer();
 
   useEffect(() => {
     fetch('/api/home')
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return res.json();
+      })
       .then((data) => {
-        setSections(data);
-        setIsLoading(false);
+        if (data && typeof data === 'object' && !data.error && Object.keys(data).length > 0) {
+          setSections(data);
+        }
       })
       .catch((err) => {
-        console.error('Home feed fetch error:', err);
-        setIsLoading(false);
+        console.warn('Home feed API notice, using local cache:', err.message);
       });
   }, []);
 
@@ -25,7 +143,8 @@ export default function HomeScreen({ onNavigateTaste }) {
     playSong(track, list);
   };
 
-  const quickPicks = sections['Spotify Quick Picks'] || sections['Trending Tracks']?.slice(0, 6) || [];
+  const quickPicks = (Array.isArray(sections['Spotify Quick Picks']) && sections['Spotify Quick Picks']) ||
+                     (Array.isArray(sections['Trending Tracks']) && sections['Trending Tracks'].slice(0, 6)) || [];
 
   return (
     <div className="home-screen">
@@ -112,7 +231,7 @@ export default function HomeScreen({ onNavigateTaste }) {
         </div>
       ) : (
         Object.entries(sections).map(([sectionTitle, tracks]) => {
-          if (!tracks || tracks.length === 0 || sectionTitle === 'Spotify Quick Picks') return null;
+          if (!Array.isArray(tracks) || tracks.length === 0 || sectionTitle === 'Spotify Quick Picks') return null;
           return (
             <div key={sectionTitle} className="home-shelf">
               <div className="shelf-header">

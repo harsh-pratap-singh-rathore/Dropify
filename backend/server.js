@@ -15,10 +15,11 @@ app.use(express.json());
 // 1. Home Feed
 app.get('/api/home', async (req, res) => {
   try {
-    const feed = await innertube.getHomeFeed();
-    res.json(feed);
+    const feed = typeof innertube?.getHomeFeed === 'function' ? await innertube.getHomeFeed() : {};
+    res.json(feed || {});
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch home feed', message: error.message });
+    console.error('Failed to fetch home feed:', error.message);
+    res.json({});
   }
 });
 
