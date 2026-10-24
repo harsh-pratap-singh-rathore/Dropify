@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Heart, ListMusic, Plus, Play } from 'lucide-react';
 import TrackCard from '../components/TrackCard';
 import { usePlayer } from '../context/PlayerContext';
+import { apiUrl } from '../config';
 
 export default function LibraryScreen() {
   const [library, setLibrary] = useState({ likedSongs: [], playlists: [] });
@@ -11,7 +12,7 @@ export default function LibraryScreen() {
   const { playSong } = usePlayer();
 
   const fetchLibrary = () => {
-    fetch('/api/library')
+    fetch(apiUrl('/api/library'))
       .then((res) => res.json())
       .then((data) => setLibrary(data))
       .catch((err) => console.error('Library fetch error:', err));
@@ -25,7 +26,7 @@ export default function LibraryScreen() {
     e.preventDefault();
     if (!newPlaylistName.trim()) return;
 
-    fetch('/api/library/playlist', {
+    fetch(apiUrl('/api/library/playlist'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: newPlaylistName.trim() })

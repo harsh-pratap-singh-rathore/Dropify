@@ -18,6 +18,7 @@ import {
   Minus
 } from 'lucide-react';
 import { usePlayer } from '../context/PlayerContext';
+import { apiUrl } from '../config';
 
 function formatSeconds(sec) {
   if (!sec || isNaN(sec)) return '0:00';
@@ -101,7 +102,7 @@ export default function FullscreenPlayer() {
     if (!manualQuery.trim() || !currentSong) return;
 
     setIsLoadingLyrics(true);
-    fetch(`/api/lyrics/${currentSong.id}?title=${encodeURIComponent(manualQuery.trim())}&artist=&duration=${currentSong.duration || ''}`)
+    fetch(apiUrl(`/api/lyrics/${currentSong.id}?title=${encodeURIComponent(manualQuery.trim())}&artist=&duration=${currentSong.duration || ''}`))
       .then((res) => res.json())
       .then((data) => {
         setLyricsData(data);

@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import audioManager from '../audio/AudioManager';
+import { apiUrl } from '../config';
 
 const PlayerContext = createContext();
 
@@ -40,7 +41,7 @@ export function PlayerProvider({ children }) {
 
   // Fetch initial library and preferences
   useEffect(() => {
-    fetch('/api/library')
+    fetch(apiUrl('/api/library'))
       .then(res => res.json())
       .then(data => {
         if (data.likedSongs) {
@@ -49,7 +50,7 @@ export function PlayerProvider({ children }) {
       })
       .catch(() => {});
 
-    fetch('/api/preferences')
+    fetch(apiUrl('/api/preferences'))
       .then(res => res.json())
       .then(pref => {
         if (pref.eqBands) setEqGains(pref.eqBands.map(b => b.gain));
@@ -132,7 +133,7 @@ export function PlayerProvider({ children }) {
       duration: currentSong.duration || ''
     });
 
-    fetch(`/api/lyrics/${currentSong.id}?${queryParams}`)
+    fetch(apiUrl(`/api/lyrics/${currentSong.id}?${queryParams}`))
       .then(res => res.json())
       .then(data => {
         setLyricsData(data);
@@ -146,7 +147,7 @@ export function PlayerProvider({ children }) {
   const recordStats = (skipped = false) => {
     if (!currentSong) return;
     const listened = listenedDurationRef.current || 0;
-    fetch('/api/taste/record', {
+    fetch(apiUrl('/api/taste/record'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -173,7 +174,7 @@ export function PlayerProvider({ children }) {
     songStartTimeRef.current = Date.now();
     listenedDurationRef.current = 0;
 
-    const streamUrl = `/api/stream/${song.id}`;
+    const streamUrl = apiUrl(`/api/stream/${song.id}`);
     await audioManager.playTrack(streamUrl, false);
     setIsPlaying(true);
   };
@@ -200,12 +201,12 @@ export function PlayerProvider({ children }) {
       setQueueIndex(nextIndex);
       const nextSong = queue[nextIndex];
       setCurrentSong(nextSong);
-      const streamUrl = `/api/stream/${nextSong.id}`;
+      const streamUrl = apiUrl(`/api/stream/${nextSong.id}`);
       audioManager.playTrack(streamUrl, withCrossfade);
       setIsPlaying(true);
     } else if (currentSong) {
       // Auto-Radio generation: fetch related recommendations
-      fetch(`/api/song/${currentSong.id}`)
+      fetch(apiUrl(`/api/song/${currentSong.id}`))
         .then(res => res.json())
         .then(details => {
           if (details.related && details.related.length > 0) {
@@ -225,7 +226,7 @@ export function PlayerProvider({ children }) {
       setQueueIndex(prevIndex);
       const prevSong = queue[prevIndex];
       setCurrentSong(prevSong);
-      audioManager.playTrack(`/api/stream/${prevSong.id}`, false);
+      audioManager.playTrack(apiUrl(`/api/stream/${prevSong.id}`), false);
       setIsPlaying(true);
     }
   };
@@ -242,7 +243,7 @@ export function PlayerProvider({ children }) {
   const toggleLike = async (song = currentSong) => {
     if (!song) return;
     try {
-      const res = await fetch('/api/library/like', {
+      const res = await fetch(apiUrl('/api/library/like'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ song })

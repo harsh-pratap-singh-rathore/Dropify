@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Disc, Search, Compass, Radio, Heart, Sliders, Mic, Sparkles, X, ArrowRight } from 'lucide-react';
 import { usePlayer } from '../context/PlayerContext';
+import { apiUrl } from '../config';
 
 export default function Navbar({ activeTab, setActiveTab, onSearch }) {
   const [query, setQuery] = useState('');
@@ -23,7 +24,7 @@ export default function Navbar({ activeTab, setActiveTab, onSearch }) {
     }
 
     debounceTimerRef.current = setTimeout(() => {
-      fetch(`/api/suggest?q=${encodeURIComponent(query.trim())}`)
+      fetch(apiUrl(`/api/suggest?q=${encodeURIComponent(query.trim())}`))
         .then((res) => res.json())
         .then((data) => {
           if (Array.isArray(data)) {
@@ -71,7 +72,7 @@ export default function Navbar({ activeTab, setActiveTab, onSearch }) {
     setIsListening(true);
     setTimeout(async () => {
       try {
-        const res = await fetch('/api/recognize', {
+        const res = await fetch(apiUrl('/api/recognize'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ query: 'Starboy The Weeknd' })

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Sparkles, Play, Flame, Disc3, Zap, Clock } from 'lucide-react';
 import TrackCard from '../components/TrackCard';
 import { usePlayer } from '../context/PlayerContext';
+import { apiUrl } from '../config';
 
 const CLIENT_FALLBACK_SECTIONS = {
   'Spotify Quick Picks': [
@@ -124,7 +125,7 @@ export default function HomeScreen({ onNavigateTaste }) {
   const { playSong, currentSong, isPlaying } = usePlayer();
 
   useEffect(() => {
-    fetch('/api/home')
+    fetch(apiUrl('/api/home'))
       .then((res) => {
         if (!res.ok) throw new Error('HTTP ' + res.status);
         return res.json();

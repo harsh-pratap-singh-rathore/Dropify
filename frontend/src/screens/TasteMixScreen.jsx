@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Sparkles, RefreshCw, Play, Clock, ShieldCheck, Zap } from 'lucide-react';
 import TrackCard from '../components/TrackCard';
 import { usePlayer } from '../context/PlayerContext';
+import { apiUrl } from '../config';
 
 export default function TasteMixScreen() {
   const [tasteData, setTasteData] = useState(null);
@@ -10,7 +11,7 @@ export default function TasteMixScreen() {
 
   const fetchTasteMix = () => {
     setIsLoading(true);
-    fetch('/api/taste/mix?count=24')
+    fetch(apiUrl('/api/taste/mix?count=24'))
       .then((res) => res.json())
       .then((data) => {
         setTasteData(data);

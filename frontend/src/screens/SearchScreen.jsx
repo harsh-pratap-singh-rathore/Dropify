@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Search, Music, X, TrendingUp, Sparkles, ArrowRight } from 'lucide-react';
 import TrackCard from '../components/TrackCard';
 import { usePlayer } from '../context/PlayerContext';
+import { apiUrl } from '../config';
 
 const CHIPS = [
   'Top Hits 2026',
@@ -30,7 +31,7 @@ export default function SearchScreen({ initialQuery = '' }) {
     if (!searchTerm || !searchTerm.trim()) return;
     setIsLoading(true);
     setShowSuggestions(false);
-    fetch(`/api/search?q=${encodeURIComponent(searchTerm.trim())}`)
+    fetch(apiUrl(`/api/search?q=${encodeURIComponent(searchTerm.trim())}`))
       .then((res) => res.json())
       .then((data) => {
         setResults(data);
@@ -54,7 +55,7 @@ export default function SearchScreen({ initialQuery = '' }) {
     }
 
     debounceTimerRef.current = setTimeout(() => {
-      fetch(`/api/suggest?q=${encodeURIComponent(query.trim())}`)
+      fetch(apiUrl(`/api/suggest?q=${encodeURIComponent(query.trim())}`))
         .then((res) => res.json())
         .then((items) => {
           if (Array.isArray(items)) {

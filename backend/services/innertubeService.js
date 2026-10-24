@@ -253,6 +253,8 @@ async function getSongDetails(videoId) {
   }
 
   try {
+    const ytdl = getYtdl();
+    if (!ytdl) throw new Error('Ytdl not initialized');
     const info = await ytdl.getInfo(videoId);
     const details = {
       id: videoId,
@@ -298,6 +300,8 @@ async function resolveAudioFormat(videoId) {
     return cached.format;
   }
 
+  const ytdl = getYtdl();
+  if (!ytdl) throw new Error('Ytdl not initialized');
   const info = await ytdl.getInfo(videoId);
   const audioFormats = (info.formats || []).filter(f => f.hasAudio && !f.hasVideo && f.url);
 

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, ChevronUp, ChevronDown, Play, Pause, Heart, Radio, Sparkles } from 'lucide-react';
 import { usePlayer } from '../context/PlayerContext';
+import { apiUrl } from '../config';
 
 export default function MusicFlowModal() {
   const { isMusicFlowOpen, setIsMusicFlowOpen, currentSong, isPlaying, togglePlayPause, playSong, toggleLike, likedSongIds, activeLyricIndex, lyricsData } = usePlayer();
@@ -11,7 +12,7 @@ export default function MusicFlowModal() {
   useEffect(() => {
     if (!isMusicFlowOpen) return;
 
-    fetch('/api/taste/mix?count=25')
+    fetch(apiUrl('/api/taste/mix?count=25'))
       .then(res => res.json())
       .then(data => {
         if (data.tracks && data.tracks.length > 0) {
