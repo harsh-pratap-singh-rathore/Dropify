@@ -41,27 +41,124 @@ const infoCache = new Map();
 const streamUrlCache = new Map();
 
 /**
- * Searches music tracks on YouTube
+ * Searches music tracks on YouTube using official InnerTube JSON API (Zero scraping, works on cloud IPs)
+ */
+async function searchWithInnerTube(query) {
+  const res = await axios.post('https://www.youtube.com/youtubei/v1/search', {
+    query: query.trim(),
+    context: {
+      client: {
+        clientName: 'WEB',
+        clientVersion: '2.20240101.01.00',
+        hl: 'en',
+        gl: 'US'
+      }
+    }
+  }, {
+    headers: {
+      'Content-Type': 'application/json',
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36'
+    },
+    timeout: 7000
+  });
+
+  const sections = res.data.contents?.twoColumnSearchResultsRenderer?.primaryContents?.sectionListRenderer?.contents || [];
+  const tracks = [];
+
+  for (const sec of sections) {
+    const items = sec.itemSectionRenderer?.contents || [];
+    for (const item of items) {
+      const v = item.videoRenderer;
+      if (v && v.videoId && v.title?.runs?.[0]?.text) {
+        const durationFormatted = v.lengthText?.simpleText || '0:00';
+        const parts = durationFormatted.split(':').map(p => parseInt(p, 10));
+        const duration = parts.length === 2 ? parts[0] * 60 + parts[1] : (parts.length === 3 ? parts[0] * 3600 + parts[1] * 60 + parts[2] : 0);
+
+        tracks.push({
+          id: v.videoId,
+          title: v.title.runs[0].text,
+          artist: v.ownerText?.runs?.[0]?.text || 'Various Artists',
+          duration,
+          durationFormatted,
+          thumbnail: `https://i.ytimg.com/vi/${v.videoId}/mqdefault.jpg`,
+          thumbnailHigh: `https://i.ytimg.com/vi/${v.videoId}/hqdefault.jpg`,
+          views: v.viewCountText?.simpleText || ''
+        });
+      }
+    }
+  }
+
+  return tracks.slice(0, 30);
+}
+
+async function searchWithYtdl(query) {
+  const ytdl = await getYtdl();
+  if (!ytdl) throw new Error('Ytdl not initialized');
+  const items = await ytdl.search(query.trim(), { limit: 25 });
+  return (items || []).map(v => {
+    const duration = v.lengthSeconds || 0;
+    const min = Math.floor(duration / 60);
+    const sec = Math.floor(duration % 60);
+    const durationFormatted = `${min}:${sec < 10 ? '0' : ''}${sec}`;
+    return {
+      id: v.id,
+      title: v.title,
+      artist: v.author?.name || 'Various Artists',
+      duration,
+      durationFormatted,
+      thumbnail: `https://i.ytimg.com/vi/${v.id}/mqdefault.jpg`,
+      thumbnailHigh: `https://i.ytimg.com/vi/${v.id}/hqdefault.jpg`,
+      views: v.viewCount ? `${v.viewCount.toLocaleString()} views` : ''
+    };
+  });
+}
+
+async function searchWithYts(query) {
+  const results = await yts(query);
+  return (results.videos || []).slice(0, 30).map(v => ({
+    id: v.videoId,
+    title: v.title,
+    artist: v.author?.name || 'Unknown Artist',
+    duration: v.seconds,
+    durationFormatted: v.timestamp,
+    thumbnail: v.videoId ? `https://i.ytimg.com/vi/${v.videoId}/mqdefault.jpg` : (v.thumbnail || ''),
+    thumbnailHigh: v.videoId ? `https://i.ytimg.com/vi/${v.videoId}/hqdefault.jpg` : (v.thumbnail || ''),
+    views: v.views,
+    ago: v.ago
+  }));
+}
+
+/**
+ * Searches music tracks on YouTube (Multi-tiered: InnerTube API -> Ytdl -> Yts)
  */
 async function searchMusic(query) {
+  if (!query || !query.trim()) return [];
+
+  // 1. Official InnerTube API (instant JSON, zero scraping, immune to cloud IP blocks)
   try {
-    const results = await yts(query);
-    const videos = (results.videos || []).slice(0, 30).map(v => ({
-      id: v.videoId,
-      title: v.title,
-      artist: v.author?.name || 'Unknown Artist',
-      duration: v.seconds,
-      durationFormatted: v.timestamp,
-      thumbnail: v.videoId ? `https://i.ytimg.com/vi/${v.videoId}/mqdefault.jpg` : (v.thumbnail || ''),
-      thumbnailHigh: v.videoId ? `https://i.ytimg.com/vi/${v.videoId}/hqdefault.jpg` : (v.thumbnail || ''),
-      views: v.views,
-      ago: v.ago
-    }));
-    return videos;
-  } catch (error) {
-    console.error('Search error:', error.message);
-    return [];
+    const tracks = await searchWithInnerTube(query);
+    if (tracks.length > 0) return tracks;
+  } catch (err) {
+    console.warn('InnerTube search notice:', err.message);
   }
+
+  // 2. Ytdl authenticated session
+  try {
+    const tracks = await searchWithYtdl(query);
+    if (tracks.length > 0) return tracks;
+  } catch (err) {
+    console.warn('Ytdl search notice:', err.message);
+  }
+
+  // 3. Fallback to yt-search
+  try {
+    const tracks = await searchWithYts(query);
+    if (tracks.length > 0) return tracks;
+  } catch (err) {
+    console.error('All search providers failed for query:', query, err?.message || err);
+  }
+
+  return [];
 }
 
 // Guaranteed Default Home Feed in case disk cache or YouTube is delayed
@@ -224,16 +321,7 @@ async function refreshHomeFeedParallel() {
   try {
     const promises = sections.map(async (sec) => {
       try {
-        const searchRes = await yts(sec.query);
-        const tracks = (searchRes.videos || []).slice(0, 10).map((v) => ({
-          id: v.videoId,
-          title: v.title,
-          artist: v.author?.name || 'Various Artists',
-          duration: v.seconds,
-          durationFormatted: v.timestamp,
-          thumbnail: v.videoId ? `https://i.ytimg.com/vi/${v.videoId}/mqdefault.jpg` : (v.thumbnail || ''),
-          thumbnailHigh: v.videoId ? `https://i.ytimg.com/vi/${v.videoId}/hqdefault.jpg` : (v.thumbnail || '')
-        }));
+        const tracks = (await searchMusic(sec.query)).slice(0, 10);
         return { title: sec.title, tracks };
       } catch (err) {
         return { title: sec.title, tracks: [] };
