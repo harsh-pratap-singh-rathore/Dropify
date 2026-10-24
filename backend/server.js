@@ -12,6 +12,11 @@ const PORT = process.env.PORT || 5001;
 app.use(cors());
 app.use(express.json());
 
+// Health Check
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', version: '2.0.0-potoken', timestamp: Date.now() });
+});
+
 // 1. Home Feed
 app.get('/api/home', async (req, res) => {
   try {

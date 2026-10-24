@@ -3,18 +3,37 @@ const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
 
-// Lazy Ytdl instance to prevent module load crash in serverless environments
+// Lazy Ytdl instance with Proof of Origin (PO) token support to prevent cloud datacenter IP blocks
 let ytdlInstance = null;
-function getYtdl() {
-  if (!ytdlInstance) {
-    try {
-      const { Ytdl } = require('@distube/ytdl-core');
-      ytdlInstance = new Ytdl();
-    } catch (e) {
-      console.warn('Ytdl init deferred:', e.message);
-    }
+let ytdlInitPromise = null;
+
+async function getYtdl() {
+  if (ytdlInstance) return ytdlInstance;
+  if (!ytdlInitPromise) {
+    ytdlInitPromise = (async () => {
+      try {
+        const { Ytdl, createPoTokenProvider } = require('@distube/ytdl-core');
+        let getPoToken = null;
+        try {
+          getPoToken = await createPoTokenProvider();
+        } catch (poErr) {
+          console.warn('PO Token provider creation notice:', poErr.message);
+        }
+        ytdlInstance = new Ytdl(getPoToken ? { getPoToken } : {});
+        return ytdlInstance;
+      } catch (e) {
+        console.warn('Ytdl init fallback:', e.message);
+        try {
+          const { Ytdl } = require('@distube/ytdl-core');
+          ytdlInstance = new Ytdl();
+          return ytdlInstance;
+        } catch (inner) {
+          return null;
+        }
+      }
+    })();
   }
-  return ytdlInstance;
+  return await ytdlInitPromise;
 }
 
 // In-memory format & metadata cache (TTL: 5 hours, similar to Echo Music's 21600s cache)
@@ -253,7 +272,7 @@ async function getSongDetails(videoId) {
   }
 
   try {
-    const ytdl = getYtdl();
+    const ytdl = await getYtdl();
     if (!ytdl) throw new Error('Ytdl not initialized');
     const info = await ytdl.getInfo(videoId);
     const details = {
@@ -300,7 +319,7 @@ async function resolveAudioFormat(videoId) {
     return cached.format;
   }
 
-  const ytdl = getYtdl();
+  const ytdl = await getYtdl();
   if (!ytdl) throw new Error('Ytdl not initialized');
   const info = await ytdl.getInfo(videoId);
   const audioFormats = (info.formats || []).filter(f => f.hasAudio && !f.hasVideo && f.url);
@@ -373,7 +392,7 @@ async function streamAudio(videoId, req, res) {
   } catch (error) {
     console.warn(`Direct stream error for ${videoId}, falling back to ytdl.download:`, error.message);
     try {
-      const ytdl = getYtdl();
+      const ytdl = await getYtdl();
       if (!ytdl) throw new Error('Ytdl not initialized');
       const audioStream = ytdl.download(videoId, {
         filter: f => f.hasAudio && !f.hasVideo,
