@@ -3,37 +3,22 @@ const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
 
-// Lazy Ytdl instance with Proof of Origin (PO) token support to prevent cloud datacenter IP blocks
+// Optimized Ytdl instance targeting embedded, TV, and visionos clients (zero player.js blocking, zero PO token requirement)
 let ytdlInstance = null;
-let ytdlInitPromise = null;
-
-async function getYtdl() {
-  if (ytdlInstance) return ytdlInstance;
-  if (!ytdlInitPromise) {
-    ytdlInitPromise = (async () => {
-      try {
-        const { Ytdl, createPoTokenProvider } = require('@distube/ytdl-core');
-        let getPoToken = null;
-        try {
-          getPoToken = await createPoTokenProvider();
-        } catch (poErr) {
-          console.warn('PO Token provider creation notice:', poErr.message);
-        }
-        ytdlInstance = new Ytdl(getPoToken ? { getPoToken } : {});
-        return ytdlInstance;
-      } catch (e) {
-        console.warn('Ytdl init fallback:', e.message);
-        try {
-          const { Ytdl } = require('@distube/ytdl-core');
-          ytdlInstance = new Ytdl();
-          return ytdlInstance;
-        } catch (inner) {
-          return null;
-        }
-      }
-    })();
+function getYtdl() {
+  if (!ytdlInstance) {
+    try {
+      const { Ytdl } = require('@distube/ytdl-core');
+      ytdlInstance = new Ytdl({
+        clients: ['visionos', 'web_embedded', 'tv'],
+        lang: 'en',
+        country: 'US'
+      });
+    } catch (e) {
+      console.warn('Ytdl init error:', e.message);
+    }
   }
-  return await ytdlInitPromise;
+  return ytdlInstance;
 }
 
 // In-memory format & metadata cache (TTL: 5 hours, similar to Echo Music's 21600s cache)

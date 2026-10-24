@@ -14,7 +14,7 @@ app.use(express.json());
 
 // Health Check
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', version: '2.0.0-potoken', timestamp: Date.now() });
+  res.json({ status: 'ok', version: '2.1.0-innertube-search', timestamp: Date.now() });
 });
 
 // 1. Home Feed
