@@ -26,6 +26,7 @@ export class PlaybackCutoffGuard {
 
   /**
    * Evaluates whether an 'ended' or 'stalled' event is genuine or premature.
+   * If canonical duration is available, checks discrepancy against it first.
    * If current position is further than thresholdSeconds away from canonical duration,
    * it returns { allowEnd: false, shouldRecover: true, resumePosition, retryAttempt }.
    */
@@ -34,32 +35,41 @@ export class PlaybackCutoffGuard {
     const safeCanonical = Math.max(0, Number(canonicalDuration) || 0);
     const safePlayerDur = Math.max(0, Number(playerDuration) || 0);
 
-    // If decoder reports duration and current position has reached it within threshold, allow end
+    // 1. Prioritize canonical metadata duration if available
+    if (safeCanonical > 0) {
+      const discrepancy = safeCanonical - safePosition;
+      if (discrepancy > this.thresholdSeconds && this.retryCount < this.maxRetriesPerTrack) {
+        this.retryCount++;
+        return {
+          allowEnd: false,
+          shouldRecover: true,
+          resumePosition: safePosition,
+          retryAttempt: this.retryCount,
+          discrepancy
+        };
+      }
+      return { allowEnd: true, shouldRecover: false };
+    }
+
+    // 2. Fall back to player/decoder duration only if canonical duration is missing
     if (safePlayerDur > 0) {
       const playerDiscrepancy = safePlayerDur - safePosition;
       if (playerDiscrepancy <= this.thresholdSeconds) {
         return { allowEnd: true, shouldRecover: false };
       }
+      if (this.retryCount < this.maxRetriesPerTrack) {
+        this.retryCount++;
+        return {
+          allowEnd: false,
+          shouldRecover: true,
+          resumePosition: safePosition,
+          retryAttempt: this.retryCount,
+          discrepancy: playerDiscrepancy
+        };
+      }
     }
 
-    // If canonical duration is missing, accept genuine end
-    if (safeCanonical <= 0) {
-      return { allowEnd: true, shouldRecover: false };
-    }
-
-    const discrepancy = safeCanonical - safePosition;
-
-    if (discrepancy > this.thresholdSeconds && this.retryCount < this.maxRetriesPerTrack) {
-      this.retryCount++;
-      return {
-        allowEnd: false,
-        shouldRecover: true,
-        resumePosition: safePosition,
-        retryAttempt: this.retryCount,
-        discrepancy
-      };
-    }
-
+    // If both canonical and player durations are missing or retries exhausted, accept end
     return { allowEnd: true, shouldRecover: false };
   }
 

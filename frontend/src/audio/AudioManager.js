@@ -9,7 +9,6 @@
  */
 
 import { PlaybackCutoffGuard } from './PlaybackCutoffGuard';
-import { apiUrl } from '../config';
 
 const isMobilePlatform = () => {
   if (typeof navigator === 'undefined') return false;
@@ -24,9 +23,10 @@ class AudioManager {
     this.primaryAudio = new Audio();
     this.secondaryAudio = new Audio();
 
-    // NOTE: We deliberately do NOT set crossOrigin = 'anonymous' here.
-    // Leaving crossOrigin unset allows HTML5 <audio> to play cross-origin redirected
-    // audio streams (such as direct GoogleVideo / edge CDN chunks) with zero CORS restrictions!
+    // Enable crossOrigin = 'anonymous' so Web Audio createMediaElementSource
+    // receives genuine audio data without CORS security muting on desktop
+    this.primaryAudio.crossOrigin = 'anonymous';
+    this.secondaryAudio.crossOrigin = 'anonymous';
 
     // Mobile Background Playback & Lockscreen Attributes
     this.primaryAudio.playsInline = true;
@@ -39,14 +39,6 @@ class AudioManager {
     // High performance preload
     this.primaryAudio.preload = 'auto';
     this.secondaryAudio.preload = 'auto';
-
-    // Mobile silent audio keepalive to prevent mobile OS lockscreen suspension
-    this.silentAudio = typeof Audio !== 'undefined' ? new Audio('data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA') : null;
-    if (this.silentAudio) {
-      this.silentAudio.loop = true;
-      this.silentAudio.playsInline = true;
-      this.silentAudio.setAttribute('playsinline', 'true');
-    }
 
     // Attach audio elements directly to the DOM to guarantee Android OS process prioritization
     if (typeof document !== 'undefined') {
@@ -67,7 +59,6 @@ class AudioManager {
       };
       attachNode(this.primaryAudio, 'dropify-primary-audio');
       attachNode(this.secondaryAudio, 'dropify-secondary-audio');
-      attachNode(this.silentAudio, 'dropify-silent-audio');
     }
 
     if (typeof window !== 'undefined') {
@@ -96,6 +87,8 @@ class AudioManager {
     this.activePlayer = 'primary'; // 'primary' or 'secondary'
     this.crossfadeDuration = 3.5; // seconds
     this.isCrossfading = false;
+    this.crossfadeTimeout = null;
+    this.bufferTimeout = null;
     this.isEqualizerEnabled = true;
 
     // Echo Music PlaybackCutoffGuard
@@ -154,7 +147,9 @@ class AudioManager {
         };
       `], { type: 'application/javascript' });
 
-      this.keepaliveWorker = new Worker(URL.createObjectURL(workerBlob));
+      const workerBlobUrl = URL.createObjectURL(workerBlob);
+      this.keepaliveWorker = new Worker(workerBlobUrl);
+      URL.revokeObjectURL(workerBlobUrl);
       this.keepaliveWorker.onmessage = (e) => {
         if (e.data === 'keepalive_tick') {
           this.onBackgroundKeepaliveTick();
@@ -183,11 +178,6 @@ class AudioManager {
           this.ytPlayer.playVideo();
         }
       }
-    }
-
-    // Keep silent audio loop playing to hold audio focus
-    if (this.silentAudio && this.silentAudio.paused) {
-      this.silentAudio.play().catch(() => {});
     }
 
     if (this.audioCtx && this.audioCtx.state === 'suspended') {
@@ -293,7 +283,6 @@ class AudioManager {
     }
 
     try {
-      this.startSilentKeepalive();
       this.ytPlayer.loadVideoById(videoId);
       this.ytPlayer.playVideo();
       this.isYtPlaying = true;
@@ -404,20 +393,51 @@ class AudioManager {
     this.widenerSplitter = this.audioCtx.createChannelSplitter(2);
     this.widenerMerger = this.audioCtx.createChannelMerger(2);
 
-    const leftInGain = this.audioCtx.createGain();
-    const rightInGain = this.audioCtx.createGain();
-    leftInGain.gain.value = 0.5;
-    rightInGain.gain.value = 0.5;
-
+    // Mid channel: (L + R) * 0.5
     this.midGain = this.audioCtx.createGain();
+    this.midGain.gain.value = 0.5;
+
+    // Side channel: (L - R) * 0.5 * stereoWidth
     this.sideGain = this.audioCtx.createGain();
-    this.sideGain.gain.setValueAtTime(this.stereoWidth, this.audioCtx.currentTime);
+    this.sideGain.gain.setValueAtTime(this.stereoWidth * 0.5, this.audioCtx.currentTime);
+
+    const rightInvert = this.audioCtx.createGain();
+    rightInvert.gain.value = -1.0;
+
+    const sideDiff = this.audioCtx.createGain();
+    sideDiff.gain.value = 1.0;
+
+    const sideInvert = this.audioCtx.createGain();
+    sideInvert.gain.value = -1.0;
 
     inputNode.connect(this.widenerSplitter);
-    this.widenerSplitter.connect(leftInGain, 0);
-    this.widenerSplitter.connect(rightInGain, 1);
 
-    inputNode.connect(this.masterGain);
+    // Mid summing: L + R into midGain
+    this.widenerSplitter.connect(this.midGain, 0);
+    this.widenerSplitter.connect(this.midGain, 1);
+
+    // Side summing: L (+1) and R (-1) into sideDiff -> sideGain
+    this.widenerSplitter.connect(sideDiff, 0);
+    this.widenerSplitter.connect(rightInvert, 1);
+    rightInvert.connect(sideDiff);
+    sideDiff.connect(this.sideGain);
+
+    // Recombine L = Mid + Side, R = Mid - Side
+    const leftSum = this.audioCtx.createGain();
+    const rightSum = this.audioCtx.createGain();
+
+    this.midGain.connect(leftSum);
+    this.sideGain.connect(leftSum);
+
+    this.midGain.connect(rightSum);
+    this.sideGain.connect(sideInvert);
+    sideInvert.connect(rightSum);
+
+    // Connect into merger channels (0: Left, 1: Right)
+    leftSum.connect(this.widenerMerger, 0, 0);
+    rightSum.connect(this.widenerMerger, 0, 1);
+
+    this.widenerMerger.connect(this.masterGain);
     this.masterGain.connect(this.analyser);
     this.analyser.connect(this.audioCtx.destination);
   }
@@ -437,9 +457,6 @@ class AudioManager {
           }
         }
 
-        if (this.silentAudio && this.silentAudio.paused) {
-          this.silentAudio.play().catch(() => {});
-        }
         if (this.audioCtx && this.audioCtx.state === 'suspended') {
           this.audioCtx.resume().catch(() => {});
         }
@@ -492,19 +509,32 @@ class AudioManager {
           `[Echo PlaybackCutoffGuard] Premature cutoff detected: pos=${currentPos.toFixed(1)}s, canonical=${canonicalDur}s (attempt #${decision.retryAttempt}). Auto-recovering...`
         );
         try {
-          audio.currentTime = decision.resumePosition;
-          await audio.play();
-          return;
-        } catch (recoverErr) {
-          console.warn('[CutoffGuard] Direct recovery failed, reloading stream chunk:', recoverErr);
-          if (this.currentStreamUrl) {
-            audio.src = this.currentStreamUrl;
-            audio.load();
+          if (audio.readyState >= 2) {
             audio.currentTime = decision.resumePosition;
-            try {
-              await audio.play();
-              return;
-            } catch (_) {}
+            await audio.play();
+            return;
+          }
+        } catch (_) {}
+
+        if (this.currentStreamUrl) {
+          try {
+            audio.src = this.currentStreamUrl;
+            await new Promise((resolve) => {
+              const onReady = () => {
+                audio.removeEventListener('loadedmetadata', onReady);
+                audio.removeEventListener('canplay', onReady);
+                resolve();
+              };
+              audio.addEventListener('loadedmetadata', onReady, { once: true });
+              audio.addEventListener('canplay', onReady, { once: true });
+              audio.load();
+            });
+            audio.currentTime = decision.resumePosition;
+            await audio.play();
+            return;
+          } catch (reloadErr) {
+            if (reloadErr.name === 'AbortError') return;
+            console.warn('[CutoffGuard] Direct recovery notice:', reloadErr.message);
           }
         }
       }
@@ -557,6 +587,14 @@ class AudioManager {
     return curAudio ? curAudio.currentTime || 0 : 0;
   }
 
+  getDuration() {
+    if (this.currentMode === 'yt' && this.ytPlayer && typeof this.ytPlayer.getDuration === 'function') {
+      return this.ytPlayer.getDuration() || this.currentCanonicalDuration || 0;
+    }
+    const curAudio = this.getCurrentAudio();
+    return curAudio ? curAudio.duration || this.currentCanonicalDuration || 0 : (this.currentCanonicalDuration || 0);
+  }
+
   getIsPlaying() {
     if (this.currentMode === 'yt') {
       return !!this.isYtPlaying;
@@ -581,14 +619,20 @@ class AudioManager {
     this.shouldBePlaying = true;
     this.ensureAudioContext();
 
+    if (this.bufferTimeout) {
+      clearTimeout(this.bufferTimeout);
+      this.bufferTimeout = null;
+    }
+    if (this.crossfadeTimeout) {
+      clearTimeout(this.crossfadeTimeout);
+      this.crossfadeTimeout = null;
+    }
+
     const match = streamUrl ? streamUrl.match(/\/api\/stream\/([a-zA-Z0-9_-]+)/) : null;
     const resolvedVideoId = videoId || (match ? match[1] : null);
 
     const isMobile = isMobilePlatform();
     const current = this.getCurrentAudio();
-
-    // Start silent audio keepalive loop to immediately hold Android AudioTrack focus
-    this.startSilentKeepalive();
 
     if (shouldCrossfade && this.crossfadeDuration > 0 && !this.getCurrentAudio().paused && this.currentMode === 'audio' && !isMobile) {
       await this.executeCrossfade(streamUrl);
@@ -599,45 +643,17 @@ class AudioManager {
 
     if (isMobile) {
       // MOBILE ANDROID / IOS STREAMING ENGINE:
-      // Guarantee pure native HTML5 streaming directly into Android's MediaSession & AudioTrack.
+      // Direct native HTML5 streaming from backend HTTP 206 chunked proxy directly into Android AudioTrack.
+      current.src = streamUrl;
+      current.load();
       try {
-        let directUrl = null;
-        if (resolvedVideoId) {
-          try {
-            const streamUrlEndpoint = apiUrl(`/api/stream-url/${resolvedVideoId}`);
-            const res = await fetch(streamUrlEndpoint, { signal: AbortSignal.timeout(4500) });
-            if (res.ok) {
-              const data = await res.json();
-              if (data && data.url) {
-                directUrl = data.url;
-              }
-            }
-          } catch (_) {}
-        }
-
-        const chosenUrl = directUrl || streamUrl;
-        current.src = chosenUrl;
-        current.load();
         await current.play();
-        this.startSilentKeepalive();
         if (typeof navigator !== 'undefined' && 'mediaSession' in navigator) {
           try { navigator.mediaSession.playbackState = 'playing'; } catch (_) {}
         }
-        return;
       } catch (err) {
-        console.warn('[Mobile AudioManager] Initial playback notice, falling back to stream proxy:', err.message);
-        try {
-          current.src = streamUrl;
-          current.load();
-          await current.play();
-          this.startSilentKeepalive();
-          if (typeof navigator !== 'undefined' && 'mediaSession' in navigator) {
-            try { navigator.mediaSession.playbackState = 'playing'; } catch (_) {}
-          }
-          return;
-        } catch (retryErr) {
-          console.warn('[Mobile AudioManager] Direct proxy retry notice:', retryErr.message);
-        }
+        if (err.name === 'AbortError') return;
+        console.warn('[Mobile AudioManager] Playback notice:', err.message);
       }
       return;
     }
@@ -653,20 +669,26 @@ class AudioManager {
       }
     };
 
-    const bufferTimeout = setTimeout(() => {
+    this.bufferTimeout = setTimeout(() => {
       if (this.currentMode === 'audio' && current.readyState < 2) {
         triggerFallback();
       }
     }, 4500);
 
     const onPlayingHandler = () => {
-      clearTimeout(bufferTimeout);
+      if (this.bufferTimeout) {
+        clearTimeout(this.bufferTimeout);
+        this.bufferTimeout = null;
+      }
       current.removeEventListener('playing', onPlayingHandler);
       current.removeEventListener('error', onErrorHandler);
     };
 
     const onErrorHandler = () => {
-      clearTimeout(bufferTimeout);
+      if (this.bufferTimeout) {
+        clearTimeout(this.bufferTimeout);
+        this.bufferTimeout = null;
+      }
       current.removeEventListener('playing', onPlayingHandler);
       current.removeEventListener('error', onErrorHandler);
       triggerFallback();
@@ -680,8 +702,8 @@ class AudioManager {
 
     try {
       await current.play();
-      this.startSilentKeepalive();
     } catch (err) {
+      if (err.name === 'AbortError') return;
       console.warn('Direct HTML5 play notice, evaluating fallback:', err.message);
       triggerFallback();
     }
@@ -700,7 +722,12 @@ class AudioManager {
 
     incomingAudio.src = newStreamUrl;
     incomingAudio.load();
-    await incomingAudio.play();
+    try {
+      await incomingAudio.play();
+    } catch (err) {
+      if (err.name === 'AbortError') return;
+      console.warn('Crossfade incoming play notice:', err.message);
+    }
 
     const steps = 30;
     for (let i = 0; i <= steps; i++) {
@@ -714,29 +741,36 @@ class AudioManager {
       if (incomingGain) incomingGain.gain.setValueAtTime(inVal, timeAt);
     }
 
-    setTimeout(() => {
+    if (this.crossfadeTimeout) {
+      clearTimeout(this.crossfadeTimeout);
+    }
+
+    this.crossfadeTimeout = setTimeout(() => {
       outgoingAudio.pause();
       outgoingAudio.currentTime = 0;
       this.activePlayer = this.activePlayer === 'primary' ? 'secondary' : 'primary';
       this.isCrossfading = false;
+      this.crossfadeTimeout = null;
     }, duration * 1000);
   }
 
-  startSilentKeepalive() {
-    if (this.silentAudio) {
-      this.silentAudio.play().catch(() => {});
-    }
-  }
-
-  stopSilentKeepalive() {
-    if (this.silentAudio) {
-      this.silentAudio.pause();
-    }
-  }
+  startSilentKeepalive() {}
+  stopSilentKeepalive() {}
 
   pause() {
     this.shouldBePlaying = false;
-    this.stopSilentKeepalive();
+    if (this.bufferTimeout) {
+      clearTimeout(this.bufferTimeout);
+      this.bufferTimeout = null;
+    }
+    if (this.crossfadeTimeout) {
+      clearTimeout(this.crossfadeTimeout);
+      this.crossfadeTimeout = null;
+    }
+    if (this.ytPollInterval) {
+      clearInterval(this.ytPollInterval);
+      this.ytPollInterval = null;
+    }
     if (typeof navigator !== 'undefined' && 'mediaSession' in navigator) {
       try { navigator.mediaSession.playbackState = 'paused'; } catch (_) {}
     }
@@ -751,7 +785,6 @@ class AudioManager {
   async resume() {
     this.shouldBePlaying = true;
     this.ensureAudioContext();
-    this.startSilentKeepalive();
     if (typeof navigator !== 'undefined' && 'mediaSession' in navigator) {
       try { navigator.mediaSession.playbackState = 'playing'; } catch (_) {}
     }
@@ -799,7 +832,7 @@ class AudioManager {
     this.ensureAudioContext();
     this.stereoWidth = Math.max(0, Math.min(2.5, width));
     if (this.sideGain && this.audioCtx) {
-      this.sideGain.gain.setValueAtTime(this.stereoWidth, this.audioCtx.currentTime);
+      this.sideGain.gain.setValueAtTime(this.stereoWidth * 0.5, this.audioCtx.currentTime);
     }
   }
 

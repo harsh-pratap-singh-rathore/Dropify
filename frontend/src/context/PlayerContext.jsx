@@ -85,6 +85,23 @@ export function PlayerProvider({ children }) {
 
   const songStartTimeRef = useRef(0);
   const listenedDurationRef = useRef(0);
+  const isPlayingRef = useRef(isPlaying);
+  const currentSongRef = useRef(currentSong);
+  const durationRef = useRef(duration);
+  const currentTimeRef = useRef(currentTime);
+  const queueRef = useRef(queue);
+  const queueIndexRef = useRef(queueIndex);
+  const isPreArmingRef = useRef(false);
+  const playNextRef = useRef();
+  const playPreviousRef = useRef();
+  const seekToRef = useRef();
+
+  isPlayingRef.current = isPlaying;
+  currentSongRef.current = currentSong;
+  durationRef.current = duration;
+  currentTimeRef.current = currentTime;
+  queueRef.current = queue;
+  queueIndexRef.current = queueIndex;
 
   // Fetch initial library and preferences
   useEffect(() => {
@@ -135,16 +152,34 @@ export function PlayerProvider({ children }) {
     };
 
     audioManager.onNearingEndCallback = () => {
-      // Automix pre-arm next song
-      if (queueIndex + 1 < queue.length) {
-        // next track is ready
+      // Automix pre-arm next song recommendations when nearing queue end
+      const q = queueRef.current || [];
+      const qIdx = queueIndexRef.current || 0;
+      const cur = currentSongRef.current;
+      if (qIdx + 1 >= q.length && cur && cur.id && !isPreArmingRef.current) {
+        isPreArmingRef.current = true;
+        fetch(apiUrl(`/api/song/${cur.id}`))
+          .then(res => res.json())
+          .then(details => {
+            if (details.related && details.related.length > 0) {
+              setQueue(prev => {
+                const existingIds = new Set(prev.map(s => s.id));
+                const newTracks = details.related.filter(r => !existingIds.has(r.id));
+                return newTracks.length > 0 ? [...prev, ...newTracks] : prev;
+              });
+            }
+          })
+          .catch(() => {})
+          .finally(() => {
+            setTimeout(() => { isPreArmingRef.current = false; }, 6000);
+          });
       }
     };
   }, [lyricsData, queue, queueIndex, lyricsOffset]);
 
   // High-precision 60fps real-time live lyric synchronization ticker with calibrated timing offset
   useEffect(() => {
-    if (!isPlaying) return;
+    if (!isPlaying || (!isFullscreenPlayerOpen && !isMusicFlowOpen)) return;
     let animId;
     const syncTicker = () => {
       if (audioManager.getIsPlaying() && lyricsData?.lines?.length > 0) {
@@ -165,7 +200,7 @@ export function PlayerProvider({ children }) {
 
     animId = requestAnimationFrame(syncTicker);
     return () => cancelAnimationFrame(animId);
-  }, [isPlaying, lyricsData, audioManager, lyricsOffset]);
+  }, [isPlaying, isFullscreenPlayerOpen, isMusicFlowOpen, lyricsData, audioManager, lyricsOffset]);
 
   // Load lyrics when song changes
   useEffect(() => {
@@ -218,13 +253,11 @@ export function PlayerProvider({ children }) {
     }
   }, [currentSong]);
 
-  // Sync MediaSession action handlers and playbackState
+  // Register MediaSession action handlers ONCE with mutable refs to eliminate IPC registration flooding
   useEffect(() => {
     if (typeof window === 'undefined' || !('mediaSession' in navigator)) return;
 
     try {
-      navigator.mediaSession.playbackState = isPlaying ? 'playing' : 'paused';
-
       navigator.mediaSession.setActionHandler('play', async () => {
         await audioManager.resume();
         setIsPlaying(true);
@@ -238,32 +271,45 @@ export function PlayerProvider({ children }) {
         setIsPlaying(false);
       });
       navigator.mediaSession.setActionHandler('previoustrack', () => {
-        playPrevious();
+        if (playPreviousRef.current) playPreviousRef.current();
       });
       navigator.mediaSession.setActionHandler('nexttrack', () => {
-        playNext(true);
+        if (playNextRef.current) playNextRef.current(true);
       });
       navigator.mediaSession.setActionHandler('seekto', (details) => {
-        if (details.seekTime !== undefined && duration > 0) {
-          seekTo((details.seekTime / duration) * 100);
+        const d = durationRef.current;
+        if (details.seekTime !== undefined && d > 0 && seekToRef.current) {
+          seekToRef.current((details.seekTime / d) * 100);
         }
       });
       navigator.mediaSession.setActionHandler('seekbackward', (details) => {
         const offset = details.seekOffset || 10;
-        if (duration > 0) {
-          seekTo(Math.max(0, ((currentTime - offset) / duration) * 100));
+        const d = durationRef.current;
+        const cur = currentTimeRef.current;
+        if (d > 0 && seekToRef.current) {
+          seekToRef.current(Math.max(0, ((cur - offset) / d) * 100));
         }
       });
       navigator.mediaSession.setActionHandler('seekforward', (details) => {
         const offset = details.seekOffset || 10;
-        if (duration > 0) {
-          seekTo(Math.min(100, ((currentTime + offset) / duration) * 100));
+        const d = durationRef.current;
+        const cur = currentTimeRef.current;
+        if (d > 0 && seekToRef.current) {
+          seekToRef.current(Math.min(100, ((cur + offset) / d) * 100));
         }
       });
     } catch (e) {
       console.warn('MediaSession action handler notice:', e);
     }
-  }, [isPlaying, currentSong, duration, currentTime, queue, queueIndex]);
+  }, []);
+
+  // Sync MediaSession playbackState with single dependency to prevent IPC flooding
+  useEffect(() => {
+    if (typeof window === 'undefined' || !('mediaSession' in navigator)) return;
+    try {
+      navigator.mediaSession.playbackState = isPlaying ? 'playing' : 'paused';
+    } catch (_) {}
+  }, [isPlaying]);
 
   // Sync MediaSession position state for the lockscreen seekbar
   useEffect(() => {
@@ -286,12 +332,18 @@ export function PlayerProvider({ children }) {
   // Mobile WakeLock to keep audio playback thread active
   useEffect(() => {
     let wakeLock = null;
+    let isCancelled = false;
     if (typeof window !== 'undefined' && 'wakeLock' in navigator && isPlaying) {
       navigator.wakeLock.request('screen').then(wl => {
-        wakeLock = wl;
+        if (isCancelled) {
+          wl.release().catch(() => {});
+        } else {
+          wakeLock = wl;
+        }
       }).catch(() => {});
     }
     return () => {
+      isCancelled = true;
       if (wakeLock) {
         wakeLock.release().catch(() => {});
       }
@@ -406,6 +458,10 @@ export function PlayerProvider({ children }) {
       setProgress(percent);
     }
   };
+
+  playNextRef.current = playNext;
+  playPreviousRef.current = playPrevious;
+  seekToRef.current = seekTo;
 
   const toggleLike = async (song = currentSong) => {
     if (!song) return;

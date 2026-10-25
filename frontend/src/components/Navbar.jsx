@@ -253,7 +253,7 @@ export default function Navbar({ activeTab, setActiveTab, onSearch }) {
         </button>
 
         <button
-          className="btn-icon"
+          className="btn-icon nav-shortcuts-btn"
           onClick={() => setIsShortcutsOpen(true)}
           title="Audiophile Keyboard Shortcuts (?)"
         >

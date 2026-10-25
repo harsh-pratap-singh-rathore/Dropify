@@ -19,8 +19,6 @@ function MainApp() {
   const {
     currentSong,
     togglePlayPause,
-    currentTime,
-    duration,
     seekTo,
     volume,
     handleVolumeChange,
@@ -34,7 +32,8 @@ function MainApp() {
     isMusicFlowOpen,
     setIsMusicFlowOpen,
     isShortcutsOpen,
-    setIsShortcutsOpen
+    setIsShortcutsOpen,
+    audioManager
   } = usePlayer();
 
   const handleSearchTrigger = (query) => {
@@ -98,23 +97,33 @@ function MainApp() {
           }
           break;
 
-        case 'ArrowLeft': // Seek backward 5s (or Shift+Arrow: Previous)
+        case 'ArrowLeft': { // Seek backward 5s (or Shift+Arrow: Previous)
           e.preventDefault();
           if (e.shiftKey) {
             playPrevious();
-          } else if (duration > 0) {
-            seekTo(Math.max(0, ((currentTime - 5) / duration) * 100));
+          } else {
+            const cur = audioManager?.getCurrentTime() || 0;
+            const dur = audioManager?.getDuration() || 0;
+            if (dur > 0) {
+              seekTo(Math.max(0, ((cur - 5) / dur) * 100));
+            }
           }
           break;
+        }
 
-        case 'ArrowRight': // Seek forward 5s (or Shift+Arrow: Next)
+        case 'ArrowRight': { // Seek forward 5s (or Shift+Arrow: Next)
           e.preventDefault();
           if (e.shiftKey) {
             playNext(true);
-          } else if (duration > 0) {
-            seekTo(Math.min(100, ((currentTime + 5) / duration) * 100));
+          } else {
+            const cur = audioManager?.getCurrentTime() || 0;
+            const dur = audioManager?.getDuration() || 0;
+            if (dur > 0) {
+              seekTo(Math.min(100, ((cur + 5) / dur) * 100));
+            }
           }
           break;
+        }
 
         case 'ArrowUp': // Volume Up 5%
           e.preventDefault();
@@ -149,8 +158,6 @@ function MainApp() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [
     currentSong,
-    duration,
-    currentTime,
     volume,
     isFullscreenPlayerOpen,
     isEqOpen,
@@ -163,7 +170,9 @@ function MainApp() {
     setIsFullscreenPlayerOpen,
     setIsEqOpen,
     setIsMusicFlowOpen,
-    toggleLike
+    setIsShortcutsOpen,
+    toggleLike,
+    audioManager
   ]);
 
   return (

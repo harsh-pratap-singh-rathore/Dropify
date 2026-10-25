@@ -21,9 +21,52 @@ function getYtdl() {
   return ytdlInstance;
 }
 
-// In-memory format & metadata cache (TTL: 5 hours, similar to Echo Music's 21600s cache)
-const infoCache = new Map();
-const streamUrlCache = new Map();
+/**
+ * High-Performance Bounded LRU Cache with TTL Eviction
+ * Guarantees process memory stability and prevents Out-Of-Memory (OOM) fatal crashes
+ */
+class BoundedLRUCache {
+  constructor(maxSize = 500, ttlMs = 5 * 60 * 60 * 1000) {
+    this.maxSize = maxSize;
+    this.ttlMs = ttlMs;
+    this.cache = new Map();
+  }
+
+  get(key) {
+    const item = this.cache.get(key);
+    if (!item) return undefined;
+    if (Date.now() > item.expiry) {
+      this.cache.delete(key);
+      return undefined;
+    }
+    // Refresh LRU recency
+    this.cache.delete(key);
+    this.cache.set(key, item);
+    return item.value;
+  }
+
+  set(key, value) {
+    if (this.cache.has(key)) {
+      this.cache.delete(key);
+    } else if (this.cache.size >= this.maxSize) {
+      const oldestKey = this.cache.keys().next().value;
+      if (oldestKey !== undefined) this.cache.delete(oldestKey);
+    }
+    this.cache.set(key, { value, expiry: Date.now() + this.ttlMs });
+  }
+
+  has(key) {
+    return this.get(key) !== undefined;
+  }
+
+  delete(key) {
+    return this.cache.delete(key);
+  }
+}
+
+// In-memory format & metadata cache (Bounded LRU, TTL: 5 hours)
+const infoCache = new BoundedLRUCache(500, 5 * 3600 * 1000);
+const streamUrlCache = new BoundedLRUCache(500, 5 * 3600 * 1000);
 
 /**
  * Searches music tracks on YouTube using official InnerTube JSON API (Zero scraping, works on cloud IPs)
@@ -489,8 +532,9 @@ async function getSongDetails(videoId) {
 /**
  * Resolves best audio format (Opus 160kbps itag 251 or AAC 128kbps itag 140)
  */
-async function resolveAudioFormat(videoId) {
-  const cached = streamUrlCache.get(videoId);
+async function resolveAudioFormat(videoId, preferredFormat = null) {
+  const cacheKey = preferredFormat ? `${videoId}_${preferredFormat}` : videoId;
+  const cached = streamUrlCache.get(cacheKey);
   if (cached && cached.expiresAt > Date.now()) {
     return cached.format;
   }
@@ -504,15 +548,22 @@ async function resolveAudioFormat(videoId) {
     throw new Error('No direct audio format found');
   }
 
-  // Prioritize itag 251 (Opus WebM 160kbps - exactly like Echo Music) or highest audio bitrate
+  // Prioritize based on preferred format or default:
+  // itag 251 (Opus WebM 160kbps) & itag 140 (AAC 128kbps M4A)
   const sorted = audioFormats.sort((a, b) => {
+    if (preferredFormat === 'mp4' || preferredFormat === 'aac') {
+      if (a.itag === 140) return -1;
+      if (b.itag === 140) return 1;
+    }
     if (a.itag === 251) return -1;
     if (b.itag === 251) return 1;
+    if (a.itag === 140) return -1;
+    if (b.itag === 140) return 1;
     return (b.bitrate || 0) - (a.bitrate || 0);
   });
 
   const bestFormat = sorted[0];
-  streamUrlCache.set(videoId, {
+  streamUrlCache.set(cacheKey, {
     format: bestFormat,
     expiresAt: Date.now() + 5 * 3600 * 1000 // 5 hours TTL
   });
@@ -523,21 +574,99 @@ async function resolveAudioFormat(videoId) {
 /**
  * Streams audio for a given videoId directly to Express response
  * Handles HTTP Range requests for seeking support (HTTP 206 Partial Content)
+ * Proxies the stream from Google Video CDN to avoid client IP binding (403 Forbidden)
  */
 async function streamAudio(videoId, req, res) {
+  const abortController = new AbortController();
+  let isCleanedUp = false;
+
+  const cleanup = () => {
+    if (!isCleanedUp) {
+      isCleanedUp = true;
+      try {
+        abortController.abort();
+      } catch (_) {}
+    }
+  };
+
+  req.on('close', cleanup);
+  res.on('close', cleanup);
+  res.on('finish', cleanup);
+
   try {
-    const format = await resolveAudioFormat(videoId);
+    const userAgent = req.headers['user-agent'] || '';
+    const isAppleSafari = /iPhone|iPad|iPod/i.test(userAgent) || (/Macintosh/i.test(userAgent) && !/Chrome|CriOS/i.test(userAgent));
+    const preferredFormat = req.query.format || (isAppleSafari ? 'mp4' : null);
+
+    let format = await resolveAudioFormat(videoId, preferredFormat);
     if (!format || !format.url) {
       throw new Error('No streaming URL resolved');
     }
 
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Headers', '*');
-    res.setHeader('Access-Control-Expose-Headers', '*');
+    const fetchUpstream = async (targetUrl) => {
+      const upstreamHeaders = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36'
+      };
+      if (req.headers.range) {
+        upstreamHeaders['Range'] = req.headers.range;
+      }
+      return axios.get(targetUrl, {
+        headers: upstreamHeaders,
+        responseType: 'stream',
+        signal: abortController.signal,
+        validateStatus: (status) => status >= 200 && status < 400
+      });
+    };
 
-    // 302 Redirect directly to Google CDN edge - exactly how Echo Music streams to client
-    return res.redirect(302, format.url);
+    let upstreamRes;
+    try {
+      upstreamRes = await fetchUpstream(format.url);
+    } catch (err) {
+      const status = err.response?.status;
+      if (status === 403 || status === 410 || status === 404) {
+        const cacheKey = preferredFormat ? `${videoId}_${preferredFormat}` : videoId;
+        streamUrlCache.delete(cacheKey);
+        streamUrlCache.delete(videoId);
+        format = await resolveAudioFormat(videoId, preferredFormat);
+        upstreamRes = await fetchUpstream(format.url);
+      } else {
+        throw err;
+      }
+    }
+
+    // Set CORS and streaming headers
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Headers', 'Range, Content-Type, Accept');
+    res.setHeader('Access-Control-Expose-Headers', 'Content-Range, Content-Length, Accept-Ranges');
+    res.setHeader('Accept-Ranges', 'bytes');
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+
+    const contentType = upstreamRes.headers['content-type'] || format.mimeType || (preferredFormat === 'mp4' ? 'audio/mp4; codecs="mp4a.40.2"' : 'audio/webm; codecs="opus"');
+    res.setHeader('Content-Type', contentType);
+
+    if (upstreamRes.headers['content-range']) {
+      res.setHeader('Content-Range', upstreamRes.headers['content-range']);
+    }
+    if (upstreamRes.headers['content-length']) {
+      res.setHeader('Content-Length', upstreamRes.headers['content-length']);
+    }
+
+    res.status(upstreamRes.status);
+
+    upstreamRes.data.on('error', (streamErr) => {
+      cleanup();
+      if (!res.headersSent) {
+        res.status(500).end();
+      } else {
+        res.end();
+      }
+    });
+
+    upstreamRes.data.pipe(res);
   } catch (error) {
+    if (abortController.signal.aborted || req.destroyed) {
+      return;
+    }
     console.warn(`Direct stream error for ${videoId}:`, error.message);
     if (!res.headersSent) {
       res.status(500).json({ error: 'Playback stream failed', message: error.message });
@@ -550,5 +679,7 @@ module.exports = {
   getHomeFeed,
   getSongDetails,
   streamAudio,
-  resolveAudioFormat
+  resolveAudioFormat,
+  streamUrlCache,
+  infoCache
 };

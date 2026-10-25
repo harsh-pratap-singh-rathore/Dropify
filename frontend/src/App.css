@@ -10,6 +10,7 @@
 .app-layout {
   position: relative;
   min-height: 100vh;
+  min-height: 100dvh;
   padding-bottom: 130px;
   background-color: var(--paper-bg);
   color: var(--graphite-main);
@@ -597,8 +598,6 @@
 .card-thumb-container {
   width: 100%;
   aspect-ratio: 1 / 1;
-  height: 144px;
-  max-height: 144px;
   border-radius: 10px;
   border: 1.5px solid var(--paper-border);
   overflow: hidden;
@@ -851,13 +850,24 @@
 .mobile-mini-actions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
   flex-shrink: 0;
 }
 
+.mobile-mini-actions .card-like-btn {
+  min-width: 44px !important;
+  min-height: 44px !important;
+  padding: 10px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
 .mobile-play-btn {
-  width: 38px !important;
-  height: 38px !important;
+  width: 44px !important;
+  height: 44px !important;
+  min-width: 44px !important;
+  min-height: 44px !important;
   border-radius: 50% !important;
   background: var(--grad-sunset) !important;
   border: 2px solid #18181B !important;
@@ -867,6 +877,15 @@
   justify-content: center;
   cursor: pointer;
   transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+.mobile-mini-actions .mobile-skip-btn {
+  min-width: 44px !important;
+  min-height: 44px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 8px !important;
 }
 
 .mobile-play-btn:active {
@@ -1172,6 +1191,8 @@
 .fullscreen-overlay {
   position: fixed;
   inset: 0;
+  height: 100vh;
+  height: 100dvh;
   background: var(--paper-bg);
   background-image: radial-gradient(circle, rgba(24, 24, 27, 0.08) 1.2px, transparent 1.2px);
   background-size: 24px 24px;
@@ -1182,9 +1203,10 @@
   animation: modalFadeIn 0.25s ease-out;
 }
 
-.fullscreen-header {
-  height: 72px;
-  padding: 0 32px;
+.fullscreen-header,
+.musicflow-header {
+  height: calc(72px + env(safe-area-inset-top, 0px));
+  padding: env(safe-area-inset-top, 0px) max(32px, env(safe-area-inset-right, 0px)) 0 max(32px, env(safe-area-inset-left, 0px));
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1431,6 +1453,76 @@
   border: 1px dashed rgba(24, 24, 27, 0.4);
 }
 
+/* Lyrics Header Synchronization & Nudge Controls */
+.lyrics-sync-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 8px;
+  border-bottom: 2px dashed var(--paper-border-dashed);
+  gap: 8px;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.lyrics-sync-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  color: var(--graphite-muted);
+}
+
+.lyrics-nudge-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--paper-card-subtle);
+  border: 1.5px solid var(--paper-border);
+  border-radius: var(--sketch-radius-pill);
+  padding: 2px 4px;
+  box-shadow: 1px 1px 0px var(--paper-border);
+}
+
+.nudge-btn {
+  min-width: 44px !important;
+  min-height: 44px !important;
+  padding: 0 8px !important;
+  font-size: 0.85rem !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.nudge-val {
+  font-size: 0.82rem;
+  font-weight: 700;
+  min-width: 44px;
+  text-align: center;
+}
+
+.nudge-line-btn {
+  min-width: 44px !important;
+  min-height: 44px !important;
+  padding: 0 6px !important;
+  font-size: 0.76rem !important;
+  font-family: var(--font-mono) !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lyrics-search-trigger-btn {
+  min-height: 44px !important;
+  min-width: 44px !important;
+  padding: 0 14px !important;
+  font-size: 0.9rem !important;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
 /* Sketch Visualizer Canvas Container */
 .visualizer-canvas-container {
   flex: 1;
@@ -1557,8 +1649,14 @@
 .eq-modal-content {
   max-width: 680px;
   max-height: 90vh;
+  max-height: 90dvh;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+}
+
+.eq-graph-container {
+  min-height: 100px !important;
+  flex-shrink: 0 !important;
 }
 
 .eq-bands-scroll-wrap {
@@ -2079,17 +2177,21 @@
   }
 
   .card-play-overlay .play-glyph-btn {
-    width: 34px !important;
-    height: 34px !important;
+    width: 44px !important;
+    height: 44px !important;
     box-shadow: 0 3px 0 #18181B, 0 4px 10px rgba(255, 51, 102, 0.4) !important;
     transform: scale(1) !important;
     pointer-events: auto !important;
   }
 
   /* Fullscreen Player Mobile Sheet */
-  .fullscreen-header {
-    height: 54px !important;
-    padding: 0 14px !important;
+  .fullscreen-header,
+  .musicflow-header {
+    height: calc(56px + env(safe-area-inset-top, 0px)) !important;
+    padding-top: env(safe-area-inset-top, 0px) !important;
+    padding-bottom: 0 !important;
+    padding-left: calc(14px + env(safe-area-inset-left, 0px)) !important;
+    padding-right: calc(14px + env(safe-area-inset-right, 0px)) !important;
   }
 
   .fullscreen-tab-pills {
@@ -2099,10 +2201,125 @@
   .glass-pill {
     padding: 4px 10px !important;
     font-size: 0.88rem !important;
+    min-height: 44px !important;
   }
 
   .fullscreen-bottom-deck {
     padding: 12px 16px calc(16px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+
+  /* Hide keyboard shortcuts button on mobile */
+  .nav-shortcuts-btn {
+    display: none !important;
+  }
+
+  .btn-icon {
+    min-width: 44px !important;
+    min-height: 44px !important;
+  }
+
+  .card-like-btn {
+    min-width: 44px !important;
+    min-height: 44px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  .category-chip {
+    min-height: 44px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+  }
+
+  .shelf-nav-btn {
+    min-width: 44px !important;
+    min-height: 44px !important;
+  }
+}
+
+@media (max-width: 600px) {
+  /* Fullscreen Single Column Portrait Layout: Compact horizontal track bar + 100% full-width lyrics */
+  .fullscreen-body.lyrics-mode-active {
+    flex-direction: column !important;
+    padding: 6px 10px !important;
+    gap: 8px !important;
+    overflow: hidden !important;
+    height: 100% !important;
+  }
+
+  .fullscreen-mobile-artwork-col {
+    width: 100% !important;
+    min-width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    flex-shrink: 0 !important;
+  }
+
+  .mobile-boxy-card {
+    flex-direction: row !important;
+    align-items: center !important;
+    text-align: left !important;
+    padding: 6px 10px !important;
+    gap: 10px !important;
+    width: 100% !important;
+  }
+
+  .mobile-boxy-thumb-wrap {
+    width: 44px !important;
+    height: 44px !important;
+    margin-bottom: 0 !important;
+    flex-shrink: 0 !important;
+  }
+
+  .mobile-boxy-meta {
+    flex: 1 !important;
+    min-width: 0 !important;
+  }
+
+  .mobile-boxy-title {
+    font-size: 0.92rem !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    -webkit-line-clamp: 1 !important;
+  }
+
+  .mobile-boxy-artist {
+    font-size: 0.78rem !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  .mobile-boxy-badges {
+    display: none !important;
+  }
+
+  .fullscreen-content-col.lyrics-expanded {
+    width: 100% !important;
+    flex: 1 !important;
+    padding: 8px 10px !important;
+  }
+
+  .lyrics-scroll-container {
+    padding: 16px 6px 36px !important;
+    width: 100% !important;
+    gap: 16px !important;
+  }
+
+  .lyric-line {
+    font-size: 1.22rem !important;
+    line-height: 1.35 !important;
+    padding: 4px 8px !important;
+    max-width: 100% !important;
+    word-break: break-word !important;
+  }
+
+  .lyric-line.active {
+    font-size: 1.42rem !important;
+    line-height: 1.25 !important;
+    padding: 5px 10px !important;
   }
 }
 
@@ -2140,9 +2357,11 @@
     max-width: 138px !important;
   }
 
-  .shelf-row .card-thumb-container {
-    height: 122px !important;
-    max-height: 122px !important;
+  .shelf-row .card-thumb-container,
+  .shelf-grid .card-thumb-container {
+    height: auto !important;
+    max-height: none !important;
+    aspect-ratio: 1 / 1 !important;
   }
 
   .brand-name {
@@ -2156,16 +2375,6 @@
   .turntable-wrapper {
     width: 175px !important;
     height: 175px !important;
-  }
-
-  .lyric-line {
-    font-size: 1.08rem !important;
-    line-height: 1.35 !important;
-  }
-
-  .lyric-line.active {
-    font-size: 1.28rem !important;
-    line-height: 1.25 !important;
   }
 }
 
@@ -2190,15 +2399,21 @@
 }
 
 .vinyl-disc,
-.lyric-line,
-.track-card,
 .btn-control-play,
-.play-glyph-btn,
-.mobile-boxy-card {
+.play-glyph-btn {
   will-change: transform;
 }
 
 .shelf-row .track-card {
   contain: content;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 

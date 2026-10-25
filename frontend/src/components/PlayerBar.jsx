@@ -85,7 +85,7 @@ export default function PlayerBar() {
             {isPlaying ? <Pause size={18} color="#ffffff" /> : <Play size={18} fill="#ffffff" color="#ffffff" style={{ marginLeft: '2px' }} />}
           </button>
 
-          <button className="btn-control" onClick={() => playNext(true)} aria-label="Next Track">
+          <button className="btn-control mobile-skip-btn" onClick={() => playNext(true)} aria-label="Next Track">
             <SkipForward size={18} />
           </button>
         </div>

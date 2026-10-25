@@ -141,7 +141,7 @@ export default function EqualizerModal() {
         </div>
 
         {/* Dynamic Interactive SVG Frequency Response Curve */}
-        <div className="eq-graph-container" style={{ position: 'relative', width: '100%', height: '110px', background: '#ffffff', border: '2px solid var(--paper-border)', borderRadius: '12px', overflow: 'hidden', boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.05)' }}>
+        <div className="eq-graph-container" style={{ position: 'relative', width: '100%', height: '110px', minHeight: '100px', flexShrink: 0, background: '#ffffff', border: '2px solid var(--paper-border)', borderRadius: '12px', overflow: 'hidden', boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.05)' }}>
           <svg
             viewBox="0 0 520 100"
             preserveAspectRatio="none"

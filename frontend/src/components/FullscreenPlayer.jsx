@@ -5,15 +5,11 @@ import {
   Pause,
   SkipBack,
   SkipForward,
-  Heart,
   Sliders,
   AlignLeft,
-  Volume2,
-  VolumeX,
   Disc,
   Sparkles,
   Search,
-  RefreshCw,
   Plus,
   Minus
 } from 'lucide-react';
@@ -34,8 +30,6 @@ export default function FullscreenPlayer() {
     currentTime,
     duration,
     progress,
-    volume,
-    handleVolumeChange,
     togglePlayPause,
     playNext,
     playPrevious,
@@ -43,7 +37,6 @@ export default function FullscreenPlayer() {
     lyricsData,
     setLyricsData,
     activeLyricIndex,
-    setActiveLyricIndex,
     isLoadingLyrics,
     setIsLoadingLyrics,
     lyricsOffset,
@@ -51,8 +44,6 @@ export default function FullscreenPlayer() {
     isFullscreenPlayerOpen,
     setIsFullscreenPlayerOpen,
     setIsEqOpen,
-    toggleLike,
-    likedSongIds,
     audioManager
   } = usePlayer();
 
@@ -171,7 +162,8 @@ export default function FullscreenPlayer() {
         let barHeight;
         if (isSimulated) {
           // Ambient organic harmonic wave
-          const t = (currentTime * 3.5) + (frameCount * 0.035);
+          const curTime = (audioManager && typeof audioManager.getCurrentTime === 'function') ? audioManager.getCurrentTime() : 0;
+          const t = (curTime * 3.5) + (frameCount * 0.035);
           const s1 = Math.sin(t + i * 0.22);
           const s2 = Math.cos(t * 0.65 + i * 0.12);
           const wave = (s1 * 0.45 + s2 * 0.35 + 0.8) / 1.6;
@@ -222,11 +214,10 @@ export default function FullscreenPlayer() {
 
     render();
     return () => cancelAnimationFrame(animId);
-  }, [isFullscreenPlayerOpen, activeTab, audioManager, isPlaying, currentTime]);
+  }, [isFullscreenPlayerOpen, activeTab, audioManager, isPlaying]);
 
   if (!isFullscreenPlayerOpen || !currentSong) return null;
 
-  const isLiked = likedSongIds.has(currentSong.id);
   const albumArt = currentSong.thumbnailHigh || currentSong.thumbnail || (currentSong.id ? `https://i.ytimg.com/vi/${currentSong.id}/hqdefault.jpg` : '');
 
   return (
@@ -325,60 +316,57 @@ export default function FullscreenPlayer() {
           {activeTab === 'lyrics' ? (
             <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%' }}>
               {/* Lyrics Provider & Timing Offset Controls */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '8px', borderBottom: '2px dashed var(--paper-border-dashed)', flexWrap: 'wrap', gap: '6px' }}>
-                <div className="sketch-font-mono" style={{ fontSize: '0.78rem', color: 'var(--graphite-muted)', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                  <Sparkles size={12} />
+              <div className="lyrics-sync-bar">
+                <div className="lyrics-sync-meta sketch-font-mono">
+                  <Sparkles size={13} />
                   <span>{lyricsData.synced ? 'SYNC' : 'PLAIN'} • {lyricsData.provider || 'Lyrics Engine'}</span>
                 </div>
 
                 {lyricsData.synced && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px', flexWrap: 'wrap' }}>
-                    <span className="sketch-font-mono" style={{ fontSize: '0.8rem' }}>Sync:</span>
+                  <div className="lyrics-nudge-group">
                     <button
-                      className="sketch-btn"
-                      style={{ padding: '2px 7px', fontSize: '0.78rem' }}
-                      onClick={() => setLyricsOffset((prev) => +(prev - 2.5).toFixed(1))}
-                      title="Shift back 1 line (-2.5s)"
-                    >
-                      -1 Line
-                    </button>
-                    <button
-                      className="sketch-btn"
-                      style={{ padding: '2px 7px', fontSize: '0.8rem' }}
+                      className="sketch-btn nudge-btn"
                       onClick={() => setLyricsOffset((prev) => +(prev - 0.5).toFixed(1))}
                       title="Nudge back 0.5s"
+                      aria-label="Nudge lyrics back 0.5s"
                     >
-                      <Minus size={11} />
+                      <Minus size={14} />
                     </button>
-                    <span className="sketch-font-mono" style={{ fontSize: '0.82rem', fontWeight: 700, minWidth: '40px', textAlign: 'center' }}>
+                    <span className="nudge-val sketch-font-mono">
                       {lyricsOffset >= 0 ? `+${lyricsOffset}s` : `${lyricsOffset}s`}
                     </span>
                     <button
-                      className="sketch-btn"
-                      style={{ padding: '2px 7px', fontSize: '0.8rem' }}
+                      className="sketch-btn nudge-btn"
                       onClick={() => setLyricsOffset((prev) => +(prev + 0.5).toFixed(1))}
                       title="Nudge forward 0.5s"
+                      aria-label="Nudge lyrics forward 0.5s"
                     >
-                      <Plus size={11} />
+                      <Plus size={14} />
                     </button>
                     <button
-                      className="sketch-btn"
-                      style={{ padding: '2px 7px', fontSize: '0.78rem' }}
+                      className="sketch-btn nudge-line-btn"
+                      onClick={() => setLyricsOffset((prev) => +(prev - 2.5).toFixed(1))}
+                      title="Shift back 1 line (-2.5s)"
+                    >
+                      -1L
+                    </button>
+                    <button
+                      className="sketch-btn nudge-line-btn"
                       onClick={() => setLyricsOffset((prev) => +(prev + 2.5).toFixed(1))}
                       title="Shift forward 1 line (+2.5s)"
                     >
-                      +1 Line
+                      +1L
                     </button>
                   </div>
                 )}
 
                 <button
-                  className="sketch-btn"
-                  style={{ padding: '4px 12px', fontSize: '0.9rem' }}
+                  className="sketch-btn lyrics-search-trigger-btn"
                   onClick={() => setShowManualSearch(!showManualSearch)}
+                  aria-label="Search Lyrics"
                 >
-                  <Search size={13} />
-                  <span>Search Lyrics</span>
+                  <Search size={14} />
+                  <span>Search</span>
                 </button>
               </div>
 
@@ -429,7 +417,7 @@ export default function FullscreenPlayer() {
                     className="sketch-btn sketch-btn-primary"
                     style={{ marginTop: '16px' }}
                     onClick={() => {
-                      const cleanHint = lyricsData?.cleanTitle || currentSong.title.replace(/[\(\[|].*?[\)\]]/g, '').trim();
+                      const cleanHint = lyricsData?.cleanTitle || currentSong.title.replace(/[([|].*?[)\]]/g, '').trim();
                       setManualQuery(cleanHint);
                       setShowManualSearch(true);
                     }}

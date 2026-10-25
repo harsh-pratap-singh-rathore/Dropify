@@ -51,7 +51,7 @@ export default function MusicFlowModal() {
   return (
     <div className="fullscreen-overlay" style={{ zIndex: 3500 }}>
       {/* Top Header */}
-      <div className="fullscreen-header">
+      <div className="fullscreen-header musicflow-header">
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--highlighter-yellow)', padding: '4px 14px', border: '1.5px solid var(--paper-border)', borderRadius: 'var(--sketch-radius-pill)' }}>
           <Radio size={16} />
           <span className="sketch-font-hand" style={{ fontSize: '1rem', fontWeight: 700 }}>Music Flow • Notebook Journal</span>

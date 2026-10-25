@@ -9,30 +9,52 @@ const axios = require('axios');
 const app = express();
 const PORT = process.env.PORT || 5001;
 
+// Configure trusted proxy (Render/Vercel single edge reverse-proxy topology)
+app.set('trust proxy', 1);
+
 // 1. Security & Request Configuration
 app.use(cors());
 app.use(express.json({ limit: '250kb' }));
 
-// Custom Security Headers Middleware
+// Custom Security Headers Middleware (Hardened CSP + HSTS)
 app.use((req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'SAMEORIGIN');
   res.setHeader('X-XSS-Protection', '1; mode=block');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
   res.setHeader('Permissions-Policy', 'camera=(), microphone=(self), geolocation=()');
+  res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
+  res.setHeader(
+    'Content-Security-Policy',
+    "default-src 'self'; " +
+    "script-src 'self' 'unsafe-inline' https://www.youtube.com https://s.ytimg.com; " +
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
+    "font-src 'self' https://fonts.gstatic.com data:; " +
+    "img-src 'self' data: blob: https://dropify.vercel.app https://i.ytimg.com https://*.ytimg.com https://*.googlevideo.com https://images.unsplash.com; " +
+    "media-src 'self' data: blob: https://dropify-backend-wy9v.onrender.com https://dropify.vercel.app https://*.googlevideo.com https://*.youtube.com; " +
+    "connect-src 'self' https://dropify-backend-wy9v.onrender.com https://dropify.vercel.app https://suggestqueries.google.com https://lrclib.net https://unison.boidu.dev https://lyrics.kugou.com https://api.lyrics.ovh https://www.youtube.com; " +
+    "frame-src https://www.youtube.com; " +
+    "object-src 'none';"
+  );
   next();
 });
 
-// Lightweight In-Memory Sliding-Window IP Rate Limiter
+// Lightweight In-Memory Sliding-Window IP Rate Limiter with Capacity Protection
 const rateLimitMap = new Map();
 const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute window
 const MAX_REQUESTS_PER_WINDOW = 120; // 120 requests/minute/IP
+const MAX_RATE_LIMIT_ENTRIES = 10000; // Upper bound to prevent memory exhaustion
 
 function rateLimiter(req, res, next) {
-  const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket.remoteAddress || 'unknown';
+  const ip = req.ip || req.socket.remoteAddress || 'unknown';
   const now = Date.now();
   let record = rateLimitMap.get(ip);
+
   if (!record || now - record.startTime > RATE_LIMIT_WINDOW_MS) {
+    if (rateLimitMap.size >= MAX_RATE_LIMIT_ENTRIES) {
+      const oldestKey = rateLimitMap.keys().next().value;
+      if (oldestKey) rateLimitMap.delete(oldestKey);
+    }
     record = { count: 1, startTime: now };
     rateLimitMap.set(ip, record);
   } else {
@@ -62,10 +84,11 @@ app.use(rateLimiter);
 // Helper regex to validate YouTube video IDs
 const YT_ID_REGEX = /^[a-zA-Z0-9_-]{5,32}$/;
 
-// 2. Health Check
+// 2. Health Check (Consolidated single endpoint)
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'ok',
+    service: 'dropify-backend',
     version: '2.2.0-hardened-innertube',
     uptime: Math.round(process.uptime()),
     timestamp: Date.now()
@@ -118,7 +141,8 @@ app.get('/api/search', async (req, res) => {
     const results = await innertube.searchMusic(query);
     res.json(results);
   } catch (error) {
-    res.status(500).json({ error: 'Search failed', message: error.message });
+    const isProd = process.env.NODE_ENV === 'production';
+    res.status(500).json({ error: 'Search failed', message: isProd ? 'Search could not be completed' : error.message });
   }
 });
 
@@ -132,13 +156,9 @@ app.get('/api/song/:id', async (req, res) => {
     const details = await innertube.getSongDetails(songId);
     res.json(details);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to get song details', message: error.message });
+    const isProd = process.env.NODE_ENV === 'production';
+    res.status(500).json({ error: 'Failed to get song details', message: isProd ? 'Unable to retrieve track info' : error.message });
   }
-});
-
-// Healthcheck route
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', service: 'dropify-backend', time: Date.now() });
 });
 
 // 6. Direct Audio Stream with 302 Redirect to Edge CDN
@@ -152,7 +172,8 @@ app.get('/api/stream/:id', async (req, res) => {
   } catch (err) {
     console.error('Stream error:', err.message);
     if (!res.headersSent) {
-      res.status(500).json({ error: 'Streaming error', message: err.message });
+      const isProd = process.env.NODE_ENV === 'production';
+      res.status(500).json({ error: 'Streaming error', message: isProd ? 'Audio stream unavailable' : err.message });
     }
   }
 });
@@ -181,7 +202,8 @@ app.get('/api/stream-url/:id', async (req, res) => {
   } catch (err) {
     console.error('Stream URL error:', err.message);
     if (!res.headersSent) {
-      res.status(500).json({ error: 'Stream URL resolution failed', message: err.message });
+      const isProd = process.env.NODE_ENV === 'production';
+      res.status(500).json({ error: 'Stream URL resolution failed', message: isProd ? 'Stream format unavailable' : err.message });
     }
   }
 });
@@ -217,7 +239,8 @@ app.get('/api/lyrics/:id', async (req, res) => {
     res.json(lyrics);
   } catch (error) {
     console.error('Lyrics error:', error.message);
-    res.status(500).json({ error: 'Lyrics fetch failed', message: error.message });
+    const isProd = process.env.NODE_ENV === 'production';
+    res.status(500).json({ error: 'Lyrics fetch failed', message: isProd ? 'Unable to retrieve lyrics' : error.message });
   }
 });
 
@@ -243,7 +266,8 @@ app.get('/api/taste/mix', async (req, res) => {
     const mix = await tasteEngine.generateTasteMix(count);
     res.json(mix);
   } catch (error) {
-    res.status(500).json({ error: 'Taste mix generation failed', message: error.message });
+    const isProd = process.env.NODE_ENV === 'production';
+    res.status(500).json({ error: 'Taste mix generation failed', message: isProd ? 'Could not generate smart mix' : error.message });
   }
 });
 
@@ -306,7 +330,7 @@ app.post('/api/library/playlist', (req, res) => {
   res.json({ success: true, playlists: lib.playlists });
 });
 
-// 10. User Preferences & DSP Profile (Whitelisted to prevent Prototype Pollution)
+// 10. User Preferences & DSP Profile
 const ALLOWED_PREF_KEYS = [
   'audioQuality',
   'crossfadeDuration',
@@ -346,7 +370,8 @@ app.post('/api/recognize', async (req, res) => {
       res.json({ found: false });
     }
   } catch (err) {
-    res.status(500).json({ error: 'Recognition failed', message: err.message });
+    const isProd = process.env.NODE_ENV === 'production';
+    res.status(500).json({ error: 'Recognition failed', message: isProd ? 'Recognition search failed' : err.message });
   }
 });
 
@@ -354,7 +379,11 @@ app.post('/api/recognize', async (req, res) => {
 app.use((err, req, res, next) => {
   console.error('Unhandled API exception:', err);
   if (!res.headersSent) {
-    res.status(500).json({ error: 'Internal server error', message: err.message });
+    const isProd = process.env.NODE_ENV === 'production';
+    res.status(500).json({
+      error: 'Internal server error',
+      message: isProd ? 'An unexpected error occurred. Please try again later.' : (err.message || 'Unknown error')
+    });
   }
 });
 

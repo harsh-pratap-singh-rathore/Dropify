@@ -1,7 +1,59 @@
 const axios = require('axios');
 
-// In-memory lyrics cache: key -> data
-const lyricsCache = new Map();
+/**
+ * High-Performance Bounded LRU Cache with TTL Eviction
+ * Guarantees process memory stability and prevents Out-Of-Memory (OOM) fatal crashes
+ */
+class BoundedLRUCache {
+  constructor(maxSize = 500, ttlMs = 4 * 60 * 60 * 1000) {
+    this.maxSize = maxSize;
+    this.ttlMs = ttlMs;
+    this.cache = new Map();
+  }
+
+  get(key) {
+    const item = this.cache.get(key);
+    if (!item) return undefined;
+    if (Date.now() > item.expiry) {
+      this.cache.delete(key);
+      return undefined;
+    }
+    // Refresh position for LRU recency order
+    this.cache.delete(key);
+    this.cache.set(key, item);
+    return item.value;
+  }
+
+  set(key, value) {
+    if (this.cache.has(key)) {
+      this.cache.delete(key);
+    } else if (this.cache.size >= this.maxSize) {
+      // Evict oldest (first inserted key in Map)
+      const oldestKey = this.cache.keys().next().value;
+      if (oldestKey !== undefined) {
+        this.cache.delete(oldestKey);
+      }
+    }
+    this.cache.set(key, {
+      value,
+      expiry: Date.now() + this.ttlMs
+    });
+  }
+
+  has(key) {
+    return this.get(key) !== undefined;
+  }
+
+  clear() {
+    this.cache.clear();
+  }
+
+  get size() {
+    return this.cache.size;
+  }
+}
+
+const lyricsCache = new BoundedLRUCache(500, 4 * 60 * 60 * 1000);
 
 const STOP_WORDS = new Set([
   'the', 'a', 'an', 'in', 'on', 'of', 'to', 'is', 'and', 'or', 'by', 'for', 'with',
@@ -100,8 +152,6 @@ function calculateRelevance(item, targetTitle, targetArtist, targetDuration) {
 
 /**
  * Robust port and extension of Echo Music's MetadataCleaner
- * Strips bracket tags first, extracts pipes/colons/by, and correctly handles
- * 'Artist - Song' vs 'Song - Movie/Artist' variations without destroying the song title.
  */
 function cleanTrackMetadata(rawTitle, rawArtist) {
   let title = (rawTitle || '').trim();
@@ -123,14 +173,13 @@ function cleanTrackMetadata(rawTitle, rawArtist) {
     .replace(/\s+Records\b/gi, '')
     .trim();
 
-  // 3. STEP 1: Strip bracket tags FIRST (e.g. '(Official Video)', '(Lyrics)', '[Lyric Video]', '(4K HD)')
-  // CRITICAL: This MUST happen before hyphen or pipe splitting so '(Lyrics)' doesn't trigger false junk removal!
+  // 3. Strip bracket tags FIRST
   title = title.replace(
     /[\(\[\{【「][^\)\]\}】」]*(?:official|video|music\s+video|audio|lyric|lyrics|visualizer|live|remaster|remastered|4k|hd|prod\.|topic|edit|clip|from\s+"?|soundtrack|song|version|hindi|punjabi|telugu|tamil|bhojpuri|malayalam|kannada|full\s+song)[^\)\]\}】」]*[\)\]\}】」]/gi,
     ' '
   );
 
-  // 4. Extract pipes: e.g. 'Kesariya - Brahmāstra | Ranbir Kapoor | Alia Bhatt | Pritam | Arijit Singh'
+  // 4. Extract pipes
   if (title.includes('|')) {
     hadPipes = true;
     const pipeParts = title.split('|').map(p => p.trim()).filter(Boolean);
@@ -151,7 +200,7 @@ function cleanTrackMetadata(rawTitle, rawArtist) {
     }
   }
 
-  // 5. Handle colon ':' (e.g. 'Diljit Dosanjh: G.O.A.T.')
+  // 5. Handle colon ':'
   if (title.includes(':')) {
     const colonParts = title.split(':').map(p => p.trim()).filter(Boolean);
     if (colonParts.length === 2) {
@@ -170,7 +219,7 @@ function cleanTrackMetadata(rawTitle, rawArtist) {
     }
   }
 
-  // 6. Handle 'by Artist' (e.g. 'Tu Hai Kahan by AUR')
+  // 6. Handle 'by Artist'
   const byMatch = title.match(/^(.*?)\s+by\s+(.*?)$/i);
   if (byMatch) {
     title = byMatch[1].trim();
@@ -181,7 +230,7 @@ function cleanTrackMetadata(rawTitle, rawArtist) {
     }
   }
 
-  // 7. Handle hyphen ' - ' (e.g. 'AUR - Tu hai kahan', 'Alan Walker - Faded', 'Kesariya - Brahmāstra')
+  // 7. Handle hyphen ' - '
   if (title.includes(' - ')) {
     const parts = title.split(/\s+-\s+/);
     if (parts.length >= 2) {
@@ -201,36 +250,30 @@ function cleanTrackMetadata(rawTitle, rawArtist) {
 
         const normArtist = (artist || '').toLowerCase();
         if (normArtist && p0.toLowerCase().includes(normArtist)) {
-          // Artist is p0, title is p1
           title = p1;
         } else if (normArtist && p1.toLowerCase().includes(normArtist)) {
-          // Artist is p1, title is p0
           title = p0;
           extraArtists.push(p1);
         } else if (hadPipes) {
-          // In titles with pipes like 'Kesariya - Brahmāstra | ...', p0 is always the song title!
           title = p0;
         } else if (!artist || IS_LABEL_NAME.test(artist) || artist.toLowerCase() === 'unknown artist') {
-          // In standard YouTube uploads like 'AUR - Tu hai kahan' by 'Vibe Music':
-          // p0 is the artist, p1 is the song title!
           extraArtists.push(p0);
           artist = p0;
           title = p1;
         } else {
-          // Fallback: p0 is the song, p1 is subtitle
           title = p0;
         }
       }
     }
   }
 
-  // 8. Remove non-Latin characters from title if Latin characters exist (e.g. Urdu/Arabic/Hindi translation tags like '| تو ہے کہاں')
+  // 8. Remove non-Latin characters from title if Latin characters exist
   const hasLatin = /[a-zA-Z]/.test(title);
   if (hasLatin) {
     title = title.replace(/[^\x00-\x7F\s\-'\.,&]/g, ' ');
   }
 
-  // 9. Remove featuring tags: (feat. Daft Punk), ft. Bruno Mars
+  // 9. Remove featuring tags
   title = title.replace(/[\(\[]\s*(?:feat\.?|ft\.?|featuring)\s+[^\)\]]+[\)\]]/gi, ' ');
   title = title.replace(/\s+(?:feat\.?|ft\.?|featuring)\s+.*$/i, ' ');
 
@@ -238,7 +281,6 @@ function cleanTrackMetadata(rawTitle, rawArtist) {
   title = title.replace(/[\(\)\[\]\{\}\|]/g, ' ').replace(/\s+/g, ' ').trim();
   title = title.replace(/^[\s\-_–—]+|[\s\-_–—]+$/g, '').trim();
 
-  // Primary artist: split by '&', ',', '/', 'x', 'and', 'feat'
   const primaryArtist = (artist || '')
     .split(/\s*(?:&|,|\/|x|X|\band\b|\bfeat\.?\b|\bft\.?\b)\s*/)[0]
     .replace(/[^\w\s\u00C0-\u024F]/gi, '')
@@ -253,17 +295,10 @@ function cleanTrackMetadata(rawTitle, rawArtist) {
   };
 }
 
-/**
- * Generates candidate title variations for maximum search matching
- * Prioritizes the cleanest, shortest song name first
- */
 function getCandidateTitles(rawTitle, cleanTitle, extraTitles = []) {
   const list = [];
-
-  // 1. cleanTitle first
   if (cleanTitle && cleanTitle.length >= 2) list.push(cleanTitle);
 
-  // 2. Extra extracted titles (e.g. p0 from 'Kesariya - Brahmāstra')
   for (const t of extraTitles) {
     const cleanT = t.replace(/[\(\)\[\]\{\}]/g, '').trim();
     if (cleanT && cleanT.length >= 2 && !list.includes(cleanT)) {
@@ -271,13 +306,11 @@ function getCandidateTitles(rawTitle, cleanTitle, extraTitles = []) {
     }
   }
 
-  // 3. Substring before hyphen if still in cleanTitle
   if (cleanTitle && cleanTitle.includes('-')) {
     const beforeDash = cleanTitle.split('-')[0].trim();
     if (beforeDash.length >= 2 && !list.includes(beforeDash)) list.push(beforeDash);
   }
 
-  // 4. Strip common movie or language filler words
   for (const c of [...list]) {
     const stripped = c
       .replace(/\b(?:Hindi|Tamil|Telugu|Punjabi|Malayalam|Kannada|Bhojpuri|Bengali|Version|Audio|Lyrical|Song|Full Song|Title Track)\b/gi, '')
@@ -289,9 +322,6 @@ function getCandidateTitles(rawTitle, cleanTitle, extraTitles = []) {
   return list;
 }
 
-/**
- * Robust LRC timestamp parser
- */
 function parseLrc(lrcText) {
   if (!lrcText || typeof lrcText !== 'string') return [];
   const lines = lrcText.split('\n');
@@ -332,9 +362,6 @@ function parseLrc(lrcText) {
   return result;
 }
 
-/**
- * Convert plain text lyrics into structured lines with proportional time estimates
- */
 function formatPlainLyrics(plainText, durationSeconds = null) {
   if (!plainText || typeof plainText !== 'string') return [];
   const rawLines = plainText.split('\n').map(l => l.trim()).filter(l => l.length > 0 && !l.startsWith('[') && !l.endsWith(']'));
@@ -348,14 +375,12 @@ function formatPlainLyrics(plainText, durationSeconds = null) {
 }
 
 /**
- * Multi-Engine Lyrics Resolver (LRCLIB Direct -> LRCLIB Scored Search -> Unison -> YouLyPlus -> Lyrics.ovh)
- * Guarantees exact lyrics resolution across global tracks and prevents wrong-song hijacking.
+ * Multi-Engine Lyrics Resolver (Hardened HTTPS Only)
  */
 async function getLyrics(trackName, artistName, durationSeconds = null, videoId = null) {
   const { cleanTitle, cleanArtist, primaryArtist, extraArtists, extraTitles } = cleanTrackMetadata(trackName, artistName);
   const candidateTitles = getCandidateTitles(trackName, cleanTitle, extraTitles);
 
-  // Filter out record labels from candidate artists
   const validArtists = [primaryArtist, cleanArtist, ...extraArtists]
     .filter(a => a && a.length > 1 && !IS_LABEL_NAME.test(a));
   const candidateArtists = Array.from(new Set(validArtists));
@@ -364,7 +389,7 @@ async function getLyrics(trackName, artistName, durationSeconds = null, videoId 
   const cacheKey = `${cleanId ? cleanId + '_' : ''}${(candidateTitles[0] || cleanTitle).toLowerCase()}_${(candidateArtists[0] || primaryArtist || '').toLowerCase()}`;
   if (lyricsCache.has(cacheKey)) {
     const cached = lyricsCache.get(cacheKey);
-    if (cached.found) return cached;
+    if (cached && cached.found) return cached;
   }
 
   const duration = durationSeconds ? Math.round(parseFloat(durationSeconds)) : null;
@@ -375,7 +400,7 @@ async function getLyrics(trackName, artistName, durationSeconds = null, videoId 
   const rootTitle = candidateTitles[0] || cleanTitle;
   const targetArtist = candidateArtists[0] || primaryArtist;
 
-  // --- Tier 1: LRCLIB Direct Match (Exact track + artist, 100% precision) ---
+  // --- Tier 1: LRCLIB Direct Match ---
   for (const title of candidateTitles) {
     for (const artist of candidateArtists.slice(0, 3)) {
       try {
@@ -402,7 +427,6 @@ async function getLyrics(trackName, artistName, durationSeconds = null, videoId 
   }
 
   // --- Tier 2: LRCLIB Search with Strict Relevance Scoring ---
-  // Guarantees only matching songs are selected; rejects any result with score <= 0
   try {
     const queries = [
       candidateArtists.length > 0 ? `${rootTitle} ${candidateArtists[0]}` : null,
@@ -441,7 +465,7 @@ async function getLyrics(trackName, artistName, durationSeconds = null, videoId 
     }
   } catch (e) { }
 
-  // --- Tier 3: Unison API (from Echo Music: https://unison.boidu.dev) ---
+  // --- Tier 3: Unison API ---
   for (const title of candidateTitles.slice(0, 2)) {
     try {
       const unisonParams = { song: title, artist: targetArtist };
@@ -470,10 +494,10 @@ async function getLyrics(trackName, artistName, durationSeconds = null, videoId 
     } catch (e) { }
   }
 
-  // --- Tier 4: Kugou Music Global Synchronized Lyrics Engine (from Echo Music) ---
+  // --- Tier 4: Kugou Music Global Synchronized Lyrics Engine (Secured HTTPS) ---
   try {
     const kgQuery = `${rootTitle} ${targetArtist || ''}`.trim();
-    const kgSearch = await axios.get('http://lyrics.kugou.com/search', {
+    const kgSearch = await axios.get('https://lyrics.kugou.com/search', {
       params: {
         ver: 1,
         man: 'yes',
@@ -487,7 +511,7 @@ async function getLyrics(trackName, artistName, durationSeconds = null, videoId 
 
     if (kgSearch.data?.candidates?.length > 0) {
       const cand = kgSearch.data.candidates[0];
-      const kgDownload = await axios.get('http://lyrics.kugou.com/download', {
+      const kgDownload = await axios.get('https://lyrics.kugou.com/download', {
         params: {
           ver: 1,
           client: 'pc',
@@ -555,67 +579,7 @@ async function getLyrics(trackName, artistName, durationSeconds = null, videoId 
     } catch (e) { }
   }
 
-  // --- Tier 6: Paxsenix & SimpMusic Community Lyrics API (from Echo Music) ---
-  if (cleanId) {
-    try {
-      const paxResp = await axios.get(`https://api.paxsenix.biz.id/yt/lyrics?id=${encodeURIComponent(cleanId)}`, {
-        timeout: 2200,
-        headers
-      });
-      if (paxResp.data?.ok && paxResp.data?.lyrics) {
-        const synced = parseLrc(paxResp.data.lyrics);
-        const resData = {
-          found: true,
-          synced: synced.length > 0,
-          lines: synced.length > 0 ? synced : formatPlainLyrics(paxResp.data.lyrics, duration),
-          plain: paxResp.data.lyrics,
-          provider: 'Paxsenix Engine',
-          cleanTitle: rootTitle,
-          primaryArtist: targetArtist
-        };
-        lyricsCache.set(cacheKey, resData);
-        return resData;
-      }
-    } catch (e) { }
-  }
-
-  // --- Tier 7: YouLyPlus / LyricsPlus community mirrors (from Echo Music) ---
-  const mirrors = [
-    'https://lyricsplus-seven.vercel.app',
-    'https://lyrics-plus-backend.vercel.app',
-    'https://lyricsplus.prjktla.my.id'
-  ];
-
-  for (const mirror of mirrors) {
-    try {
-      const youlyResp = await axios.get(`${mirror}/v2/lyrics/get`, {
-        params: {
-          title: rootTitle,
-          artist: targetArtist,
-          duration: duration || undefined
-        },
-        timeout: 2000,
-        headers
-      });
-
-      if (youlyResp.data && (youlyResp.data.syncedLyrics || youlyResp.data.plainLyrics)) {
-        const synced = parseLrc(youlyResp.data.syncedLyrics);
-        const resData = {
-          found: true,
-          synced: synced.length > 0,
-          lines: synced.length > 0 ? synced : formatPlainLyrics(youlyResp.data.plainLyrics, duration),
-          plain: youlyResp.data.plainLyrics || '',
-          provider: 'YouLyPlus Engine',
-          cleanTitle: rootTitle,
-          primaryArtist: targetArtist
-        };
-        lyricsCache.set(cacheKey, resData);
-        return resData;
-      }
-    } catch (e) { }
-  }
-
-  // --- Tier 5: Lyrics.ovh Global Plain Lyrics Fallback ---
+  // --- Tier 6: Lyrics.ovh Global Plain Lyrics Fallback ---
   for (const title of candidateTitles.slice(0, 2)) {
     for (const artist of candidateArtists.slice(0, 2)) {
       try {
@@ -660,5 +624,6 @@ module.exports = {
   formatPlainLyrics,
   cleanTrackMetadata,
   getCandidateTitles,
-  calculateRelevance
+  calculateRelevance,
+  lyricsCache
 };
