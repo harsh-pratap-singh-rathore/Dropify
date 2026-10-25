@@ -123,18 +123,35 @@ export default function FullscreenPlayer() {
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     const bufferLength = 64;
-    const dataArray = new Uint8Array(bufferLength);
-
+    let frameCount = 0;
     const render = () => {
       animId = requestAnimationFrame(render);
+      frameCount++;
       audioManager.getFrequencyData(dataArray);
+
+      let totalEnergy = 0;
+      for (let i = 0; i < bufferLength; i++) {
+        totalEnergy += dataArray[i];
+      }
+      const isLowEnergy = totalEnergy < 25 && isPlaying;
 
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       const barWidth = (canvas.width / bufferLength) * 1.6;
       let x = 0;
 
       for (let i = 0; i < bufferLength; i++) {
-        const barHeight = (dataArray[i] / 255) * canvas.height * 0.82;
+        let barHeight;
+        if (isLowEnergy) {
+          // Organic dynamic harmonic wave simulation synced with playback tempo
+          const t = (currentTime * 4.2) + (frameCount * 0.04);
+          const s1 = Math.sin(t + i * 0.22);
+          const s2 = Math.cos(t * 0.7 + i * 0.14);
+          const norm = (s1 * 0.45 + s2 * 0.35 + 0.8) / 1.6;
+          barHeight = Math.max(8, norm * canvas.height * 0.82);
+        } else {
+          barHeight = (dataArray[i] / 255) * canvas.height * 0.82;
+        }
+
         const gradient = ctx.createLinearGradient(0, canvas.height, 0, canvas.height - barHeight);
         gradient.addColorStop(0, '#ed5564');
         gradient.addColorStop(0.5, '#ff758c');
@@ -144,7 +161,7 @@ export default function FullscreenPlayer() {
         const rx = x;
         const ry = canvas.height - barHeight;
         const rw = Math.max(2, barWidth - 3);
-        const rh = barHeight;
+        const rh = Math.max(3, barHeight);
 
         ctx.beginPath();
         if (ctx.roundRect) {
@@ -160,7 +177,7 @@ export default function FullscreenPlayer() {
 
     render();
     return () => cancelAnimationFrame(animId);
-  }, [isFullscreenPlayerOpen, activeTab, audioManager]);
+  }, [isFullscreenPlayerOpen, activeTab, audioManager, isPlaying, currentTime]);
 
   if (!isFullscreenPlayerOpen || !currentSong) return null;
 
@@ -351,7 +368,7 @@ export default function FullscreenPlayer() {
                         className={`lyric-line lyric-line-${idx} ${isActive ? 'active' : ''} ${
                           isPassed ? 'passed' : ''
                         }`}
-                        onClick={() => line.time !== undefined && seekTo((line.time / duration) * 100)}
+                        onClick={() => line.time !== undefined && duration > 0 && seekTo((line.time / duration) * 100)}
                         title="Click to jump to this lyric"
                       >
                         <span className="lyric-text">{line.text}</span>
@@ -410,15 +427,45 @@ export default function FullscreenPlayer() {
         </div>
 
         <div className="fullscreen-controls-row">
-          <button className="ctrl-btn-lg stretchy-btn" onClick={playPrevious} aria-label="Previous">
-            <SkipBack size={26} />
-          </button>
-          <button className="play-btn-circle stretchy-play" onClick={togglePlayPause} aria-label="Play/Pause">
-            <div className="play-ripple-aura"></div>
-            {isPlaying ? <Pause size={30} /> : <Play size={30} fill="#fff" />}
-          </button>
-          <button className="ctrl-btn-lg stretchy-btn" onClick={() => playNext(true)} aria-label="Next">
-            <SkipForward size={26} />
+          <div className="fullscreen-volume-cluster">
+            <button
+              className="ctrl-btn-subtle stretchy-btn"
+              onClick={() => handleVolumeChange(volume === 0 ? 0.8 : 0)}
+              title={volume === 0 ? 'Unmute' : 'Mute'}
+            >
+              {volume === 0 ? <VolumeX size={18} /> : <Volume2 size={18} />}
+            </button>
+            <input
+              type="range"
+              min="0"
+              max="1"
+              step="0.01"
+              value={volume}
+              onChange={(e) => handleVolumeChange(parseFloat(e.target.value))}
+              className="fullscreen-volume-slider stretchy-slider"
+              title={`Volume: ${Math.round(volume * 100)}%`}
+            />
+          </div>
+
+          <div className="fullscreen-main-playback">
+            <button className="ctrl-btn-lg stretchy-btn" onClick={playPrevious} aria-label="Previous">
+              <SkipBack size={26} />
+            </button>
+            <button className="play-btn-circle stretchy-play" onClick={togglePlayPause} aria-label="Play/Pause">
+              <div className="play-ripple-aura"></div>
+              {isPlaying ? <Pause size={30} /> : <Play size={30} fill="#fff" />}
+            </button>
+            <button className="ctrl-btn-lg stretchy-btn" onClick={() => playNext(true)} aria-label="Next">
+              <SkipForward size={26} />
+            </button>
+          </div>
+
+          <button
+            className="ctrl-btn-subtle stretchy-btn"
+            onClick={() => setIsEqOpen(true)}
+            title="10-Band EQ & DSP"
+          >
+            <Sliders size={20} />
           </button>
         </div>
       </div>

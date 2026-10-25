@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Disc, Search, Compass, Radio, Heart, Sliders, Mic, Sparkles, X, ArrowRight } from 'lucide-react';
+import { Disc, Search, Compass, Radio, Heart, Sliders, Mic, Sparkles, X, ArrowRight, Command } from 'lucide-react';
 import { usePlayer } from '../context/PlayerContext';
 import { apiUrl } from '../config';
 
@@ -10,7 +10,7 @@ export default function Navbar({ activeTab, setActiveTab, onSearch }) {
   const [isListening, setIsListening] = useState(false);
   const debounceTimerRef = useRef(null);
   const searchContainerRef = useRef(null);
-  const { setIsEqOpen, setIsMusicFlowOpen, playSong, setIsFullscreenPlayerOpen } = usePlayer();
+  const { setIsEqOpen, setIsMusicFlowOpen, playSong, setIsFullscreenPlayerOpen, setIsShortcutsOpen } = usePlayer();
 
   // Live autocomplete suggestions in Navbar
   useEffect(() => {
@@ -68,24 +68,58 @@ export default function Navbar({ activeTab, setActiveTab, onSearch }) {
     onSearch(suggestText);
   };
 
-  const handleEchoFind = async () => {
-    setIsListening(true);
-    setTimeout(async () => {
-      try {
-        const res = await fetch(apiUrl('/api/recognize'), {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ query: 'Starboy The Weeknd' })
-        });
-        const data = await res.json();
+  const handleEchoFind = () => {
+    const SpeechRecognition = typeof window !== 'undefined' && (window.SpeechRecognition || window.webkitSpeechRecognition);
+    if (!SpeechRecognition) {
+      const fallbackQuery = 'Trending Music';
+      setQuery(fallbackQuery);
+      setShowSuggestions(false);
+      setIsFullscreenPlayerOpen(false);
+      setActiveTab('search');
+      onSearch(fallbackQuery);
+      return;
+    }
+
+    try {
+      if (isListening) {
         setIsListening(false);
-        if (data.found) {
-          playSong(data.track);
-        }
-      } catch (e) {
-        setIsListening(false);
+        return;
       }
-    }, 2000);
+      const recognition = new SpeechRecognition();
+      recognition.continuous = false;
+      recognition.interimResults = true;
+      recognition.lang = 'en-US';
+
+      setIsListening(true);
+
+      recognition.onresult = (event) => {
+        const transcript = event.results?.[0]?.[0]?.transcript || '';
+        if (transcript.trim()) {
+          setQuery(transcript.trim());
+          if (event.results?.[0]?.isFinal) {
+            setIsListening(false);
+            setShowSuggestions(false);
+            setIsFullscreenPlayerOpen(false);
+            setActiveTab('search');
+            onSearch(transcript.trim());
+          }
+        }
+      };
+
+      recognition.onerror = (err) => {
+        console.warn('Speech recognition notice:', err.error);
+        setIsListening(false);
+      };
+
+      recognition.onend = () => {
+        setIsListening(false);
+      };
+
+      recognition.start();
+    } catch (e) {
+      console.warn('Speech start error:', e.message);
+      setIsListening(false);
+    }
   };
 
   return (
@@ -205,6 +239,14 @@ export default function Navbar({ activeTab, setActiveTab, onSearch }) {
           title={isListening ? 'Listening to acoustics...' : 'Echo Find: Song Recognition'}
         >
           <Mic size={18} />
+        </button>
+
+        <button
+          className="btn-icon"
+          onClick={() => setIsShortcutsOpen(true)}
+          title="Audiophile Keyboard Shortcuts (?)"
+        >
+          <Command size={18} />
         </button>
 
         <button

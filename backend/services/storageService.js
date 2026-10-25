@@ -1,36 +1,62 @@
 const fs = require('fs');
 const path = require('path');
 
-const DATA_DIR = path.join(__dirname, '..', 'data');
-
-if (!fs.existsSync(DATA_DIR)) {
-  fs.mkdirSync(DATA_DIR, { recursive: true });
+// Safe determination of data directory (supports read-only serverless environments like Vercel / AWS Lambda)
+let DATA_DIR;
+try {
+  const localDir = path.join(__dirname, '..', 'data');
+  if (process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME) {
+    DATA_DIR = path.join('/tmp', 'dropify_data');
+  } else {
+    DATA_DIR = localDir;
+  }
+  if (!fs.existsSync(DATA_DIR)) {
+    fs.mkdirSync(DATA_DIR, { recursive: true });
+  }
+} catch (e) {
+  DATA_DIR = path.join('/tmp', 'dropify_data');
+  try {
+    if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+  } catch (_) {}
 }
 
 const getFilePath = (fileName) => path.join(DATA_DIR, fileName);
 
+// In-memory fallback cache to ensure zero crashes on read-only environments
+const memoryCache = new Map();
+
 function readJson(fileName, defaultValue = {}) {
+  if (memoryCache.has(fileName)) {
+    return memoryCache.get(fileName);
+  }
   const filePath = getFilePath(fileName);
   try {
     if (!fs.existsSync(filePath)) {
-      fs.writeFileSync(filePath, JSON.stringify(defaultValue, null, 2), 'utf-8');
+      try {
+        fs.writeFileSync(filePath, JSON.stringify(defaultValue, null, 2), 'utf-8');
+      } catch (_) {}
+      memoryCache.set(fileName, defaultValue);
       return defaultValue;
     }
     const data = fs.readFileSync(filePath, 'utf-8');
-    return JSON.parse(data);
+    const parsed = JSON.parse(data);
+    memoryCache.set(fileName, parsed);
+    return parsed;
   } catch (err) {
-    console.error(`Error reading ${fileName}:`, err.message);
+    console.warn(`Safe storage fallback for ${fileName}:`, err.message);
+    memoryCache.set(fileName, defaultValue);
     return defaultValue;
   }
 }
 
 function writeJson(fileName, data) {
+  memoryCache.set(fileName, data);
   const filePath = getFilePath(fileName);
   try {
     fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf-8');
     return true;
   } catch (err) {
-    console.error(`Error writing ${fileName}:`, err.message);
+    console.warn(`Memory-only write for ${fileName}:`, err.message);
     return false;
   }
 }

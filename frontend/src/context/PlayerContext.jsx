@@ -32,6 +32,7 @@ export function PlayerProvider({ children }) {
   // UI Modals
   const [isFullscreenPlayerOpen, setIsFullscreenPlayerOpen] = useState(false);
   const [isMusicFlowOpen, setIsMusicFlowOpen] = useState(false);
+  const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
 
   // Liked tracks cache
   const [likedSongIds, setLikedSongIds] = useState(new Set());
@@ -346,6 +347,8 @@ function cleanSongMeta(rawTitle = '', rawArtist = '') {
         setIsFullscreenPlayerOpen,
         isMusicFlowOpen,
         setIsMusicFlowOpen,
+        isShortcutsOpen,
+        setIsShortcutsOpen,
         likedSongIds,
         playSong,
         togglePlayPause,

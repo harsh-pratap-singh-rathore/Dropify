@@ -5,6 +5,7 @@ import PlayerBar from './components/PlayerBar';
 import FullscreenPlayer from './components/FullscreenPlayer';
 import EqualizerModal from './components/EqualizerModal';
 import MusicFlowModal from './components/MusicFlowModal';
+import ShortcutsModal from './components/ShortcutsModal';
 import HomeScreen from './screens/HomeScreen';
 import SearchScreen from './screens/SearchScreen';
 import LibraryScreen from './screens/LibraryScreen';
@@ -32,7 +33,9 @@ function MainApp() {
     isEqOpen,
     setIsEqOpen,
     isMusicFlowOpen,
-    setIsMusicFlowOpen
+    setIsMusicFlowOpen,
+    isShortcutsOpen,
+    setIsShortcutsOpen
   } = usePlayer();
 
   const handleSearchTrigger = (query) => {
@@ -78,7 +81,14 @@ function MainApp() {
             setIsEqOpen(false);
           } else if (isMusicFlowOpen) {
             setIsMusicFlowOpen(false);
+          } else if (isShortcutsOpen) {
+            setIsShortcutsOpen(false);
           }
+          break;
+
+        case '?': // ?: Toggle Shortcuts Guide
+          e.preventDefault();
+          setIsShortcutsOpen((prev) => !prev);
           break;
 
         case 'f': // F: Toggle Fullscreen Player
@@ -251,6 +261,9 @@ function MainApp() {
 
       {/* Music Flow "For You" Vertical Pager */}
       <MusicFlowModal />
+
+      {/* Audiophile Keyboard Shortcuts Modal */}
+      <ShortcutsModal />
     </div>
   );
 }

@@ -4,20 +4,37 @@ const innertube = require('./services/innertubeService');
 const lyricsService = require('./services/lyricsService');
 const tasteEngine = require('./services/tasteEngine');
 const storage = require('./services/storageService');
-
 const axios = require('axios');
+
 const app = express();
 const PORT = process.env.PORT || 5001;
 
+// 1. Security & Request Configuration
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '250kb' }));
 
-// Health Check
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', version: '2.1.0-innertube-search', timestamp: Date.now() });
+// Custom Security Headers Middleware
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  next();
 });
 
-// 1. Home Feed
+// Helper regex to validate YouTube video IDs
+const YT_ID_REGEX = /^[a-zA-Z0-9_-]{5,32}$/;
+
+// 2. Health Check
+app.get('/api/health', (req, res) => {
+  res.json({
+    status: 'ok',
+    version: '2.2.0-hardened-innertube',
+    uptime: Math.round(process.uptime()),
+    timestamp: Date.now()
+  });
+});
+
+// 3. Home Feed
 app.get('/api/home', async (req, res) => {
   try {
     const feed = typeof innertube?.getHomeFeed === 'function' ? await innertube.getHomeFeed() : {};
@@ -28,10 +45,10 @@ app.get('/api/home', async (req, res) => {
   }
 });
 
-// 2. Search & Live Suggestions
+// 4. Search & Autocomplete Suggestions
 app.get('/api/suggest', async (req, res) => {
-  const query = req.query.q;
-  if (!query || query.trim().length === 0) {
+  const rawQuery = String(req.query.q || '').slice(0, 200).trim();
+  if (!rawQuery) {
     return res.json([]);
   }
   try {
@@ -39,11 +56,11 @@ app.get('/api/suggest', async (req, res) => {
       params: {
         client: 'firefox',
         ds: 'yt',
-        q: query.trim()
+        q: rawQuery
       },
       timeout: 3000
     });
-    const suggestions = (response.data && Array.isArray(response.data[1])) ? response.data[1] : [];
+    const suggestions = (response.data && Array.isArray(response.data[1])) ? response.data[1].slice(0, 10) : [];
     res.json(suggestions);
   } catch (error) {
     res.json([]);
@@ -51,7 +68,7 @@ app.get('/api/suggest', async (req, res) => {
 });
 
 app.get('/api/search', async (req, res) => {
-  const query = req.query.q;
+  const query = String(req.query.q || '').replace(/[\x00-\x1F\x7F]/g, '').slice(0, 250).trim();
   if (!query) {
     return res.status(400).json({ error: 'Missing search query ?q=' });
   }
@@ -63,56 +80,90 @@ app.get('/api/search', async (req, res) => {
   }
 });
 
-// 3. Song Details & Related
+// 5. Song Details & Related
 app.get('/api/song/:id', async (req, res) => {
+  const songId = String(req.params.id || '').trim();
+  if (!YT_ID_REGEX.test(songId)) {
+    return res.status(400).json({ error: 'Invalid song ID format' });
+  }
   try {
-    const details = await innertube.getSongDetails(req.params.id);
+    const details = await innertube.getSongDetails(songId);
     res.json(details);
   } catch (error) {
     res.status(500).json({ error: 'Failed to get song details', message: error.message });
   }
 });
 
-// 4. Audio Stream with HTTP Range support
+// 6. Audio Stream with HTTP Range support
 app.get('/api/stream/:id', (req, res) => {
-  innertube.streamAudio(req.params.id, req, res);
+  const songId = String(req.params.id || '').trim();
+  if (!YT_ID_REGEX.test(songId)) {
+    return res.status(400).json({ error: 'Invalid song ID format' });
+  }
+  try {
+    innertube.streamAudio(songId, req, res);
+  } catch (err) {
+    console.error('Stream error:', err.message);
+    if (!res.headersSent) {
+      res.status(500).json({ error: 'Streaming error', message: err.message });
+    }
+  }
 });
 
-// 5. Multi-Source Synchronized Lyrics
+// 7. Multi-Source Synchronized Lyrics
 app.get('/api/lyrics/:id', async (req, res) => {
+  const songId = String(req.params.id || '').trim();
   try {
     const { title, artist, duration } = req.query;
-    let trackTitle = title;
-    let trackArtist = artist;
+    let trackTitle = title ? String(title).slice(0, 300).trim() : '';
+    let trackArtist = artist ? String(artist).slice(0, 200).trim() : '';
     let trackDuration = duration ? parseFloat(duration) : null;
 
-    if (!trackTitle) {
-      const details = await innertube.getSongDetails(req.params.id);
-      trackTitle = details.title;
-      trackArtist = details.artist;
-      trackDuration = details.duration;
+    if (!trackTitle && YT_ID_REGEX.test(songId)) {
+      try {
+        const details = await innertube.getSongDetails(songId);
+        trackTitle = details.title;
+        trackArtist = details.artist;
+        trackDuration = details.duration;
+      } catch (_) {}
     }
 
-    const lyrics = await lyricsService.getLyrics(trackTitle, trackArtist, trackDuration);
+    if (!trackTitle) {
+      return res.json({
+        found: false,
+        synced: false,
+        lines: [],
+        plain: 'Please provide track title to search lyrics.'
+      });
+    }
+
+    const lyrics = await lyricsService.getLyrics(trackTitle, trackArtist, trackDuration, songId);
     res.json(lyrics);
   } catch (error) {
+    console.error('Lyrics error:', error.message);
     res.status(500).json({ error: 'Lyrics fetch failed', message: error.message });
   }
 });
 
-// 6. Echo Brain / Taste Engine
+// 8. Echo Brain / Taste Engine
 app.post('/api/taste/record', (req, res) => {
   const { trackId, title, artist, listenedMs, skipped } = req.body;
   if (!trackId || !title) {
     return res.status(400).json({ error: 'Missing trackId or title' });
   }
-  const stat = tasteEngine.recordPlayback(trackId, title, artist, listenedMs, skipped);
+  const cleanId = String(trackId).slice(0, 64);
+  const cleanTitle = String(title).slice(0, 200);
+  const cleanArtist = String(artist || '').slice(0, 200);
+  const validListened = Math.max(0, Math.min(3600000, Number(listenedMs) || 0));
+  const validSkipped = Boolean(skipped);
+
+  const stat = tasteEngine.recordPlayback(cleanId, cleanTitle, cleanArtist, validListened, validSkipped);
   res.json({ success: true, stat });
 });
 
 app.get('/api/taste/mix', async (req, res) => {
   try {
-    const count = parseInt(req.query.count, 10) || 20;
+    const count = Math.min(50, Math.max(5, parseInt(req.query.count, 10) || 20));
     const mix = await tasteEngine.generateTasteMix(count);
     res.json(mix);
   } catch (error) {
@@ -120,24 +171,34 @@ app.get('/api/taste/mix', async (req, res) => {
   }
 });
 
-// 7. Library (Liked Songs & Playlists)
+// 9. Library (Liked Songs & Playlists)
 app.get('/api/library', (req, res) => {
   res.json(storage.getLibrary());
 });
 
 app.post('/api/library/like', (req, res) => {
   const { song } = req.body;
-  if (!song || !song.id) {
-    return res.status(400).json({ error: 'Invalid song' });
+  if (!song || !song.id || typeof song.id !== 'string') {
+    return res.status(400).json({ error: 'Invalid song object' });
   }
+  const sanitizedSong = {
+    id: String(song.id).slice(0, 64),
+    title: String(song.title || 'Untitled').slice(0, 200),
+    artist: String(song.artist || 'Unknown Artist').slice(0, 200),
+    thumbnail: song.thumbnail ? String(song.thumbnail).slice(0, 500) : '',
+    thumbnailHigh: song.thumbnailHigh ? String(song.thumbnailHigh).slice(0, 500) : '',
+    duration: typeof song.duration === 'number' ? song.duration : 0,
+    durationFormatted: song.durationFormatted ? String(song.durationFormatted).slice(0, 16) : '0:00'
+  };
+
   const lib = storage.getLibrary();
-  const index = lib.likedSongs.findIndex(s => s.id === song.id);
+  const index = lib.likedSongs.findIndex(s => s.id === sanitizedSong.id);
   let isLiked = false;
   if (index >= 0) {
     lib.likedSongs.splice(index, 1);
     isLiked = false;
   } else {
-    lib.likedSongs.unshift({ ...song, likedAt: Date.now() });
+    lib.likedSongs.unshift({ ...sanitizedSong, likedAt: Date.now() });
     isLiked = true;
   }
   storage.saveLibrary(lib);
@@ -145,39 +206,64 @@ app.post('/api/library/like', (req, res) => {
 });
 
 app.post('/api/library/playlist', (req, res) => {
-  const { name, song } = req.body;
-  if (!name) return res.status(400).json({ error: 'Playlist name required' });
+  const rawName = String(req.body.name || '').replace(/[\x00-\x1F\x7F<>]/g, '').slice(0, 80).trim();
+  if (!rawName) return res.status(400).json({ error: 'Valid playlist name required' });
 
   const lib = storage.getLibrary();
-  let playlist = lib.playlists.find(p => p.name.toLowerCase() === name.toLowerCase());
+  let playlist = lib.playlists.find(p => p.name.toLowerCase() === rawName.toLowerCase());
   if (!playlist) {
-    playlist = { id: `pl_${Date.now()}`, name, songs: [], createdAt: Date.now() };
+    playlist = { id: `pl_${Date.now()}`, name: rawName, songs: [], createdAt: Date.now() };
     lib.playlists.push(playlist);
   }
-  if (song && !playlist.songs.some(s => s.id === song.id)) {
-    playlist.songs.push(song);
+  const song = req.body.song;
+  if (song && song.id && !playlist.songs.some(s => s.id === song.id)) {
+    playlist.songs.push({
+      id: String(song.id).slice(0, 64),
+      title: String(song.title || 'Untitled').slice(0, 200),
+      artist: String(song.artist || 'Unknown Artist').slice(0, 200),
+      thumbnail: song.thumbnail ? String(song.thumbnail).slice(0, 500) : '',
+      duration: song.duration || 0,
+      durationFormatted: song.durationFormatted || '0:00'
+    });
   }
   storage.saveLibrary(lib);
   res.json({ success: true, playlists: lib.playlists });
 });
 
-// 8. User Preferences & DSP Profile
+// 10. User Preferences & DSP Profile (Whitelisted to prevent Prototype Pollution)
+const ALLOWED_PREF_KEYS = [
+  'audioQuality',
+  'crossfadeDuration',
+  'crossfadeEnabled',
+  'automixEnabled',
+  'stereoWidenerEnabled',
+  'stereoWidth',
+  'equalizerEnabled',
+  'eqBands'
+];
+
 app.get('/api/preferences', (req, res) => {
   res.json(storage.getPreferences());
 });
 
 app.post('/api/preferences', (req, res) => {
   const current = storage.getPreferences();
-  const updated = { ...current, ...req.body };
+  const safeUpdates = {};
+  for (const key of ALLOWED_PREF_KEYS) {
+    if (req.body && Object.prototype.hasOwnProperty.call(req.body, key)) {
+      safeUpdates[key] = req.body[key];
+    }
+  }
+  const updated = { ...current, ...safeUpdates };
   storage.savePreferences(updated);
   res.json(updated);
 });
 
-// 9. Echo Find / Recognition Search
+// 11. Echo Find / Recognition Search
 app.post('/api/recognize', async (req, res) => {
-  const { query } = req.body;
+  const rawQuery = String(req.body.query || '').slice(0, 250).trim();
   try {
-    const results = await innertube.searchMusic(query || 'popular audio track');
+    const results = await innertube.searchMusic(rawQuery || 'popular hits');
     if (results.length > 0) {
       res.json({ found: true, track: results[0] });
     } else {
@@ -185,6 +271,14 @@ app.post('/api/recognize', async (req, res) => {
     }
   } catch (err) {
     res.status(500).json({ error: 'Recognition failed', message: err.message });
+  }
+});
+
+// Global Centralized Error Handler (Prevents server crashes on unexpected errors)
+app.use((err, req, res, next) => {
+  console.error('Unhandled API exception:', err);
+  if (!res.headersSent) {
+    res.status(500).json({ error: 'Internal server error', message: err.message });
   }
 });
 
