@@ -1,144 +1,552 @@
 {
-  "Trending Tracks": [
+  "Bollywood & Desi Melodies": [
     {
-      "id": "ncDnUV1ZAyk",
-      "title": "New Song 2026 | New Hindi Song | Teri Aankhon Mein | Yash | Rakul Preet | New Song",
-      "artist": "Gaurav Mali",
-      "duration": 279,
-      "durationFormatted": "4:39",
-      "thumbnail": "https://i.ytimg.com/vi/ncDnUV1ZAyk/mqdefault.jpg",
-      "thumbnailHigh": "https://i.ytimg.com/vi/ncDnUV1ZAyk/hqdefault.jpg",
-      "views": "1,680,695 views"
+      "id": "tLaJFnc93Oc",
+      "title": "Tum Hi Aana (From \"Marjaavaan\")",
+      "artist": "Payal Dev & Jubin Nautiyal",
+      "duration": 250,
+      "durationFormatted": "4:10",
+      "thumbnail": "https://i.ytimg.com/vi/tLaJFnc93Oc/mqdefault.jpg",
+      "thumbnailHigh": "https://i.ytimg.com/vi/tLaJFnc93Oc/hqdefault.jpg"
+    },
+    {
+      "id": "XwDV5xldudU",
+      "title": "Toh Phir Aao (Lounge Version)",
+      "artist": "Pritam, Mustafa Zahid & Sayeed Quadri",
+      "duration": 356,
+      "durationFormatted": "5:56",
+      "thumbnail": "https://i.ytimg.com/vi/XwDV5xldudU/mqdefault.jpg",
+      "thumbnailHigh": "https://i.ytimg.com/vi/XwDV5xldudU/hqdefault.jpg"
+    },
+    {
+      "id": "9a26mBBK4jE",
+      "title": "Tere Sang Yaara",
+      "artist": "Atif Aslam & Manoj Muntashir",
+      "duration": 287,
+      "durationFormatted": "4:47",
+      "thumbnail": "https://i.ytimg.com/vi/9a26mBBK4jE/mqdefault.jpg",
+      "thumbnailHigh": "https://i.ytimg.com/vi/9a26mBBK4jE/hqdefault.jpg"
+    },
+    {
+      "id": "TLEPzT8jrUU",
+      "title": "Piya O Re Piya",
+      "artist": "Atif Aslam, Shreya Ghoshal & Sachin-Jigar",
+      "duration": 293,
+      "durationFormatted": "4:53",
+      "thumbnail": "https://i.ytimg.com/vi/TLEPzT8jrUU/mqdefault.jpg",
+      "thumbnailHigh": "https://i.ytimg.com/vi/TLEPzT8jrUU/hqdefault.jpg"
+    },
+    {
+      "id": "qnQCd_nZn_g",
+      "title": "O Maahi",
+      "artist": "Arijit Singh",
+      "duration": 234,
+      "durationFormatted": "3:54",
+      "thumbnail": "https://i.ytimg.com/vi/qnQCd_nZn_g/mqdefault.jpg",
+      "thumbnailHigh": "https://i.ytimg.com/vi/qnQCd_nZn_g/hqdefault.jpg"
+    },
+    {
+      "id": "kLmjSOhB5dc",
+      "title": "Saagar Jaisi Aankhon Wali (The Unwind Mix)",
+      "artist": "Sreerama Chandra",
+      "duration": 264,
+      "durationFormatted": "4:24",
+      "thumbnail": "https://i.ytimg.com/vi/kLmjSOhB5dc/mqdefault.jpg",
+      "thumbnailHigh": "https://i.ytimg.com/vi/kLmjSOhB5dc/hqdefault.jpg"
+    },
+    {
+      "id": "NPC-9hYbkLE",
+      "title": "Chahun Main Ya Naa",
+      "artist": "Palak Muchhal & Arijit Singh",
+      "duration": 305,
+      "durationFormatted": "5:05",
+      "thumbnail": "https://i.ytimg.com/vi/NPC-9hYbkLE/mqdefault.jpg",
+      "thumbnailHigh": "https://i.ytimg.com/vi/NPC-9hYbkLE/hqdefault.jpg"
+    },
+    {
+      "id": "oeYgD5w3NQo",
+      "title": "Tera Hone Laga Hoon",
+      "artist": "Pritam Chakraborty, Atif Aslam & Alisha Chinai",
+      "duration": 300,
+      "durationFormatted": "5:00",
+      "thumbnail": "https://i.ytimg.com/vi/oeYgD5w3NQo/mqdefault.jpg",
+      "thumbnailHigh": "https://i.ytimg.com/vi/oeYgD5w3NQo/hqdefault.jpg"
+    },
+    {
+      "id": "fsiPzT50ZiM",
+      "title": "Tum Hi Ho",
+      "artist": "Arijit Singh",
+      "duration": 262,
+      "durationFormatted": "4:22",
+      "thumbnail": "https://i.ytimg.com/vi/fsiPzT50ZiM/mqdefault.jpg",
+      "thumbnailHigh": "https://i.ytimg.com/vi/fsiPzT50ZiM/hqdefault.jpg"
+    },
+    {
+      "id": "KtUZ9xTsCBM",
+      "title": "Toh Phir Aao",
+      "artist": "Pritam, Mustafa Zahid & Sayeed Quadri",
+      "duration": 349,
+      "durationFormatted": "5:49",
+      "thumbnail": "https://i.ytimg.com/vi/KtUZ9xTsCBM/mqdefault.jpg",
+      "thumbnailHigh": "https://i.ytimg.com/vi/KtUZ9xTsCBM/hqdefault.jpg"
+    },
+    {
+      "id": "GYRPYukYW8s",
+      "title": "Dil Se Re (From \"Dil Se\")",
+      "artist": "A.R. Rahman, Anuradha & Anupama",
+      "duration": 406,
+      "durationFormatted": "6:46",
+      "thumbnail": "https://i.ytimg.com/vi/GYRPYukYW8s/mqdefault.jpg",
+      "thumbnailHigh": "https://i.ytimg.com/vi/GYRPYukYW8s/hqdefault.jpg"
+    },
+    {
+      "id": "i1o1p_DD6TU",
+      "title": "Gehra Hua (From \"Dhurandhar\")",
+      "artist": "Shashwat Sachdev, Arijit Singh, Armaan Khan & Irshad Kamil",
+      "duration": 363,
+      "durationFormatted": "6:03",
+      "thumbnail": "https://i.ytimg.com/vi/i1o1p_DD6TU/mqdefault.jpg",
+      "thumbnailHigh": "https://i.ytimg.com/vi/i1o1p_DD6TU/hqdefault.jpg"
     }
   ],
-  "Spotify Quick Picks": [
+  "Retro Synthwave Drive": [
     {
-      "id": "vswg-xXMAys",
-      "title": "The Formula Behind Every Perfect Pop Song",
-      "artist": "Seeker",
+      "id": "M0o9vzFYINM",
+      "title": "Neon Phobia",
+      "artist": "Synthbeats",
+      "duration": 184,
+      "durationFormatted": "3:04",
+      "thumbnail": "https://i.ytimg.com/vi/M0o9vzFYINM/mqdefault.jpg",
+      "thumbnailHigh": "https://i.ytimg.com/vi/M0o9vzFYINM/hqdefault.jpg"
+    },
+    {
+      "id": "lB_XmsyiL-I",
+      "title": "Running in the Night",
+      "artist": "FM-84 & Ollie Wride",
+      "duration": 270,
+      "durationFormatted": "4:30",
+      "thumbnail": "https://i.ytimg.com/vi/lB_XmsyiL-I/mqdefault.jpg",
+      "thumbnailHigh": "https://i.ytimg.com/vi/lB_XmsyiL-I/hqdefault.jpg"
+    },
+    {
+      "id": "qEBxD42I3t8",
+      "title": "80s RETROWAVE FUNK (Voltage)",
+      "artist": "SrB stereo FM",
+      "duration": 250,
+      "durationFormatted": "4:10",
+      "thumbnail": "https://i.ytimg.com/vi/qEBxD42I3t8/mqdefault.jpg",
+      "thumbnailHigh": "https://i.ytimg.com/vi/qEBxD42I3t8/hqdefault.jpg"
+    },
+    {
+      "id": "sWcyxztky0g",
+      "title": "Sacrifice",
+      "artist": "London After Midnight",
+      "duration": 456,
+      "durationFormatted": "7:36",
+      "thumbnail": "https://i.ytimg.com/vi/sWcyxztky0g/mqdefault.jpg",
+      "thumbnailHigh": "https://i.ytimg.com/vi/sWcyxztky0g/hqdefault.jpg"
+    },
+    {
+      "id": "u9v6Y1DlaXE",
+      "title": "Life in the Mines 80s Retrowave",
+      "artist": "JuunJuubei",
+      "duration": 212,
+      "durationFormatted": "3:32",
+      "thumbnail": "https://i.ytimg.com/vi/u9v6Y1DlaXE/mqdefault.jpg",
+      "thumbnailHigh": "https://i.ytimg.com/vi/u9v6Y1DlaXE/hqdefault.jpg"
+    },
+    {
+      "id": "N7aYfBSXcyA",
+      "title": "Retrowave 80s",
+      "artist": "Electronic 80s, Electro & Electronic Music",
+      "duration": 131,
+      "durationFormatted": "2:11",
+      "thumbnail": "https://i.ytimg.com/vi/N7aYfBSXcyA/mqdefault.jpg",
+      "thumbnailHigh": "https://i.ytimg.com/vi/N7aYfBSXcyA/hqdefault.jpg"
+    },
+    {
+      "id": "3Pl1DBjtpTA",
+      "title": "Retro Future Cyber Nights",
+      "artist": "Synthwave Music",
+      "duration": 191,
+      "durationFormatted": "3:11",
+      "thumbnail": "https://i.ytimg.com/vi/3Pl1DBjtpTA/mqdefault.jpg",
+      "thumbnailHigh": "https://i.ytimg.com/vi/3Pl1DBjtpTA/hqdefault.jpg"
+    },
+    {
+      "id": "DvcGajVA-TE",
+      "title": "Afterimage Kiss",
+      "artist": "Synth.J",
+      "duration": 198,
+      "durationFormatted": "3:18",
+      "thumbnail": "https://i.ytimg.com/vi/DvcGajVA-TE/mqdefault.jpg",
+      "thumbnailHigh": "https://i.ytimg.com/vi/DvcGajVA-TE/hqdefault.jpg"
+    },
+    {
+      "id": "NmQAW7VtSHc",
+      "title": "On the Run",
+      "artist": "Timecop1983",
+      "duration": 301,
+      "durationFormatted": "5:01",
+      "thumbnail": "https://i.ytimg.com/vi/NmQAW7VtSHc/mqdefault.jpg",
+      "thumbnailHigh": "https://i.ytimg.com/vi/NmQAW7VtSHc/hqdefault.jpg"
+    },
+    {
+      "id": "qa6SiSGGwcw",
+      "title": "Los Angeles",
+      "artist": "The Midnight",
+      "duration": 390,
+      "durationFormatted": "6:30",
+      "thumbnail": "https://i.ytimg.com/vi/qa6SiSGGwcw/mqdefault.jpg",
+      "thumbnailHigh": "https://i.ytimg.com/vi/qa6SiSGGwcw/hqdefault.jpg"
+    },
+    {
+      "id": "VH9Znvo5yqA",
+      "title": "Arcade Future Nights",
+      "artist": "Synthwave Retro Beats & Retro Synthwave",
+      "duration": 151,
+      "durationFormatted": "2:31",
+      "thumbnail": "https://i.ytimg.com/vi/VH9Znvo5yqA/mqdefault.jpg",
+      "thumbnailHigh": "https://i.ytimg.com/vi/VH9Znvo5yqA/hqdefault.jpg"
+    },
+    {
+      "id": "jA4atddRWNc",
+      "title": "Dark Retro Night Rider",
+      "artist": "Synthwave Retro Beats & Retro Synthwave",
+      "duration": 151,
+      "durationFormatted": "2:31",
+      "thumbnail": "https://i.ytimg.com/vi/jA4atddRWNc/mqdefault.jpg",
+      "thumbnailHigh": "https://i.ytimg.com/vi/jA4atddRWNc/hqdefault.jpg"
+    }
+  ],
+  "Coke Studio & Sufi Melodies": [
+    {
+      "id": "kw4tT7SCmaY",
+      "title": "Coke Studio Season 9| Afreen Afreen| Rahat Fateh Ali Khan & Momina Mustehsan",
+      "artist": "Coke Studio Pakistan",
+      "duration": 405,
+      "durationFormatted": "6:45",
+      "thumbnail": "https://i.ytimg.com/vi/kw4tT7SCmaY/mqdefault.jpg",
+      "thumbnailHigh": "https://i.ytimg.com/vi/kw4tT7SCmaY/hqdefault.jpg"
+    },
+    {
+      "id": "IegQhKllFOU",
+      "title": "Halka Halka (From \"Halka Halka\")",
+      "artist": "Rahat Fateh Ali Khan",
+      "duration": 274,
+      "durationFormatted": "4:34",
+      "thumbnail": "https://i.ytimg.com/vi/IegQhKllFOU/mqdefault.jpg",
+      "thumbnailHigh": "https://i.ytimg.com/vi/IegQhKllFOU/hqdefault.jpg"
+    },
+    {
+      "id": "aacQF1GDr5E",
+      "title": "Kitni Chahat Chupaye",
+      "artist": "Liveghat",
+      "duration": 228,
+      "durationFormatted": "3:48",
+      "thumbnail": "https://i.ytimg.com/vi/aacQF1GDr5E/mqdefault.jpg",
+      "thumbnailHigh": "https://i.ytimg.com/vi/aacQF1GDr5E/hqdefault.jpg"
+    },
+    {
+      "id": "MQoColHyGzQ",
+      "title": "Saiyaara",
+      "artist": "Faheem Abdullah, Tanishk Bagchi, Arslan Nizami & Irshad Kamil",
+      "duration": 344,
+      "durationFormatted": "5:44",
+      "thumbnail": "https://i.ytimg.com/vi/MQoColHyGzQ/mqdefault.jpg",
+      "thumbnailHigh": "https://i.ytimg.com/vi/MQoColHyGzQ/hqdefault.jpg"
+    },
+    {
+      "id": "zfWlGsiFDzk",
+      "title": "Safar",
+      "artist": "Bayaan & Sherazam",
+      "duration": 217,
+      "durationFormatted": "3:37",
+      "thumbnail": "https://i.ytimg.com/vi/zfWlGsiFDzk/mqdefault.jpg",
+      "thumbnailHigh": "https://i.ytimg.com/vi/zfWlGsiFDzk/hqdefault.jpg"
+    },
+    {
+      "id": "-BJt4fCAtZE",
+      "title": "Arz Kiya Hai | Coke Studio Bharat",
+      "artist": "Anuv Jain",
+      "duration": 295,
+      "durationFormatted": "4:55",
+      "thumbnail": "https://i.ytimg.com/vi/-BJt4fCAtZE/mqdefault.jpg",
+      "thumbnailHigh": "https://i.ytimg.com/vi/-BJt4fCAtZE/hqdefault.jpg"
+    },
+    {
+      "id": "Van6EVR_4pM",
+      "title": "Nindiya Re (Studio Recording)",
+      "artist": "Kaavish & Rohail Hyatt",
+      "duration": 301,
+      "durationFormatted": "5:01",
+      "thumbnail": "https://i.ytimg.com/vi/Van6EVR_4pM/mqdefault.jpg",
+      "thumbnailHigh": "https://i.ytimg.com/vi/Van6EVR_4pM/hqdefault.jpg"
+    },
+    {
+      "id": "tLTE551bugA",
+      "title": "Bheegi Yaadein - Atif Islam LYRICS!! + Translation",
+      "artist": "Suhedul I",
+      "duration": 248,
+      "durationFormatted": "4:08",
+      "thumbnail": "https://i.ytimg.com/vi/tLTE551bugA/mqdefault.jpg",
+      "thumbnailHigh": "https://i.ytimg.com/vi/tLTE551bugA/hqdefault.jpg"
+    },
+    {
+      "id": "KaUESRM2nt4",
+      "title": "Alvida Alvida (From \"Dar-E-Nijaat\")",
+      "artist": "Nabeel Shaukat Ali",
+      "duration": 324,
+      "durationFormatted": "5:24",
+      "thumbnail": "https://i.ytimg.com/vi/KaUESRM2nt4/mqdefault.jpg",
+      "thumbnailHigh": "https://i.ytimg.com/vi/KaUESRM2nt4/hqdefault.jpg"
+    },
+    {
+      "id": "ZXtsN7G28Xw",
+      "title": "Faasle",
+      "artist": "Kaavish & Quratulain Balouch",
+      "duration": 312,
+      "durationFormatted": "5:12",
+      "thumbnail": "https://i.ytimg.com/vi/ZXtsN7G28Xw/mqdefault.jpg",
+      "thumbnailHigh": "https://i.ytimg.com/vi/ZXtsN7G28Xw/hqdefault.jpg"
+    },
+    {
+      "id": "c1xX5Qz3bBQ",
+      "title": "Qubool (From \"Haq\")",
+      "artist": "Vishal Mishra, Kaushal Kishore & Armaan Khan",
+      "duration": 285,
+      "durationFormatted": "4:45",
+      "thumbnail": "https://i.ytimg.com/vi/c1xX5Qz3bBQ/mqdefault.jpg",
+      "thumbnailHigh": "https://i.ytimg.com/vi/c1xX5Qz3bBQ/hqdefault.jpg"
+    },
+    {
+      "id": "MqEPQGcSeYk",
+      "title": "Aahatein",
+      "artist": "Agnee",
+      "duration": 218,
+      "durationFormatted": "3:38",
+      "thumbnail": "https://i.ytimg.com/vi/MqEPQGcSeYk/mqdefault.jpg",
+      "thumbnailHigh": "https://i.ytimg.com/vi/MqEPQGcSeYk/hqdefault.jpg"
+    }
+  ],
+  "Dream Pop & Ethereal Waves": [
+    {
+      "id": "W5Sq71VTJ9Q",
+      "title": "The Perfect Girl",
+      "artist": "Mareux",
+      "duration": 195,
+      "durationFormatted": "3:15",
+      "thumbnail": "https://i.ytimg.com/vi/W5Sq71VTJ9Q/mqdefault.jpg",
+      "thumbnailHigh": "https://i.ytimg.com/vi/W5Sq71VTJ9Q/hqdefault.jpg"
+    },
+    {
+      "id": "rvAGVO_A9ig",
+      "title": "Her",
+      "artist": "The American Dawn",
+      "duration": 215,
+      "durationFormatted": "3:35",
+      "thumbnail": "https://i.ytimg.com/vi/rvAGVO_A9ig/mqdefault.jpg",
+      "thumbnailHigh": "https://i.ytimg.com/vi/rvAGVO_A9ig/hqdefault.jpg"
+    },
+    {
+      "id": "NMRhx71bGo4",
+      "title": "Let It Happen",
+      "artist": "Tame Impala",
+      "duration": 468,
+      "durationFormatted": "7:48",
+      "thumbnail": "https://i.ytimg.com/vi/NMRhx71bGo4/mqdefault.jpg",
+      "thumbnailHigh": "https://i.ytimg.com/vi/NMRhx71bGo4/hqdefault.jpg"
+    },
+    {
+      "id": "KZtV4CjbezA",
+      "title": "sweet dreams ((what you looking at baby) - slowed + reverb)",
+      "artist": "slo, Twilight & Tazzy",
+      "duration": 224,
+      "durationFormatted": "3:44",
+      "thumbnail": "https://i.ytimg.com/vi/KZtV4CjbezA/mqdefault.jpg",
+      "thumbnailHigh": "https://i.ytimg.com/vi/KZtV4CjbezA/hqdefault.jpg"
+    },
+    {
+      "id": "mGUjVbsYG6E",
+      "title": "No. 1 Party Anthem",
+      "artist": "Arctic Monkeys",
+      "duration": 244,
+      "durationFormatted": "4:04",
+      "thumbnail": "https://i.ytimg.com/vi/mGUjVbsYG6E/mqdefault.jpg",
+      "thumbnailHigh": "https://i.ytimg.com/vi/mGUjVbsYG6E/hqdefault.jpg"
+    },
+    {
+      "id": "-NqnPNV-llk",
+      "title": "Heat Waves (Slowed)",
+      "artist": "Glass Animals",
+      "duration": 263,
+      "durationFormatted": "4:23",
+      "thumbnail": "https://i.ytimg.com/vi/-NqnPNV-llk/mqdefault.jpg",
+      "thumbnailHigh": "https://i.ytimg.com/vi/-NqnPNV-llk/hqdefault.jpg"
+    },
+    {
+      "id": "0ObNrS65UB8",
+      "title": "fake id x walking on a dream - slowed + reverb",
+      "artist": "slō, twilight & Tazzy",
       "duration": 208,
       "durationFormatted": "3:28",
-      "thumbnail": "https://i.ytimg.com/vi/vswg-xXMAys/mqdefault.jpg",
-      "thumbnailHigh": "https://i.ytimg.com/vi/vswg-xXMAys/hqdefault.jpg",
-      "views": "361,810 views"
+      "thumbnail": "https://i.ytimg.com/vi/0ObNrS65UB8/mqdefault.jpg",
+      "thumbnailHigh": "https://i.ytimg.com/vi/0ObNrS65UB8/hqdefault.jpg"
     },
     {
-      "id": "kizfrmykOkM",
-      "title": "Best Pop Songs 2026 ♫ Taylor Swift, Ed Sheeran, Bruno Mars, Lady Gaga💥 Billboard Top 100 This Week",
-      "artist": "Timeless Pop Music",
-      "duration": 0,
-      "durationFormatted": "0:00",
-      "thumbnail": "https://i.ytimg.com/vi/kizfrmykOkM/mqdefault.jpg",
-      "thumbnailHigh": "https://i.ytimg.com/vi/kizfrmykOkM/hqdefault.jpg",
-      "views": ""
+      "id": "P7GUkYg1BAo",
+      "title": "(dream)",
+      "artist": "salvia palth",
+      "duration": 85,
+      "durationFormatted": "1:25",
+      "thumbnail": "https://i.ytimg.com/vi/P7GUkYg1BAo/mqdefault.jpg",
+      "thumbnailHigh": "https://i.ytimg.com/vi/P7GUkYg1BAo/hqdefault.jpg"
     },
     {
-      "id": "9m1ZJHhUVSs",
-      "title": "Spotify Hits Music 2026 🎤 | Best 100 English Songs | TikTok Viral Music | New Popular English Songs",
-      "artist": "Soft Feelings",
-      "duration": 0,
-      "durationFormatted": "0:00",
-      "thumbnail": "https://i.ytimg.com/vi/9m1ZJHhUVSs/mqdefault.jpg",
-      "thumbnailHigh": "https://i.ytimg.com/vi/9m1ZJHhUVSs/hqdefault.jpg",
-      "views": ""
+      "id": "Wy5HTaOZ6EA",
+      "title": "There Is a Light That Never Goes Out (2017 Master)",
+      "artist": "The Smiths",
+      "duration": 243,
+      "durationFormatted": "4:03",
+      "thumbnail": "https://i.ytimg.com/vi/Wy5HTaOZ6EA/mqdefault.jpg",
+      "thumbnailHigh": "https://i.ytimg.com/vi/Wy5HTaOZ6EA/hqdefault.jpg"
     },
     {
-      "id": "gIuOQlCnPmU",
-      "title": "THE MOST CATCHY SONGS OF ALL TIME",
-      "artist": "Rachel Music 93",
-      "duration": 475,
-      "durationFormatted": "7:55",
-      "thumbnail": "https://i.ytimg.com/vi/gIuOQlCnPmU/mqdefault.jpg",
-      "thumbnailHigh": "https://i.ytimg.com/vi/gIuOQlCnPmU/hqdefault.jpg",
-      "views": "18,493 views"
+      "id": "L0zed4pqLFk",
+      "title": "4 Morant (Better Luck Next Time)",
+      "artist": "Com Truise",
+      "duration": 172,
+      "durationFormatted": "2:52",
+      "thumbnail": "https://i.ytimg.com/vi/L0zed4pqLFk/mqdefault.jpg",
+      "thumbnailHigh": "https://i.ytimg.com/vi/L0zed4pqLFk/hqdefault.jpg"
+    },
+    {
+      "id": "HJstyRBLqBQ",
+      "title": "I Thought I Saw Your Face Today",
+      "artist": "She & Him",
+      "duration": 171,
+      "durationFormatted": "2:51",
+      "thumbnail": "https://i.ytimg.com/vi/HJstyRBLqBQ/mqdefault.jpg",
+      "thumbnailHigh": "https://i.ytimg.com/vi/HJstyRBLqBQ/hqdefault.jpg"
+    },
+    {
+      "id": "ZWKpPDI1M-o",
+      "title": "Beggin'",
+      "artist": "Måneskin",
+      "duration": 212,
+      "durationFormatted": "3:32",
+      "thumbnail": "https://i.ytimg.com/vi/ZWKpPDI1M-o/mqdefault.jpg",
+      "thumbnailHigh": "https://i.ytimg.com/vi/ZWKpPDI1M-o/hqdefault.jpg"
     }
   ],
-  "Synthwave Velocity": [
+  "Viral Global Radio Wave": [
     {
-      "id": "4xDzrJKXOOY",
-      "title": "synthwave radio 🌌 beats to chill/game to",
-      "artist": "Lofi Girl",
-      "duration": 0,
-      "durationFormatted": "0:00",
-      "thumbnail": "https://i.ytimg.com/vi/4xDzrJKXOOY/mqdefault.jpg",
-      "thumbnailHigh": "https://i.ytimg.com/vi/4xDzrJKXOOY/hqdefault.jpg",
-      "views": ""
+      "id": "RTT1C6EIFXE",
+      "title": "Gratitude",
+      "artist": "Asake",
+      "duration": 170,
+      "durationFormatted": "2:50",
+      "thumbnail": "https://i.ytimg.com/vi/RTT1C6EIFXE/mqdefault.jpg",
+      "thumbnailHigh": "https://i.ytimg.com/vi/RTT1C6EIFXE/hqdefault.jpg"
     },
     {
-      "id": "jY3A06qWwfw",
-      "title": "80s Synthwave & Retrowave Radio 🌌 Night Drive Music to Relax, Game & Work 🎵 Pure Retro Nostalgia",
-      "artist": "RetroPulse FM",
-      "duration": 0,
-      "durationFormatted": "0:00",
-      "thumbnail": "https://i.ytimg.com/vi/jY3A06qWwfw/mqdefault.jpg",
-      "thumbnailHigh": "https://i.ytimg.com/vi/jY3A06qWwfw/hqdefault.jpg",
-      "views": ""
-    }
-  ],
-  "Global Radio Top 50": [
-    {
-      "id": "qWr0r2dkc9s",
-      "title": "Top 50 Global | Mejores Canciones Octubre 2026 (Semana 43)",
-      "artist": "TopLauMusic",
-      "duration": 573,
-      "durationFormatted": "9:33",
-      "thumbnail": "https://i.ytimg.com/vi/qWr0r2dkc9s/mqdefault.jpg",
-      "thumbnailHigh": "https://i.ytimg.com/vi/qWr0r2dkc9s/hqdefault.jpg",
-      "views": "11,749 views"
-    }
-  ],
-  "Phonk & Workout Drive": [
-    {
-      "id": "fwzrNWqaLcw",
-      "title": "BEAST MODE ACTIVATED 💀 | No Limits Gym Motivation | Hard Phonk Workout Anthem",
-      "artist": "GYM PHONK NATION",
-      "duration": 241,
-      "durationFormatted": "4:01",
-      "thumbnail": "https://i.ytimg.com/vi/fwzrNWqaLcw/mqdefault.jpg",
-      "thumbnailHigh": "https://i.ytimg.com/vi/fwzrNWqaLcw/hqdefault.jpg",
-      "views": "2 views"
-    }
-  ],
-  "Lo-Fi Chillhop Coffee": [
-    {
-      "id": "rFZHOHl-L8A",
-      "title": "lofi hip hop radio 📚 beats to relax/study to",
-      "artist": "Lofi Girl",
-      "duration": 0,
-      "durationFormatted": "0:00",
-      "thumbnail": "https://i.ytimg.com/vi/rFZHOHl-L8A/mqdefault.jpg",
-      "thumbnailHigh": "https://i.ytimg.com/vi/rFZHOHl-L8A/hqdefault.jpg",
-      "views": ""
+      "id": "kIft-LUHHVA",
+      "title": "Espresso",
+      "artist": "Sabrina Carpenter",
+      "duration": 176,
+      "durationFormatted": "2:56",
+      "thumbnail": "https://i.ytimg.com/vi/kIft-LUHHVA/mqdefault.jpg",
+      "thumbnailHigh": "https://i.ytimg.com/vi/kIft-LUHHVA/hqdefault.jpg"
     },
     {
-      "id": "5yx6BWlEVcY",
-      "title": "Chillhop Radio - jazzy & lofi hip hop beats 🐾",
-      "artist": "Chillhop Music",
-      "duration": 0,
-      "durationFormatted": "0:00",
-      "thumbnail": "https://i.ytimg.com/vi/5yx6BWlEVcY/mqdefault.jpg",
-      "thumbnailHigh": "https://i.ytimg.com/vi/5yx6BWlEVcY/hqdefault.jpg",
-      "views": ""
+      "id": "WVNs6uUd_d8",
+      "title": "With You (feat. Omah Lay)",
+      "artist": "Davido",
+      "duration": 137,
+      "durationFormatted": "2:17",
+      "thumbnail": "https://i.ytimg.com/vi/WVNs6uUd_d8/mqdefault.jpg",
+      "thumbnailHigh": "https://i.ytimg.com/vi/WVNs6uUd_d8/hqdefault.jpg"
     },
     {
-      "id": "E2vONfzoyRI",
-      "title": "jazz lofi radio 🎷 beats to chill/study to",
-      "artist": "Lofi Girl",
-      "duration": 0,
-      "durationFormatted": "0:00",
-      "thumbnail": "https://i.ytimg.com/vi/E2vONfzoyRI/mqdefault.jpg",
-      "thumbnailHigh": "https://i.ytimg.com/vi/E2vONfzoyRI/hqdefault.jpg",
-      "views": ""
+      "id": "ZVRDZ6h989E",
+      "title": "Kiss Me More (weimarR Radio Remix)",
+      "artist": "T'Amara",
+      "duration": 201,
+      "durationFormatted": "3:21",
+      "thumbnail": "https://i.ytimg.com/vi/ZVRDZ6h989E/mqdefault.jpg",
+      "thumbnailHigh": "https://i.ytimg.com/vi/ZVRDZ6h989E/hqdefault.jpg"
     },
     {
-      "id": "7NOSDKb0HlU",
-      "title": "lofi hip hop radio - beats to study/relax to 🐾",
-      "artist": "Chillhop Music",
-      "duration": 0,
-      "durationFormatted": "0:00",
-      "thumbnail": "https://i.ytimg.com/vi/7NOSDKb0HlU/mqdefault.jpg",
-      "thumbnailHigh": "https://i.ytimg.com/vi/7NOSDKb0HlU/hqdefault.jpg",
-      "views": ""
+      "id": "3MrY_BwLChk",
+      "title": "Dynamite",
+      "artist": "Taio Cruz",
+      "duration": 203,
+      "durationFormatted": "3:23",
+      "thumbnail": "https://i.ytimg.com/vi/3MrY_BwLChk/mqdefault.jpg",
+      "thumbnailHigh": "https://i.ytimg.com/vi/3MrY_BwLChk/hqdefault.jpg"
+    },
+    {
+      "id": "bC5y9k-pHMw",
+      "title": "Levitating (WAP House Remix)",
+      "artist": "Cool Aid feat. Kim Jenner",
+      "duration": 289,
+      "durationFormatted": "4:49",
+      "thumbnail": "https://i.ytimg.com/vi/bC5y9k-pHMw/mqdefault.jpg",
+      "thumbnailHigh": "https://i.ytimg.com/vi/bC5y9k-pHMw/hqdefault.jpg"
+    },
+    {
+      "id": "GqWYJT-iMTw",
+      "title": "Baby (feat. Ludacris)",
+      "artist": "Justin Bieber",
+      "duration": 215,
+      "durationFormatted": "3:35",
+      "thumbnail": "https://i.ytimg.com/vi/GqWYJT-iMTw/mqdefault.jpg",
+      "thumbnailHigh": "https://i.ytimg.com/vi/GqWYJT-iMTw/hqdefault.jpg"
+    },
+    {
+      "id": "CHIWNDAwTqQ",
+      "title": "Enter Sandman",
+      "artist": "Metallica",
+      "duration": 332,
+      "durationFormatted": "5:32",
+      "thumbnail": "https://i.ytimg.com/vi/CHIWNDAwTqQ/mqdefault.jpg",
+      "thumbnailHigh": "https://i.ytimg.com/vi/CHIWNDAwTqQ/hqdefault.jpg"
+    },
+    {
+      "id": "LYkIIc9q6BE",
+      "title": "Rajaji Ke Dilwa (feat. Shivani Singh)",
+      "artist": "Pawan Singh",
+      "duration": 185,
+      "durationFormatted": "3:05",
+      "thumbnail": "https://i.ytimg.com/vi/LYkIIc9q6BE/mqdefault.jpg",
+      "thumbnailHigh": "https://i.ytimg.com/vi/LYkIIc9q6BE/hqdefault.jpg"
+    },
+    {
+      "id": "VTLARoksKEc",
+      "title": "La La La",
+      "artist": "SYLA",
+      "duration": 194,
+      "durationFormatted": "3:14",
+      "thumbnail": "https://i.ytimg.com/vi/VTLARoksKEc/mqdefault.jpg",
+      "thumbnailHigh": "https://i.ytimg.com/vi/VTLARoksKEc/hqdefault.jpg"
+    },
+    {
+      "id": "YALvuUpY_b0",
+      "title": "Apna Bana Le (From \"Bhediya\")",
+      "artist": "Arijit Singh & Sachin-Jigar",
+      "duration": 262,
+      "durationFormatted": "4:22",
+      "thumbnail": "https://i.ytimg.com/vi/YALvuUpY_b0/mqdefault.jpg",
+      "thumbnailHigh": "https://i.ytimg.com/vi/YALvuUpY_b0/hqdefault.jpg"
+    },
+    {
+      "id": "H3Kzh6RrnMc",
+      "title": "Hymn for the Weekend",
+      "artist": "Coldplay",
+      "duration": 259,
+      "durationFormatted": "4:19",
+      "thumbnail": "https://i.ytimg.com/vi/H3Kzh6RrnMc/mqdefault.jpg",
+      "thumbnailHigh": "https://i.ytimg.com/vi/H3Kzh6RrnMc/hqdefault.jpg"
     }
   ]
 }

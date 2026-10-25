@@ -523,12 +523,15 @@
   display: flex;
   gap: 16px;
   overflow-x: auto;
-  overflow-y: hidden;
+  overflow-y: visible;
   padding: 10px 4px 18px 4px;
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: thin;
   scrollbar-color: var(--paper-border) transparent;
+  touch-action: pan-x pan-y;
+  overscroll-behavior-x: contain;
+  overscroll-behavior-y: auto;
 }
 
 .shelf-row::-webkit-scrollbar {
@@ -550,6 +553,7 @@
   min-width: 160px;
   max-width: 160px;
   flex-shrink: 0;
+  touch-action: pan-x pan-y;
 }
 
 /* Compact Shelf Grid (Search, Library) */
@@ -576,6 +580,7 @@
   position: relative;
   transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
   overflow: hidden;
+  touch-action: pan-x pan-y;
 }
 
 .track-card:hover {
@@ -1019,6 +1024,7 @@
   flex-direction: column;
   gap: 2px;
   overflow: hidden;
+  touch-action: pan-x pan-y;
 }
 
 .player-title-row {
@@ -1256,6 +1262,7 @@
   padding: 24px 48px;
   gap: 48px;
   overflow: hidden;
+  touch-action: pan-x pan-y;
 }
 
 /* Left Half: Hand-Drawn Vinyl Turntable */
@@ -2351,10 +2358,17 @@
     gap: 10px !important;
   }
 
+  .shelf-row {
+    touch-action: pan-x pan-y !important;
+    overscroll-behavior-x: contain !important;
+    overscroll-behavior-y: auto !important;
+  }
+
   .shelf-row .track-card {
     width: 138px !important;
     min-width: 138px !important;
     max-width: 138px !important;
+    touch-action: pan-x pan-y !important;
   }
 
   .shelf-row .card-thumb-container,
@@ -2385,17 +2399,28 @@
   -webkit-tap-highlight-color: transparent;
 }
 
+/* Vertical scroll containers */
 .content-container,
 .fullscreen-overlay,
 .lyrics-scroll-container,
-.shelf-row,
-.mood-chips-container,
 .eq-bands-scroll-wrap {
   -webkit-overflow-scrolling: touch;
   transform: translate3d(0, 0, 0);
   backface-visibility: hidden;
   perspective: 1000px;
   overscroll-behavior-y: contain;
+}
+
+/* Horizontal Carousels must allow natural vertical scroll chaining */
+.shelf-row,
+.mood-chips-container {
+  -webkit-overflow-scrolling: touch;
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+  overscroll-behavior-x: contain;
+  overscroll-behavior-y: auto !important;
+  touch-action: pan-x pan-y !important;
 }
 
 .vinyl-disc,
@@ -2406,6 +2431,7 @@
 
 .shelf-row .track-card {
   contain: content;
+  touch-action: pan-x pan-y;
 }
 
 @media (prefers-reduced-motion: reduce) {

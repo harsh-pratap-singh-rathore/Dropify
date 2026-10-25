@@ -5,7 +5,7 @@ import { usePlayer } from '../context/PlayerContext';
 import { apiUrl } from '../config';
 
 const CLIENT_FALLBACK_SECTIONS = {
-  'Spotify Quick Picks': [
+  'Global Hit Chartbusters': [
     {
       id: 'BddP6PYo2gs',
       title: 'Kesariya - Brahmāstra',
@@ -32,7 +32,9 @@ const CLIENT_FALLBACK_SECTIONS = {
       durationFormatted: '3:50',
       thumbnail: 'https://i.ytimg.com/vi/34Na4j8AVgA/mqdefault.jpg',
       thumbnailHigh: 'https://i.ytimg.com/vi/34Na4j8AVgA/hqdefault.jpg'
-    },
+    }
+  ],
+  'Acoustic Soul & Unplugged': [
     {
       id: 'JGwWNGJdvx8',
       title: 'Shape of You',
@@ -50,36 +52,9 @@ const CLIENT_FALLBACK_SECTIONS = {
       durationFormatted: '3:44',
       thumbnail: 'https://i.ytimg.com/vi/cl0a3i2wFcc/mqdefault.jpg',
       thumbnailHigh: 'https://i.ytimg.com/vi/cl0a3i2wFcc/hqdefault.jpg'
-    },
-    {
-      id: 'TUVcZfQe-Kw',
-      title: 'Levitating',
-      artist: 'Dua Lipa',
-      duration: 203,
-      durationFormatted: '3:23',
-      thumbnail: 'https://i.ytimg.com/vi/TUVcZfQe-Kw/mqdefault.jpg',
-      thumbnailHigh: 'https://i.ytimg.com/vi/TUVcZfQe-Kw/hqdefault.jpg'
     }
   ],
-  'Trending Tracks': [
-    {
-      id: 'BddP6PYo2gs',
-      title: 'Kesariya - Brahmāstra',
-      artist: 'Arijit Singh, Pritam',
-      duration: 268,
-      durationFormatted: '4:28',
-      thumbnail: 'https://i.ytimg.com/vi/BddP6PYo2gs/mqdefault.jpg',
-      thumbnailHigh: 'https://i.ytimg.com/vi/BddP6PYo2gs/hqdefault.jpg'
-    },
-    {
-      id: 'V7LwfY5U5WI',
-      title: 'Chaleya - Jawan',
-      artist: 'Arijit Singh, Anirudh Ravichander',
-      duration: 200,
-      durationFormatted: '3:20',
-      thumbnail: 'https://i.ytimg.com/vi/V7LwfY5U5WI/mqdefault.jpg',
-      thumbnailHigh: 'https://i.ytimg.com/vi/V7LwfY5U5WI/hqdefault.jpg'
-    },
+  'Bollywood & Desi Melodies': [
     {
       id: '7-x3uDFvHf4',
       title: 'Apna Bana Le - Bhediya',
@@ -88,24 +63,6 @@ const CLIENT_FALLBACK_SECTIONS = {
       durationFormatted: '4:21',
       thumbnail: 'https://i.ytimg.com/vi/7-x3uDFvHf4/mqdefault.jpg',
       thumbnailHigh: 'https://i.ytimg.com/vi/7-x3uDFvHf4/hqdefault.jpg'
-    },
-    {
-      id: '34Na4j8AVgA',
-      title: 'Starboy',
-      artist: 'The Weeknd ft. Daft Punk',
-      duration: 230,
-      durationFormatted: '3:50',
-      thumbnail: 'https://i.ytimg.com/vi/34Na4j8AVgA/mqdefault.jpg',
-      thumbnailHigh: 'https://i.ytimg.com/vi/34Na4j8AVgA/hqdefault.jpg'
-    },
-    {
-      id: 'JGwWNGJdvx8',
-      title: 'Shape of You',
-      artist: 'Ed Sheeran',
-      duration: 233,
-      durationFormatted: '3:53',
-      thumbnail: 'https://i.ytimg.com/vi/JGwWNGJdvx8/mqdefault.jpg',
-      thumbnailHigh: 'https://i.ytimg.com/vi/JGwWNGJdvx8/hqdefault.jpg'
     },
     {
       id: '7wtfhZwyrcc',
@@ -141,13 +98,22 @@ function ShelfSection({ sectionTitle, tracks, onPlayTrack }) {
   if (titleLower.includes('recent')) {
     icon = <Clock size={20} style={{ color: 'var(--pop-cyan)' }} />;
     badgeColor = 'var(--pop-cyan)';
-  } else if (titleLower.includes('quick') || titleLower.includes('doodle')) {
-    icon = <Zap size={20} style={{ color: 'var(--pop-amber)' }} />;
+  } else if (titleLower.includes('lo-fi') || titleLower.includes('night') || titleLower.includes('sleep') || titleLower.includes('doodle')) {
+    icon = <Disc3 size={20} style={{ color: 'var(--pop-violet)' }} />;
+    badgeColor = 'var(--pop-violet)';
+  } else if (titleLower.includes('acoustic') || titleLower.includes('soul') || titleLower.includes('unplugged') || titleLower.includes('guitar')) {
+    icon = <Sparkles size={20} style={{ color: 'var(--pop-amber)' }} />;
     badgeColor = 'var(--pop-amber)';
-  } else if (titleLower.includes('new') || titleLower.includes('fresh')) {
-    icon = <Sparkles size={20} style={{ color: 'var(--pop-cyan)' }} />;
+  } else if (titleLower.includes('energy') || titleLower.includes('anthem') || titleLower.includes('workout') || titleLower.includes('heat')) {
+    icon = <Zap size={20} style={{ color: 'var(--pop-crimson)' }} />;
+    badgeColor = 'var(--pop-crimson)';
+  } else if (titleLower.includes('sunset') || titleLower.includes('golden') || titleLower.includes('chill') || titleLower.includes('roadtrip')) {
+    icon = <Compass size={20} style={{ color: 'var(--pop-cyan)' }} />;
     badgeColor = 'var(--pop-cyan)';
-  } else if (titleLower.includes('chart') || titleLower.includes('top') || titleLower.includes('global')) {
+  } else if (titleLower.includes('desi') || titleLower.includes('bollywood') || titleLower.includes('punjabi') || titleLower.includes('sufi')) {
+    icon = <Flame size={20} className="icon-glow" style={{ color: 'var(--pop-crimson)' }} />;
+    badgeColor = 'var(--pop-crimson)';
+  } else if (titleLower.includes('synthwave') || titleLower.includes('retro') || titleLower.includes('neon') || titleLower.includes('chart') || titleLower.includes('top') || titleLower.includes('global')) {
     icon = <Disc3 size={20} style={{ color: 'var(--pop-violet)' }} />;
     badgeColor = 'var(--pop-violet)';
   }
@@ -240,9 +206,6 @@ export default function HomeScreen({ onNavigateTaste }) {
     playSong(track, list);
   };
 
-  const quickPicks = (Array.isArray(sections['Spotify Quick Picks']) && sections['Spotify Quick Picks']) ||
-                     (Array.isArray(sections['Trending Tracks']) && sections['Trending Tracks'].slice(0, 6)) || [];
-
   const MOOD_FILTERS = [
     { id: 'all', label: 'All Mixes' },
     { id: 'morning', label: 'Morning Coffee ☕' },
@@ -299,59 +262,6 @@ export default function HomeScreen({ onNavigateTaste }) {
         ))}
       </div>
 
-      {/* Spotify-style Quick Picks Section */}
-      {quickPicks.length > 0 && (
-        <div className="quick-picks-section">
-          <div className="shelf-header">
-            <div className="shelf-title-row">
-              <Zap size={20} />
-              <h2 className="shelf-title sketch-font-title">Quick Doodles</h2>
-              <span className="shelf-count">Instant Spin</span>
-            </div>
-          </div>
-          <div className="quick-picks-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '14px', marginTop: '14px' }}>
-            {quickPicks.slice(0, 6).map((track) => {
-              const isCurrent = currentSong && currentSong.id === track.id;
-              return (
-                <div
-                  key={track.id}
-                  className={`quick-pick-card sketch-card ${isCurrent ? 'active' : ''}`}
-                  onClick={() => handlePlayTrack(track, quickPicks)}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '12px',
-                    padding: '8px 12px',
-                    cursor: 'pointer',
-                    background: isCurrent ? 'var(--highlighter-yellow)' : 'var(--paper-card)',
-                    borderRadius: 'var(--sketch-radius-sm)'
-                  }}
-                >
-                  <img
-                    src={track.thumbnail || `https://i.ytimg.com/vi/${track.id}/mqdefault.jpg`}
-                    alt={track.title}
-                    className="quick-pick-thumb"
-                    loading="lazy"
-                    style={{ width: '44px', height: '44px', borderRadius: '4px', border: '1.5px solid var(--paper-border)', objectFit: 'cover' }}
-                  />
-                  <div className="quick-pick-info" style={{ flex: 1, overflow: 'hidden' }}>
-                    <div className="quick-pick-title sketch-font-hand" style={{ fontSize: '1.05rem', fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {track.title}
-                    </div>
-                    <div className="quick-pick-artist sketch-font-hand" style={{ fontSize: '0.88rem', color: 'var(--graphite-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {track.artist}
-                    </div>
-                  </div>
-                  <button className="play-glyph-btn" style={{ width: '32px', height: '32px', flexShrink: 0 }} aria-label="Play">
-                    <Play size={14} fill="#ffffff" color="#ffffff" />
-                  </button>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
       {/* Recently Played Shelf */}
       {recentlyPlayed && recentlyPlayed.length > 0 && (
         <ShelfSection
@@ -361,7 +271,7 @@ export default function HomeScreen({ onNavigateTaste }) {
         />
       )}
 
-      {/* Shelves Grid */}
+      {/* Dynamic Juggled Shelves Grid */}
       {isLoading ? (
         <div className="loading-grid">
           {[1, 2, 3].map((n) => (
@@ -381,7 +291,7 @@ export default function HomeScreen({ onNavigateTaste }) {
         </div>
       ) : (
         Object.entries(sections).map(([sectionTitle, tracks]) => {
-          if (!Array.isArray(tracks) || tracks.length === 0 || sectionTitle === 'Spotify Quick Picks') return null;
+          if (!Array.isArray(tracks) || tracks.length === 0) return null;
           return (
             <ShelfSection
               key={sectionTitle}

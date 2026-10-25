@@ -68,68 +68,174 @@ class BoundedLRUCache {
 const infoCache = new BoundedLRUCache(500, 5 * 3600 * 1000);
 const streamUrlCache = new BoundedLRUCache(500, 5 * 3600 * 1000);
 
+// Strict Song Filter: YouTube Music Songs Only, zero non-music, zero podcasts/episodes
+const NON_SONG_REGEX = /\b(podcast|episode|interview|gameplay|walkthrough|vlog|livestream|live\s*stream|reaction|review|audiobook|documentary|compilation|1\s*hour|10\s*hours|tutorial|unboxing|standup|stand-up|comedy\s*special|full\s*movie|trailer|news|lecture)\b/i;
+
+function isValidSong(title, artist, durationSeconds, durationPartsCount) {
+  if (!title || typeof title !== 'string') return false;
+  // Reject multi-hour items
+  if (durationPartsCount && durationPartsCount >= 3) return false;
+  // Pure songs are between 45 seconds and 480 seconds (8 minutes)
+  if (durationSeconds < 45 || durationSeconds > 480) return false;
+  // Blacklist non-song titles or artists
+  if (NON_SONG_REGEX.test(title) || NON_SONG_REGEX.test(artist || '')) return false;
+  return true;
+}
+
 /**
- * Searches music tracks on YouTube using official InnerTube JSON API (Zero scraping, works on cloud IPs)
+ * Searches music tracks on YouTube Music using official InnerTube WEB_REMIX API
+ * Filters strictly to SONGS ONLY (no videos, no podcasts, no 1-hour loops)
  */
 async function searchWithInnerTube(query) {
-  const res = await axios.post('https://www.youtube.com/youtubei/v1/search', {
-    query: query.trim(),
-    context: {
-      client: {
-        clientName: 'WEB',
-        clientVersion: '2.20240101.01.00',
-        hl: 'en',
-        gl: 'US'
+  try {
+    const res = await axios.post('https://music.youtube.com/youtubei/v1/search', {
+      query: query.trim(),
+      params: 'EgWKAQIIAWoSEAQQAxAFEAkQChAQEA4QFRAR', // YouTube Music "Songs" filter param
+      context: {
+        client: {
+          clientName: 'WEB_REMIX',
+          clientVersion: '1.20240101.01.00',
+          hl: 'en',
+          gl: 'US'
+        }
       }
-    }
-  }, {
-    headers: {
-      'Content-Type': 'application/json',
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36'
-    },
-    timeout: 7000
-  });
+    }, {
+      headers: {
+        'Content-Type': 'application/json',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36'
+      },
+      timeout: 7500
+    });
 
-  const sections = res.data.contents?.twoColumnSearchResultsRenderer?.primaryContents?.sectionListRenderer?.contents || [];
-  const tracks = [];
+    const sections = res.data.contents?.tabbedSearchResultsRenderer?.tabs?.[0]?.tabRenderer?.content?.sectionListRenderer?.contents || [];
+    const tracks = [];
 
-  for (const sec of sections) {
-    const items = sec.itemSectionRenderer?.contents || [];
-    for (const item of items) {
-      const v = item.videoRenderer;
-      if (v && v.videoId && v.title?.runs?.[0]?.text) {
-        const durationFormatted = v.lengthText?.simpleText || '0:00';
-        const parts = durationFormatted.split(':').map(p => parseInt(p, 10));
-        const duration = parts.length === 2 ? parts[0] * 60 + parts[1] : (parts.length === 3 ? parts[0] * 3600 + parts[1] * 60 + parts[2] : 0);
+    for (const sec of sections) {
+      const contents = sec.musicShelfRenderer?.contents || sec.itemSectionRenderer?.contents || [];
+      for (const item of contents) {
+        const r = item.musicResponsiveListItemRenderer;
+        if (!r) continue;
 
-        // Strict song filter: exclude long DJ mixes, 2-3 hour compilations, or audiobooks (>10 mins)
-        if (duration > 600 || parts.length >= 3) {
+        const videoId = r.playlistItemData?.videoId ||
+          r.overlay?.musicItemThumbnailOverlayRenderer?.content?.musicPlayButtonRenderer?.playNavigationEndpoint?.watchEndpoint?.videoId ||
+          r.flexColumns?.[0]?.musicResponsiveListItemFlexColumnRenderer?.text?.runs?.[0]?.navigationEndpoint?.watchEndpoint?.videoId;
+
+        if (!videoId) continue;
+
+        const title = r.flexColumns?.[0]?.musicResponsiveListItemFlexColumnRenderer?.text?.runs?.[0]?.text?.trim() || '';
+        if (!title) continue;
+
+        const subRuns = r.flexColumns?.[1]?.musicResponsiveListItemFlexColumnRenderer?.text?.runs || [];
+        const subTexts = subRuns.map(x => x.text).join('').split('•').map(s => s.trim());
+
+        let artist = subTexts[0] || 'Various Artists';
+        if (artist.toLowerCase() === 'song' && subTexts[1]) {
+          artist = subTexts[1];
+        }
+
+        let durationFormatted = '3:30';
+        let duration = 210;
+        let partsCount = 2;
+        for (let i = subTexts.length - 1; i >= 0; i--) {
+          const part = subTexts[i];
+          if (/^\d{1,2}:\d{2}$/.test(part)) {
+            durationFormatted = part;
+            const [m, s] = part.split(':').map(Number);
+            duration = m * 60 + s;
+            break;
+          } else if (/^\d{1,2}:\d{2}:\d{2}$/.test(part)) {
+            partsCount = 3;
+            break;
+          }
+        }
+
+        if (!isValidSong(title, artist, duration, partsCount)) {
           continue;
         }
 
         tracks.push({
-          id: v.videoId,
-          title: v.title.runs[0].text,
-          artist: v.ownerText?.runs?.[0]?.text || 'Various Artists',
+          id: videoId,
+          title,
+          artist,
           duration,
           durationFormatted,
-          thumbnail: `https://i.ytimg.com/vi/${v.videoId}/mqdefault.jpg`,
-          thumbnailHigh: `https://i.ytimg.com/vi/${v.videoId}/hqdefault.jpg`,
-          views: v.viewCountText?.simpleText || ''
+          thumbnail: `https://i.ytimg.com/vi/${videoId}/mqdefault.jpg`,
+          thumbnailHigh: `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`
         });
       }
     }
+
+    if (tracks.length > 0) {
+      return tracks.slice(0, 30);
+    }
+  } catch (err) {
+    console.warn('InnerTube WEB_REMIX notice:', err.message);
   }
 
-  return tracks.slice(0, 30);
+  // Secondary InnerTube WEB fallback if WEB_REMIX returned 0 items
+  try {
+    const resWeb = await axios.post('https://www.youtube.com/youtubei/v1/search', {
+      query: `${query.trim()} audio song`,
+      context: {
+        client: {
+          clientName: 'WEB',
+          clientVersion: '2.20240101.01.00',
+          hl: 'en',
+          gl: 'US'
+        }
+      }
+    }, {
+      headers: {
+        'Content-Type': 'application/json',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36'
+      },
+      timeout: 7000
+    });
+
+    const sections = resWeb.data.contents?.twoColumnSearchResultsRenderer?.primaryContents?.sectionListRenderer?.contents || [];
+    const webTracks = [];
+
+    for (const sec of sections) {
+      const items = sec.itemSectionRenderer?.contents || [];
+      for (const item of items) {
+        const v = item.videoRenderer;
+        if (v && v.videoId && v.title?.runs?.[0]?.text) {
+          const durationFormatted = v.lengthText?.simpleText || '0:00';
+          const parts = durationFormatted.split(':').map(p => parseInt(p, 10));
+          const duration = parts.length === 2 ? parts[0] * 60 + parts[1] : (parts.length === 3 ? parts[0] * 3600 + parts[1] * 60 + parts[2] : 0);
+          const title = v.title.runs[0].text;
+          const artist = v.ownerText?.runs?.[0]?.text || 'Various Artists';
+
+          if (!isValidSong(title, artist, duration, parts.length)) {
+            continue;
+          }
+
+          webTracks.push({
+            id: v.videoId,
+            title,
+            artist,
+            duration,
+            durationFormatted,
+            thumbnail: `https://i.ytimg.com/vi/${v.videoId}/mqdefault.jpg`,
+            thumbnailHigh: `https://i.ytimg.com/vi/${v.videoId}/hqdefault.jpg`,
+            views: v.viewCountText?.simpleText || ''
+          });
+        }
+      }
+    }
+    return webTracks.slice(0, 30);
+  } catch (err) {
+    console.warn('InnerTube WEB search notice:', err.message);
+    return [];
+  }
 }
 
 async function searchWithYtdl(query) {
   const ytdl = await getYtdl();
   if (!ytdl) throw new Error('Ytdl not initialized');
-  const items = await ytdl.search(query.trim(), { limit: 25 });
+  const items = await ytdl.search(`${query.trim()} song`, { limit: 25 });
   return (items || [])
-    .filter(v => (v.lengthSeconds || 0) <= 600)
+    .filter(v => isValidSong(v.title, v.author?.name, v.lengthSeconds || 0, 2))
     .map(v => {
       const duration = v.lengthSeconds || 0;
       const min = Math.floor(duration / 60);
@@ -149,9 +255,9 @@ async function searchWithYtdl(query) {
 }
 
 async function searchWithYts(query) {
-  const results = await yts(query);
+  const results = await yts(`${query.trim()} song`);
   return (results.videos || [])
-    .filter(v => (v.seconds || 0) <= 600)
+    .filter(v => isValidSong(v.title, v.author?.name, v.seconds || 0, 2))
     .slice(0, 30)
     .map(v => ({
       id: v.videoId,
@@ -201,7 +307,7 @@ async function searchMusic(query) {
 
 // Guaranteed Default Home Feed in case disk cache or YouTube is delayed
 const DEFAULT_HOME_FEED = {
-  "Spotify Quick Picks": [
+  "Global Hit Chartbusters": [
     {
       "id": "BddP6PYo2gs",
       "title": "Kesariya - Brahmāstra",
@@ -228,7 +334,9 @@ const DEFAULT_HOME_FEED = {
       "durationFormatted": "3:50",
       "thumbnail": "https://i.ytimg.com/vi/34Na4j8AVgA/mqdefault.jpg",
       "thumbnailHigh": "https://i.ytimg.com/vi/34Na4j8AVgA/hqdefault.jpg"
-    },
+    }
+  ],
+  "Acoustic Soul & Unplugged": [
     {
       "id": "JGwWNGJdvx8",
       "title": "Shape of You",
@@ -246,36 +354,9 @@ const DEFAULT_HOME_FEED = {
       "durationFormatted": "3:44",
       "thumbnail": "https://i.ytimg.com/vi/cl0a3i2wFcc/mqdefault.jpg",
       "thumbnailHigh": "https://i.ytimg.com/vi/cl0a3i2wFcc/hqdefault.jpg"
-    },
-    {
-      "id": "TUVcZfQe-Kw",
-      "title": "Levitating",
-      "artist": "Dua Lipa",
-      "duration": 203,
-      "durationFormatted": "3:23",
-      "thumbnail": "https://i.ytimg.com/vi/TUVcZfQe-Kw/mqdefault.jpg",
-      "thumbnailHigh": "https://i.ytimg.com/vi/TUVcZfQe-Kw/hqdefault.jpg"
     }
   ],
-  "Trending Tracks": [
-    {
-      "id": "BddP6PYo2gs",
-      "title": "Kesariya - Brahmāstra",
-      "artist": "Arijit Singh, Pritam",
-      "duration": 268,
-      "durationFormatted": "4:28",
-      "thumbnail": "https://i.ytimg.com/vi/BddP6PYo2gs/mqdefault.jpg",
-      "thumbnailHigh": "https://i.ytimg.com/vi/BddP6PYo2gs/hqdefault.jpg"
-    },
-    {
-      "id": "V7LwfY5U5WI",
-      "title": "Chaleya - Jawan",
-      "artist": "Arijit Singh, Anirudh Ravichander",
-      "duration": 200,
-      "durationFormatted": "3:20",
-      "thumbnail": "https://i.ytimg.com/vi/V7LwfY5U5WI/mqdefault.jpg",
-      "thumbnailHigh": "https://i.ytimg.com/vi/V7LwfY5U5WI/hqdefault.jpg"
-    },
+  "Bollywood & Desi Melodies": [
     {
       "id": "7-x3uDFvHf4",
       "title": "Apna Bana Le - Bhediya",
@@ -284,24 +365,6 @@ const DEFAULT_HOME_FEED = {
       "durationFormatted": "4:21",
       "thumbnail": "https://i.ytimg.com/vi/7-x3uDFvHf4/mqdefault.jpg",
       "thumbnailHigh": "https://i.ytimg.com/vi/7-x3uDFvHf4/hqdefault.jpg"
-    },
-    {
-      "id": "34Na4j8AVgA",
-      "title": "Starboy",
-      "artist": "The Weeknd ft. Daft Punk",
-      "duration": 230,
-      "durationFormatted": "3:50",
-      "thumbnail": "https://i.ytimg.com/vi/34Na4j8AVgA/mqdefault.jpg",
-      "thumbnailHigh": "https://i.ytimg.com/vi/34Na4j8AVgA/hqdefault.jpg"
-    },
-    {
-      "id": "JGwWNGJdvx8",
-      "title": "Shape of You",
-      "artist": "Ed Sheeran",
-      "duration": 233,
-      "durationFormatted": "3:53",
-      "thumbnail": "https://i.ytimg.com/vi/JGwWNGJdvx8/mqdefault.jpg",
-      "thumbnailHigh": "https://i.ytimg.com/vi/JGwWNGJdvx8/hqdefault.jpg"
     },
     {
       "id": "7wtfhZwyrcc",
@@ -331,64 +394,64 @@ try {
   console.warn('Using default home feed cache:', e.message);
 }
 
-// Echo Music Circadian Mood Seeds & Themes Catalog (35+ Seeds)
-const MOOD_CATALOG = {
-  morning: {
-    greeting: 'Good Morning',
-    moment: 'Morning Momentum',
-    sections: [
-      { title: 'Morning Acoustic Coffee', query: 'acoustic morning coffee indie' },
-      { title: 'Upbeat Morning Energy', query: 'upbeat positive morning pop hits' },
-      { title: 'Fresh Daily Discoveries', query: 'fresh hits discover 2026' },
-      { title: 'Bollywood Morning Melodies', query: 'bollywood acoustic soul unplugged' },
-      { title: 'Feel-Good Indie Folk', query: 'indie folk acoustic sunshine' }
-    ]
-  },
-  afternoon: {
-    greeting: 'Good Afternoon',
-    moment: 'Deep Focus Flow',
-    sections: [
-      { title: 'Deep Work Beats', query: 'lo-fi beats to study relax' },
-      { title: 'Instrumental Concentration', query: 'chill instrumental electronic beats' },
-      { title: 'Indie Afternoon Chill', query: 'indie afternoon acoustic pop' },
-      { title: 'Synthwave Velocity', query: 'retrowave synthwave 80s chill' },
-      { title: 'Global Radio Top 50', query: 'global top 50 hits 2026' }
-    ]
-  },
-  evening: {
-    greeting: 'Good Evening',
-    moment: 'Golden Hour Sunset',
-    sections: [
-      { title: 'Golden Hour Anthems', query: 'sunset golden hour acoustic hits' },
-      { title: 'Trending Global Anthems', query: 'trending music viral hits' },
-      { title: 'Desi Pop & Punjabi Energy', query: 'punjabi pop hits 2026 arijit diljit' },
-      { title: 'Electronic Sunset Chill', query: 'future bass electronic sunset vibes' },
-      { title: 'Evening Wind-Down', query: 'acoustic guitar chill evening unplugged' }
-    ]
-  },
-  night: {
-    greeting: 'Late Night Notes',
-    moment: 'Midnight Lo-Fi & Chill',
-    sections: [
-      { title: 'Midnight Lo-Fi Doodles', query: 'midnight lofi chill beats sleep' },
-      { title: 'Late Night Drives', query: 'synthwave night drive retro' },
-      { title: 'Dark Ambient Chill', query: 'dark ambient acoustic soul' },
-      { title: 'Smooth Midnight R&B', query: 'smooth rnb late night vibes' },
-      { title: 'Sleep & Peaceful Piano', query: 'peaceful piano acoustic calm' }
-    ]
-  }
-};
-
-const EXTRA_GENRE_SEEDS = [
-  { title: 'Bollywood Classics Reimagined', query: 'bollywood unplugged acoustic covers' },
-  { title: 'Global Viral Radar', query: 'viral hits global top 50 2026' },
-  { title: 'Phonk & Workout Drive', query: 'gym workout phonk hype music' },
-  { title: 'Lo-Fi Chillhop Coffee', query: 'chillhop jazz beats lofi study' },
-  { title: 'Indie Dream Pop', query: 'dream pop indie alternative' },
-  { title: 'Punjabi Top Hits', query: 'top punjabi pop songs' },
-  { title: 'Acoustic Soul', query: 'acoustic soul guitar vocals' },
-  { title: 'Synthpop & Neon Beats', query: 'synthpop modern electronic hits' }
+// 24+ Dynamic Curated Categories (Randomly Juggled - Zero Fixed Shelves)
+const DYNAMIC_CATEGORY_POOL = [
+  { title: 'Global Hit Chartbusters', query: 'global top hits pop songs' },
+  { title: 'Acoustic Soul & Unplugged', query: 'acoustic soul guitar live unplugged songs' },
+  { title: 'Bollywood & Desi Melodies', query: 'bollywood romantic acoustic melodies songs' },
+  { title: 'Midnight Lo-Fi & Chill', query: 'lofi chill beats midnight sleep study' },
+  { title: 'Indie Pop Sketches', query: 'indie pop alternative bedroom pop songs' },
+  { title: 'High-Energy Anthems', query: 'upbeat workout energetic dance songs' },
+  { title: 'Golden Hour Sunset Grooves', query: 'golden hour sunset acoustic pop songs' },
+  { title: 'Retro Synthwave Drive', query: 'synthwave 80s retrowave electronic songs' },
+  { title: 'Punjabi Heatwave Hits', query: 'punjabi pop hit songs' },
+  { title: 'Chillhop Coffee Lounge', query: 'chillhop jazz beats lofi study songs' },
+  { title: 'Smooth Late Night R&B', query: 'smooth rnb late night chill songs' },
+  { title: 'Heartfelt Ballads & Melancholy', query: 'sad emotional piano acoustic ballads' },
+  { title: 'Deep Focus & Zen Instrumentals', query: 'deep focus instrumental calm songs' },
+  { title: 'Coke Studio & Sufi Melodies', query: 'coke studio sufi acoustic songs' },
+  { title: 'Feel-Good Roadtrip Beats', query: 'feel good sunny roadtrip acoustic songs' },
+  { title: 'Dark Ambient Chill', query: 'dark ambient acoustic soul songs' },
+  { title: 'Afrobeats Rhythm Pulse', query: 'afrobeats dance songs' },
+  { title: '90s & 2000s Nostalgia Mix', query: '2000s pop rock classic hits' },
+  { title: 'Dream Pop & Ethereal Waves', query: 'dream pop indie reverb songs' },
+  { title: 'Electropop & Club Heat', query: 'electropop dance electronic songs' },
+  { title: 'Acoustic Morning Sunshine', query: 'acoustic morning guitar sunny folk' },
+  { title: 'Rainy Day Cafe Notes', query: 'rainy day acoustic jazz piano songs' },
+  { title: 'Bolly Chill & Lo-Fi Rewind', query: 'bollywood lofi chill remake songs' },
+  { title: 'Viral Global Radio Wave', query: 'viral hits global top 50 songs' }
 ];
+
+const MOOD_SPECIFIC_POOLS = {
+  morning: [
+    { title: 'Morning Acoustic Coffee', query: 'acoustic morning coffee indie songs' },
+    { title: 'Upbeat Morning Energy', query: 'upbeat positive morning pop hits' },
+    { title: 'Fresh Daily Discoveries', query: 'fresh hits discover songs' },
+    { title: 'Bollywood Morning Melodies', query: 'bollywood acoustic soul unplugged' },
+    { title: 'Feel-Good Indie Folk', query: 'indie folk acoustic sunshine songs' }
+  ],
+  afternoon: [
+    { title: 'Deep Work Beats', query: 'lo-fi beats to study relax' },
+    { title: 'Instrumental Concentration', query: 'chill instrumental electronic beats' },
+    { title: 'Indie Afternoon Chill', query: 'indie afternoon acoustic pop songs' },
+    { title: 'Synthwave Velocity', query: 'retrowave synthwave 80s chill' },
+    { title: 'Global Radio Top Hits', query: 'global top 50 hits songs' }
+  ],
+  evening: [
+    { title: 'Golden Hour Anthems', query: 'sunset golden hour acoustic hits' },
+    { title: 'Trending Global Vibes', query: 'trending music viral hit songs' },
+    { title: 'Desi Pop & Punjabi Energy', query: 'punjabi pop hits arijit diljit' },
+    { title: 'Electronic Sunset Chill', query: 'future bass electronic sunset vibes' },
+    { title: 'Evening Wind-Down Acoustic', query: 'acoustic guitar chill evening unplugged' }
+  ],
+  night: [
+    { title: 'Midnight Lo-Fi Doodles', query: 'midnight lofi chill beats sleep' },
+    { title: 'Late Night Neon Drives', query: 'synthwave night drive retro' },
+    { title: 'Dark Ambient Chill', query: 'dark ambient acoustic soul' },
+    { title: 'Smooth Midnight R&B', query: 'smooth rnb late night vibes' },
+    { title: 'Peaceful Piano & Sleep', query: 'peaceful piano acoustic calm songs' }
+  ]
+};
 
 function getCircadianPeriod(hour) {
   if (hour >= 5 && hour < 12) return 'morning';
@@ -397,62 +460,40 @@ function getCircadianPeriod(hour) {
   return 'night';
 }
 
-const TRENDING_QUERIES = [
-  'top global hit songs official audio',
-  'chart topping hits pop music 2026',
-  'trending music popular songs',
-  'top 50 hit tracks radio',
-  'viral songs 2026 hits'
-];
-
-const QUICK_PICK_QUERIES = [
-  'popular acoustic indie songs',
-  'fresh new songs official audio',
-  'top catchy pop tracks',
-  'acoustic guitar vocal hits',
-  'popular radio hits 2026'
-];
-
 /**
  * Echo Music Dynamic Home Feed Engine
- * Generates fresh, contextual music shelves tailored to the time of day and diverse seeds.
+ * Randomly juggles diverse categories with zero fixed shelves.
+ * Every re-roll or refresh delivers brand new randomized sections and tracks.
  */
 async function getHomeFeed(options = {}) {
   const { mood = null, forceRefresh = false, hour = new Date().getHours() } = options;
-  const period = mood && MOOD_CATALOG[mood] ? mood : getCircadianPeriod(hour);
-  const moodConfig = MOOD_CATALOG[period];
+  const period = mood && MOOD_SPECIFIC_POOLS[mood] ? mood : getCircadianPeriod(hour);
 
-  if (!forceRefresh && inMemoryHomeFeed && Object.keys(inMemoryHomeFeed).length > 0 && (Date.now() - lastHomeRefresh < 1200000)) {
+  // Return cached feed if not forced and within 5 minutes
+  if (!forceRefresh && inMemoryHomeFeed && Object.keys(inMemoryHomeFeed).length > 0 && (Date.now() - lastHomeRefresh < 300000)) {
     return inMemoryHomeFeed;
   }
 
-  // Randomize core shelf queries so re-roll always produces brand new songs
-  const trendingQuery = TRENDING_QUERIES[Math.floor(Math.random() * TRENDING_QUERIES.length)];
-  const quickQuery = QUICK_PICK_QUERIES[Math.floor(Math.random() * QUICK_PICK_QUERIES.length)];
+  // JUGGLE RANDOMLY: Pick 5-6 diverse categories with zero fixed/pinned sections
+  let candidatePool = [];
+  if (mood && MOOD_SPECIFIC_POOLS[mood]) {
+    const moodItems = [...MOOD_SPECIFIC_POOLS[mood]].sort(() => 0.5 - Math.random()).slice(0, 3);
+    const extraItems = [...DYNAMIC_CATEGORY_POOL].sort(() => 0.5 - Math.random()).slice(0, 3);
+    candidatePool = [...moodItems, ...extraItems];
+  } else {
+    candidatePool = [...DYNAMIC_CATEGORY_POOL].sort(() => 0.5 - Math.random()).slice(0, 6);
+  }
 
-  // Curate dynamic section seeds
-  const chosenSections = [
-    { title: 'Trending Tracks', query: trendingQuery },
-    { title: 'Spotify Quick Picks', query: quickQuery }
-  ];
-
-  // Add 2 randomized sections from the current circadian mood
-  const moodShuffled = [...moodConfig.sections].sort(() => 0.5 - Math.random());
-  chosenSections.push(moodShuffled[0]);
-  if (moodShuffled[1]) chosenSections.push(moodShuffled[1]);
-
-  // Add 1-2 random extra genre seeds for discovery variety
-  const extraShuffled = [...EXTRA_GENRE_SEEDS].sort(() => 0.5 - Math.random());
-  chosenSections.push(extraShuffled[0]);
-  if (extraShuffled[1]) chosenSections.push(extraShuffled[1]);
+  // Shuffle the chosen categories thoroughly so no category is ever fixed at position 0
+  const chosenSections = candidatePool.sort(() => 0.5 - Math.random()).slice(0, 5);
 
   try {
     const promises = chosenSections.map(async (sec) => {
       try {
         const rawTracks = await searchMusic(sec.query);
-        // Exclude >10min tracks, and shuffle so rotation is obvious and fun
-        const filtered = rawTracks.filter(t => (t.duration || 0) <= 600);
-        const shuffled = filtered.sort(() => 0.5 - Math.random()).slice(0, 10);
+        // Exclude non-songs, duration between 45s and 480s, shuffle rotation
+        const filtered = rawTracks.filter(t => (t.duration || 0) >= 45 && (t.duration || 0) <= 480);
+        const shuffled = filtered.sort(() => 0.5 - Math.random()).slice(0, 12);
         return { title: sec.title, tracks: shuffled };
       } catch (err) {
         return { title: sec.title, tracks: [] };
