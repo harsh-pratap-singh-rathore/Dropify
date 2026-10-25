@@ -9,6 +9,7 @@
  */
 
 import { PlaybackCutoffGuard } from './PlaybackCutoffGuard';
+import { apiUrl } from '../config';
 
 const isMobilePlatform = () => {
   if (typeof navigator === 'undefined') return false;
@@ -570,9 +571,10 @@ class AudioManager {
 
   /**
    * Loads and plays a track with zero-failure hybrid architecture:
-   * 1. Attempts instant direct HTML5 streaming.
-   * 2. If the backend is waking up or network stalls for >2.8s, automatically promotes to the client-side
-   *    YouTube Engine so audio NEVER fails to play.
+   * 1. On Android / Mobile: Strictly maintains native HTML5 <audio> streaming directly to Android AudioTrack.
+   *    Under NO circumstances promotes mobile devices to YouTube iframe (because Chrome strictly terminates
+   *    YouTube iframes when the screen turns off).
+   * 2. On Desktop PC: Uses HTML5 direct audio with automated fallback to client-side YouTube engine if network stalls.
    */
   async playTrack(streamUrl, shouldCrossfade = false, videoId = null) {
     this.currentStreamUrl = streamUrl;
@@ -585,26 +587,77 @@ class AudioManager {
     const isMobile = isMobilePlatform();
     const current = this.getCurrentAudio();
 
+    // Start silent audio keepalive loop to immediately hold Android AudioTrack focus
+    this.startSilentKeepalive();
+
     if (shouldCrossfade && this.crossfadeDuration > 0 && !this.getCurrentAudio().paused && this.currentMode === 'audio' && !isMobile) {
       await this.executeCrossfade(streamUrl);
       return;
     }
 
+    this.currentMode = 'audio';
+
+    if (isMobile) {
+      // MOBILE ANDROID / IOS STREAMING ENGINE:
+      // Guarantee pure native HTML5 streaming directly into Android's MediaSession & AudioTrack.
+      try {
+        let directUrl = null;
+        if (resolvedVideoId) {
+          try {
+            const streamUrlEndpoint = apiUrl(`/api/stream-url/${resolvedVideoId}`);
+            const res = await fetch(streamUrlEndpoint, { signal: AbortSignal.timeout(4500) });
+            if (res.ok) {
+              const data = await res.json();
+              if (data && data.url) {
+                directUrl = data.url;
+              }
+            }
+          } catch (_) {}
+        }
+
+        const chosenUrl = directUrl || streamUrl;
+        current.src = chosenUrl;
+        current.load();
+        await current.play();
+        this.startSilentKeepalive();
+        if (typeof navigator !== 'undefined' && 'mediaSession' in navigator) {
+          try { navigator.mediaSession.playbackState = 'playing'; } catch (_) {}
+        }
+        return;
+      } catch (err) {
+        console.warn('[Mobile AudioManager] Initial playback notice, falling back to stream proxy:', err.message);
+        try {
+          current.src = streamUrl;
+          current.load();
+          await current.play();
+          this.startSilentKeepalive();
+          if (typeof navigator !== 'undefined' && 'mediaSession' in navigator) {
+            try { navigator.mediaSession.playbackState = 'playing'; } catch (_) {}
+          }
+          return;
+        } catch (retryErr) {
+          console.warn('[Mobile AudioManager] Direct proxy retry notice:', retryErr.message);
+        }
+      }
+      return;
+    }
+
+    // DESKTOP PC STREAMING ENGINE:
+    // Hybrid zero-failure engine: direct HTML5 audio with YouTube engine fallback if stalled
     let fallbackTriggered = false;
     const triggerFallback = () => {
       if (!fallbackTriggered && resolvedVideoId) {
         fallbackTriggered = true;
-        console.log('[AudioManager] Promoting to zero-latency YouTube player for:', resolvedVideoId);
+        console.log('[AudioManager] Promoting desktop to client-side YouTube engine for:', resolvedVideoId);
         this.playWithYouTube(resolvedVideoId);
       }
     };
 
-    // If HTML5 audio has not reached playable buffer state within 2.8s, trigger fallback immediately
     const bufferTimeout = setTimeout(() => {
       if (this.currentMode === 'audio' && current.readyState < 2) {
         triggerFallback();
       }
-    }, 2800);
+    }, 4500);
 
     const onPlayingHandler = () => {
       clearTimeout(bufferTimeout);
@@ -622,7 +675,6 @@ class AudioManager {
     current.addEventListener('playing', onPlayingHandler);
     current.addEventListener('error', onErrorHandler);
 
-    this.currentMode = 'audio';
     current.src = streamUrl;
     current.load();
 
@@ -685,6 +737,9 @@ class AudioManager {
   pause() {
     this.shouldBePlaying = false;
     this.stopSilentKeepalive();
+    if (typeof navigator !== 'undefined' && 'mediaSession' in navigator) {
+      try { navigator.mediaSession.playbackState = 'paused'; } catch (_) {}
+    }
     if (this.currentMode === 'yt' && this.ytPlayer && typeof this.ytPlayer.pauseVideo === 'function') {
       this.ytPlayer.pauseVideo();
       this.isYtPlaying = false;
@@ -697,6 +752,9 @@ class AudioManager {
     this.shouldBePlaying = true;
     this.ensureAudioContext();
     this.startSilentKeepalive();
+    if (typeof navigator !== 'undefined' && 'mediaSession' in navigator) {
+      try { navigator.mediaSession.playbackState = 'playing'; } catch (_) {}
+    }
 
     if (this.currentMode === 'yt' && this.ytPlayer && typeof this.ytPlayer.playVideo === 'function') {
       this.ytPlayer.playVideo();

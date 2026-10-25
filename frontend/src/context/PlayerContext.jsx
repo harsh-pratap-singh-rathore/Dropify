@@ -225,11 +225,17 @@ export function PlayerProvider({ children }) {
     try {
       navigator.mediaSession.playbackState = isPlaying ? 'playing' : 'paused';
 
-      navigator.mediaSession.setActionHandler('play', () => {
-        togglePlayPause();
+      navigator.mediaSession.setActionHandler('play', async () => {
+        await audioManager.resume();
+        setIsPlaying(true);
       });
       navigator.mediaSession.setActionHandler('pause', () => {
-        togglePlayPause();
+        audioManager.pause();
+        setIsPlaying(false);
+      });
+      navigator.mediaSession.setActionHandler('stop', () => {
+        audioManager.pause();
+        setIsPlaying(false);
       });
       navigator.mediaSession.setActionHandler('previoustrack', () => {
         playPrevious();

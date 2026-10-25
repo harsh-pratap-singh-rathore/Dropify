@@ -10,7 +10,7 @@ function getYtdl() {
     try {
       const { Ytdl } = require('@distube/ytdl-core');
       ytdlInstance = new Ytdl({
-        clients: ['visionos', 'web_embedded', 'tv'],
+        clients: ['visionos'],
         lang: 'en',
         country: 'US'
       });

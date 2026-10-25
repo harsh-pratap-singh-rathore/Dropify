@@ -136,18 +136,52 @@ app.get('/api/song/:id', async (req, res) => {
   }
 });
 
-// 6. Audio Stream with HTTP Range support
-app.get('/api/stream/:id', (req, res) => {
+// Healthcheck route
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', service: 'dropify-backend', time: Date.now() });
+});
+
+// 6. Direct Audio Stream with 302 Redirect to Edge CDN
+app.get('/api/stream/:id', async (req, res) => {
   const songId = String(req.params.id || '').trim();
   if (!YT_ID_REGEX.test(songId)) {
     return res.status(400).json({ error: 'Invalid song ID format' });
   }
   try {
-    innertube.streamAudio(songId, req, res);
+    await innertube.streamAudio(songId, req, res);
   } catch (err) {
     console.error('Stream error:', err.message);
     if (!res.headersSent) {
       res.status(500).json({ error: 'Streaming error', message: err.message });
+    }
+  }
+});
+
+// Direct Audio Stream URL JSON Resolver for Mobile Native Playback
+app.get('/api/stream-url/:id', async (req, res) => {
+  const songId = String(req.params.id || '').trim();
+  if (!YT_ID_REGEX.test(songId)) {
+    return res.status(400).json({ error: 'Invalid song ID format' });
+  }
+  try {
+    const format = await innertube.resolveAudioFormat(songId);
+    if (!format || !format.url) {
+      return res.status(404).json({ error: 'Stream format not resolved' });
+    }
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Headers', '*');
+    res.json({
+      success: true,
+      url: format.url,
+      itag: format.itag,
+      mimeType: format.mimeType || 'audio/webm; codecs="opus"',
+      bitrate: format.bitrate,
+      duration: format.approxDurationMs ? Math.round(format.approxDurationMs / 1000) : null
+    });
+  } catch (err) {
+    console.error('Stream URL error:', err.message);
+    if (!res.headersSent) {
+      res.status(500).json({ error: 'Stream URL resolution failed', message: err.message });
     }
   }
 });
