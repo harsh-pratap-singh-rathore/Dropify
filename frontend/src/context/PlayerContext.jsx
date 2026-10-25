@@ -99,9 +99,8 @@ export function PlayerProvider({ children }) {
     if (!isPlaying) return;
     let animId;
     const syncTicker = () => {
-      const curAudio = audioManager.getCurrentAudio();
-      if (curAudio && !curAudio.paused && lyricsData?.lines?.length > 0) {
-        const t = curAudio.currentTime;
+      if (audioManager.getIsPlaying() && lyricsData?.lines?.length > 0) {
+        const t = audioManager.getCurrentTime();
         let index = -1;
         for (let i = 0; i < lyricsData.lines.length; i++) {
           if (t >= lyricsData.lines[i].time) {

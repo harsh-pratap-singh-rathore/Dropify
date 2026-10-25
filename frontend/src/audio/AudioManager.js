@@ -304,6 +304,22 @@ class AudioManager {
     return this.activePlayer === 'primary' ? this.primaryAudio : this.secondaryAudio;
   }
 
+  getCurrentTime() {
+    if (this.currentMode === 'yt' && this.ytPlayer && typeof this.ytPlayer.getCurrentTime === 'function') {
+      return this.ytPlayer.getCurrentTime() || 0;
+    }
+    const curAudio = this.getCurrentAudio();
+    return curAudio ? curAudio.currentTime || 0 : 0;
+  }
+
+  getIsPlaying() {
+    if (this.currentMode === 'yt') {
+      return !!this.isYtPlaying;
+    }
+    const curAudio = this.getCurrentAudio();
+    return curAudio ? !curAudio.paused : false;
+  }
+
   getStandbyAudio() {
     return this.activePlayer === 'primary' ? this.secondaryAudio : this.primaryAudio;
   }
