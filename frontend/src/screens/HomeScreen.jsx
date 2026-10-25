@@ -222,6 +222,8 @@ export default function HomeScreen({ onNavigateTaste }) {
         setIsRefreshing(false);
       })
       .catch((err) => {
+        setIsLoading(false);
+        setIsRefreshing(false);
       });
   };
 

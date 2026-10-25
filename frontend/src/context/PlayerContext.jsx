@@ -206,6 +206,7 @@ export function PlayerProvider({ children }) {
   useEffect(() => {
     if (!currentSong) return;
 
+    const requestedSongId = currentSong.id;
     setIsLoadingLyrics(true);
     setLyricsData({ lines: [], synced: false, plain: '' });
     setActiveLyricIndex(-1);
@@ -221,13 +222,17 @@ export function PlayerProvider({ children }) {
     fetch(apiUrl(`/api/lyrics/${currentSong.id}?${queryParams}`))
       .then(res => res.json())
       .then(data => {
-        setLyricsData(data);
-        setIsLoadingLyrics(false);
+        if (currentSongRef.current?.id === requestedSongId) {
+          setLyricsData(data);
+          setIsLoadingLyrics(false);
+        }
       })
       .catch(() => {
-        setIsLoadingLyrics(false);
+        if (currentSongRef.current?.id === requestedSongId) {
+          setIsLoadingLyrics(false);
+        }
       });
-  }, [currentSong]);
+  }, [currentSong?.id]);
 
   // HTML5 Media Session API Integration for Native Mobile Lockscreen Controls & Background Playback
   useEffect(() => {
@@ -366,13 +371,16 @@ export function PlayerProvider({ children }) {
     }).catch(() => {});
   };
 
-  const playSong = async (song, newQueue = null, index = 0) => {
+  const playSong = async (song, newQueue = null, index = null) => {
     if (currentSong && currentSong.id !== song.id) {
       recordStats(currentTime < 15);
     }
 
-    if (newQueue) {
+    if (newQueue && Array.isArray(newQueue)) {
       setQueue(newQueue);
+      const songIdx = newQueue.findIndex(s => s.id === song.id);
+      setQueueIndex(songIdx >= 0 ? songIdx : (index !== null ? index : 0));
+    } else if (index !== null) {
       setQueueIndex(index);
     }
 
@@ -380,6 +388,8 @@ export function PlayerProvider({ children }) {
     audioManager.setCurrentSongMetadata(song);
     songStartTimeRef.current = Date.now();
     listenedDurationRef.current = 0;
+    setCurrentTime(0);
+    setProgress(0);
 
     // Track Recently Played
     setRecentlyPlayed((prev) => {
@@ -413,12 +423,16 @@ export function PlayerProvider({ children }) {
   };
 
   const playNext = (withCrossfade = false) => {
-    if (queueIndex + 1 < queue.length) {
-      const nextIndex = queueIndex + 1;
+    const q = queueRef.current || [];
+    const qIdx = queueIndexRef.current || 0;
+    if (qIdx + 1 < q.length) {
+      const nextIndex = qIdx + 1;
       setQueueIndex(nextIndex);
-      const nextSong = queue[nextIndex];
+      const nextSong = q[nextIndex];
       setCurrentSong(nextSong);
       audioManager.setCurrentSongMetadata(nextSong);
+      setCurrentTime(0);
+      setProgress(0);
       const streamUrl = apiUrl(`/api/stream/${nextSong.id}`);
       audioManager.playTrack(streamUrl, withCrossfade, nextSong.id);
       setIsPlaying(true);
@@ -427,9 +441,18 @@ export function PlayerProvider({ children }) {
       fetch(apiUrl(`/api/song/${currentSong.id}`))
         .then(res => res.json())
         .then(details => {
-          if (details.related && details.related.length > 0) {
-            setQueue(prev => [...prev, ...details.related]);
-            playNext(withCrossfade);
+          if (details && details.related && details.related.length > 0) {
+            const nextTrack = details.related[0];
+            const remainingTracks = details.related.slice(1);
+            setQueue(prev => [...prev, nextTrack, ...remainingTracks]);
+            setQueueIndex(prev => prev + 1);
+            setCurrentSong(nextTrack);
+            audioManager.setCurrentSongMetadata(nextTrack);
+            setCurrentTime(0);
+            setProgress(0);
+            const streamUrl = apiUrl(`/api/stream/${nextTrack.id}`);
+            audioManager.playTrack(streamUrl, withCrossfade, nextTrack.id);
+            setIsPlaying(true);
           }
         })
         .catch(() => {});
@@ -439,12 +462,16 @@ export function PlayerProvider({ children }) {
   const playPrevious = () => {
     if (currentTime > 4) {
       audioManager.seek(0);
+      setCurrentTime(0);
+      setProgress(0);
     } else if (queueIndex > 0) {
       const prevIndex = queueIndex - 1;
       setQueueIndex(prevIndex);
       const prevSong = queue[prevIndex];
       setCurrentSong(prevSong);
       audioManager.setCurrentSongMetadata(prevSong);
+      setCurrentTime(0);
+      setProgress(0);
       audioManager.playTrack(apiUrl(`/api/stream/${prevSong.id}`), false, prevSong.id);
       setIsPlaying(true);
     }

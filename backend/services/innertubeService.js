@@ -541,7 +541,11 @@ async function resolveAudioFormat(videoId, preferredFormat = null) {
 
   const ytdl = await getYtdl();
   if (!ytdl) throw new Error('Ytdl not initialized');
-  const info = await ytdl.getInfo(videoId);
+  const info = await ytdl.getInfo(videoId, {
+    requestOptions: {
+      timeout: 8000
+    }
+  });
   const audioFormats = (info.formats || []).filter(f => f.hasAudio && !f.hasVideo && f.url);
 
   if (audioFormats.length === 0) {
@@ -614,6 +618,7 @@ async function streamAudio(videoId, req, res) {
         headers: upstreamHeaders,
         responseType: 'stream',
         signal: abortController.signal,
+        timeout: 10000,
         validateStatus: (status) => status >= 200 && status < 400
       });
     };

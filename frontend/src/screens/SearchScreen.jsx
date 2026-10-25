@@ -34,11 +34,12 @@ export default function SearchScreen({ initialQuery = '' }) {
     fetch(apiUrl(`/api/search?q=${encodeURIComponent(searchTerm.trim())}`))
       .then((res) => res.json())
       .then((data) => {
-        setResults(data);
+        setResults(Array.isArray(data) ? data : []);
         setIsLoading(false);
       })
       .catch((err) => {
         console.error('Search error:', err);
+        setResults([]);
         setIsLoading(false);
       });
   };
@@ -58,9 +59,7 @@ export default function SearchScreen({ initialQuery = '' }) {
       fetch(apiUrl(`/api/suggest?q=${encodeURIComponent(query.trim())}`))
         .then((res) => res.json())
         .then((items) => {
-          if (Array.isArray(items)) {
-            setSuggestions(items.slice(0, 8));
-          }
+          setSuggestions(Array.isArray(items) ? items.slice(0, 8) : []);
         })
         .catch(() => setSuggestions([]));
     }, 150);

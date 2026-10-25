@@ -278,9 +278,17 @@ class AudioManager {
     this.currentMode = 'yt';
     this.shouldBePlaying = true;
 
-    // Pause HTML5 audios to prevent dual audio
-    this.primaryAudio.pause();
-    this.secondaryAudio.pause();
+    // Immediately stop and clear HTML5 audios to prevent dual audio
+    try {
+      this.primaryAudio.pause();
+      this.primaryAudio.currentTime = 0;
+      this.primaryAudio.removeAttribute('src');
+      this.primaryAudio.load();
+      this.secondaryAudio.pause();
+      this.secondaryAudio.currentTime = 0;
+      this.secondaryAudio.removeAttribute('src');
+      this.secondaryAudio.load();
+    } catch (_) {}
 
     if (!this.ytPlayerReady || !this.ytPlayer || typeof this.ytPlayer.loadVideoById !== 'function') {
       this.pendingVideoId = videoId;
@@ -621,9 +629,21 @@ class AudioManager {
    * 2. On Desktop PC: Uses HTML5 direct audio with automated fallback to client-side YouTube engine if network stalls.
    */
   async playTrack(streamUrl, shouldCrossfade = false, videoId = null) {
-    this.currentStreamUrl = streamUrl;
-    this.shouldBePlaying = true;
-    this.ensureAudioContext();
+    // Generation request ID to eliminate stale race conditions and overlapping audio
+    this.playRequestId = (this.playRequestId || 0) + 1;
+    const requestId = this.playRequestId;
+
+    // 1. Immediately silence and stop ANY previous playback
+    if (this.ytPlayer && typeof this.ytPlayer.pauseVideo === 'function') {
+      try {
+        this.ytPlayer.pauseVideo();
+      } catch (_) {}
+    }
+    this.isYtPlaying = false;
+    if (this.ytPollInterval) {
+      clearInterval(this.ytPollInterval);
+      this.ytPollInterval = null;
+    }
 
     if (this.bufferTimeout) {
       clearTimeout(this.bufferTimeout);
@@ -634,13 +654,38 @@ class AudioManager {
       this.crossfadeTimeout = null;
     }
 
+    // Clean up any listeners from previous playTrack invocation
+    if (this._activeCleanup) {
+      try { this._activeCleanup(); } catch (_) {}
+      this._activeCleanup = null;
+    }
+
+    // Immediately silence the standby audio player
+    const standbyAudio = this.getStandbyAudio();
+    try {
+      standbyAudio.pause();
+      standbyAudio.currentTime = 0;
+      standbyAudio.removeAttribute('src');
+      standbyAudio.load();
+    } catch (_) {}
+
+    // Immediately pause the current audio player
+    const current = this.getCurrentAudio();
+    try {
+      current.pause();
+      current.currentTime = 0;
+    } catch (_) {}
+
+    this.currentStreamUrl = streamUrl;
+    this.shouldBePlaying = true;
+    this.ensureAudioContext();
+
     const match = streamUrl ? streamUrl.match(/\/api\/stream\/([a-zA-Z0-9_-]+)/) : null;
     const resolvedVideoId = videoId || (match ? match[1] : null);
 
     const isMobile = isMobilePlatform();
-    const current = this.getCurrentAudio();
 
-    if (shouldCrossfade && this.crossfadeDuration > 0 && !this.getCurrentAudio().paused && this.currentMode === 'audio' && !isMobile) {
+    if (shouldCrossfade && this.crossfadeDuration > 0 && !current.paused && this.currentMode === 'audio' && !isMobile) {
       await this.executeCrossfade(streamUrl);
       return;
     }
@@ -649,6 +694,7 @@ class AudioManager {
 
     let fallbackTriggered = false;
     const triggerFallback = () => {
+      if (this.playRequestId !== requestId) return; // Stale request, ignore!
       if (!fallbackTriggered && resolvedVideoId) {
         fallbackTriggered = true;
         console.log(`[AudioManager] Promoting ${isMobile ? 'mobile' : 'desktop'} to client-side YouTube engine for:`, resolvedVideoId);
@@ -656,15 +702,17 @@ class AudioManager {
       }
     };
 
-    // Buffer timeout: if native stream does not buffer within 3.5s (mobile) / 4.5s (desktop), fallback to YouTube
-    const timeoutMs = isMobile ? 3500 : 4500;
+    // Buffer timeout: if native stream does not buffer within 3s (mobile) / 4s (desktop), fallback to YouTube
+    const timeoutMs = isMobile ? 3000 : 4000;
     this.bufferTimeout = setTimeout(() => {
+      if (this.playRequestId !== requestId) return;
       if (this.currentMode === 'audio' && current.readyState < 2) {
         triggerFallback();
       }
     }, timeoutMs);
 
     const onPlayingHandler = () => {
+      if (this.playRequestId !== requestId) return;
       if (this.bufferTimeout) {
         clearTimeout(this.bufferTimeout);
         this.bufferTimeout = null;
@@ -674,6 +722,7 @@ class AudioManager {
     };
 
     const onErrorHandler = () => {
+      if (this.playRequestId !== requestId) return;
       if (this.bufferTimeout) {
         clearTimeout(this.bufferTimeout);
         this.bufferTimeout = null;
@@ -681,6 +730,11 @@ class AudioManager {
       current.removeEventListener('playing', onPlayingHandler);
       current.removeEventListener('error', onErrorHandler);
       triggerFallback();
+    };
+
+    this._activeCleanup = () => {
+      current.removeEventListener('playing', onPlayingHandler);
+      current.removeEventListener('error', onErrorHandler);
     };
 
     current.addEventListener('playing', onPlayingHandler);
@@ -691,10 +745,15 @@ class AudioManager {
 
     try {
       await current.play();
+      if (this.playRequestId !== requestId) {
+        current.pause();
+        return;
+      }
       if (typeof navigator !== 'undefined' && 'mediaSession' in navigator) {
         try { navigator.mediaSession.playbackState = 'playing'; } catch (_) {}
       }
     } catch (err) {
+      if (this.playRequestId !== requestId) return;
       if (err.name === 'AbortError') return;
       console.warn('Direct HTML5 play notice, evaluating fallback:', err.message);
       triggerFallback();
@@ -766,12 +825,12 @@ class AudioManager {
     if (typeof navigator !== 'undefined' && 'mediaSession' in navigator) {
       try { navigator.mediaSession.playbackState = 'paused'; } catch (_) {}
     }
-    if (this.currentMode === 'yt' && this.ytPlayer && typeof this.ytPlayer.pauseVideo === 'function') {
-      this.ytPlayer.pauseVideo();
-      this.isYtPlaying = false;
-      return;
+    if (this.ytPlayer && typeof this.ytPlayer.pauseVideo === 'function') {
+      try { this.ytPlayer.pauseVideo(); } catch (_) {}
     }
-    this.getCurrentAudio().pause();
+    this.isYtPlaying = false;
+    try { this.primaryAudio.pause(); } catch (_) {}
+    try { this.secondaryAudio.pause(); } catch (_) {}
   }
 
   async resume() {
