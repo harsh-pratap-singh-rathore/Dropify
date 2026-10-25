@@ -68,6 +68,7 @@ class AudioManager {
     this.currentVolume = 0.85;
 
     this.setupAudioListeners();
+    this.setupVisibilityHandler();
     this.initYouTubePlayer();
   }
 
@@ -274,6 +275,26 @@ class AudioManager {
     this.analyser.connect(this.audioCtx.destination);
   }
 
+  setupVisibilityHandler() {
+    if (typeof document === 'undefined') return;
+    document.addEventListener('visibilitychange', () => {
+      // When screen locks or tab goes to background, ensure audio keeps streaming
+      if (document.hidden) {
+        if (this.audioCtx && this.audioCtx.state === 'suspended') {
+          this.audioCtx.resume().catch(() => {});
+        }
+        const cur = this.getCurrentAudio();
+        if (cur && cur.paused && this.getIsPlaying()) {
+          cur.play().catch(() => {});
+        }
+      } else {
+        if (this.audioCtx && this.audioCtx.state === 'suspended') {
+          this.audioCtx.resume().catch(() => {});
+        }
+      }
+    });
+  }
+
   setupAudioListeners() {
     const handleTimeUpdate = (audio) => {
       if (this.currentMode === 'audio' && this.getCurrentAudio() === audio && this.onTimeUpdateCallback) {
@@ -343,38 +364,31 @@ class AudioManager {
 
   /**
    * Loads and plays a track with optional equal-power crossfade
-   * Automatically uses client-side YouTube engine on production deployment to prevent 60s cloud stalls
+   * Prioritizes native HTML5 <audio> on mobile phones so screen-off background playback never halts
    */
   async playTrack(streamUrl, shouldCrossfade = false, videoId = null) {
     this.ensureAudioContext();
 
-    // Auto-extract videoId from streamUrl if not explicitly provided
     const match = streamUrl ? streamUrl.match(/\/api\/stream\/([a-zA-Z0-9_-]+)/) : null;
     const resolvedVideoId = videoId || (match ? match[1] : null);
 
-    const isLocalhost = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+    const isMobile = typeof navigator !== 'undefined' && /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    const current = this.getCurrentAudio();
 
-    // In production (Vercel / Render), play directly via YouTube Engine for 200ms instant playback
-    if (!isLocalhost && resolvedVideoId) {
-      this.playWithYouTube(resolvedVideoId);
-      return;
-    }
-
-    // In local development, try HTML5 streaming with instant fallback to YouTube if it stalls or errors
     let fallbackTriggered = false;
     const triggerFallback = () => {
+      // If mobile HTML5 fails or desktop fails, fallback to YouTube embed
       if (!fallbackTriggered && resolvedVideoId) {
         fallbackTriggered = true;
         this.playWithYouTube(resolvedVideoId);
       }
     };
 
-    const current = this.getCurrentAudio();
     const timeoutTimer = setTimeout(() => {
       if (current.paused && current.readyState < 2) {
         triggerFallback();
       }
-    }, 2500);
+    }, isMobile ? 5000 : 3000);
 
     const onPlayingHandler = () => {
       clearTimeout(timeoutTimer);
@@ -400,8 +414,9 @@ class AudioManager {
       current.load();
       try {
         await current.play();
+        this.startSilentKeepalive();
       } catch (err) {
-        console.warn('HTML5 Playback error, switching to YouTube engine:', err.message);
+        console.warn('HTML5 Playback error, evaluating fallback:', err.message);
         triggerFallback();
       }
     }

@@ -277,6 +277,21 @@ export function PlayerProvider({ children }) {
     } catch (_) {}
   }, [currentTime, duration]);
 
+  // Mobile WakeLock to keep audio playback thread active
+  useEffect(() => {
+    let wakeLock = null;
+    if (typeof window !== 'undefined' && 'wakeLock' in navigator && isPlaying) {
+      navigator.wakeLock.request('screen').then(wl => {
+        wakeLock = wl;
+      }).catch(() => {});
+    }
+    return () => {
+      if (wakeLock) {
+        wakeLock.release().catch(() => {});
+      }
+    };
+  }, [isPlaying]);
+
   const recordStats = (skipped = false) => {
     if (!currentSong) return;
     const listened = listenedDurationRef.current || 0;

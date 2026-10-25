@@ -261,6 +261,30 @@ export default function FullscreenPlayer() {
 
       {/* Main Content Area */}
       <div className={`fullscreen-body ${activeTab === 'lyrics' ? 'lyrics-mode-active' : 'visualizer-mode-active'}`}>
+        {/* Mobile Left Boxy Artwork Card (Visible on mobile during lyrics mode) */}
+        {activeTab === 'lyrics' && (
+          <div className="fullscreen-mobile-artwork-col mobile-only">
+            <div className="sketch-card mobile-boxy-card">
+              <div className="washi-tape-top" />
+              <div className="mobile-boxy-thumb-wrap">
+                <img src={albumArt} alt={currentSong.title} className="mobile-boxy-thumb" />
+              </div>
+              <div className="mobile-boxy-meta">
+                <h3 className="sketch-font-title mobile-boxy-title" title={currentSong.title}>
+                  {currentSong.title}
+                </h3>
+                <p className="sketch-font-hand mobile-boxy-artist" title={currentSong.artist}>
+                  {currentSong.artist}
+                </p>
+                <div className="mobile-boxy-badges">
+                  <span className="gain-badge-compact">320k</span>
+                  <span className="gain-badge-compact">DSP</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Left: Vintage Hand-Drawn Vinyl Turntable & Polaroid Metadata */}
         <div className={`fullscreen-turntable-col ${activeTab === 'lyrics' ? 'mobile-hidden' : ''}`}>
           <div className="turntable-wrapper">
@@ -300,27 +324,11 @@ export default function FullscreenPlayer() {
         <div className={`fullscreen-content-col ${activeTab === 'lyrics' ? 'lyrics-expanded' : ''}`}>
           {activeTab === 'lyrics' ? (
             <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%' }}>
-              {/* Mobile Track Header (Visible when turntable is hidden on mobile) */}
-              <div className="fullscreen-mobile-song-bar">
-                <div style={{ minWidth: 0, flex: 1 }}>
-                  <h3 className="sketch-font-title truncate" style={{ fontSize: '1.15rem', margin: 0, lineHeight: 1.2 }}>
-                    {currentSong.title}
-                  </h3>
-                  <p className="sketch-font-hand truncate" style={{ fontSize: '0.95rem', margin: 0, color: 'var(--graphite-muted)' }}>
-                    {currentSong.artist}
-                  </p>
-                </div>
-                <div style={{ display: 'flex', gap: '4px', flexShrink: 0 }}>
-                  <span className="gain-badge-compact" style={{ fontSize: '0.68rem' }}>320k</span>
-                  <span className="gain-badge-compact" style={{ fontSize: '0.68rem' }}>DSP</span>
-                </div>
-              </div>
-
               {/* Lyrics Provider & Timing Offset Controls */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '12px', borderBottom: '2px dashed var(--paper-border-dashed)', flexWrap: 'wrap', gap: '8px' }}>
-                <div className="sketch-font-mono" style={{ fontSize: '0.82rem', color: 'var(--graphite-muted)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <Sparkles size={13} />
-                  <span>{lyricsData.synced ? 'KARAOKE SYNC' : 'PLAIN NOTEBOOK'} • {lyricsData.provider || 'Lyrics Engine'}</span>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '8px', borderBottom: '2px dashed var(--paper-border-dashed)', flexWrap: 'wrap', gap: '6px' }}>
+                <div className="sketch-font-mono" style={{ fontSize: '0.78rem', color: 'var(--graphite-muted)', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  <Sparkles size={12} />
+                  <span>{lyricsData.synced ? 'SYNC' : 'PLAIN'} • {lyricsData.provider || 'Lyrics Engine'}</span>
                 </div>
 
                 {lyricsData.synced && (

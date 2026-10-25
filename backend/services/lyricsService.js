@@ -470,7 +470,116 @@ async function getLyrics(trackName, artistName, durationSeconds = null, videoId 
     } catch (e) { }
   }
 
-  // --- Tier 4: YouLyPlus / LyricsPlus community mirrors (from Echo Music) ---
+  // --- Tier 4: Kugou Music Global Synchronized Lyrics Engine (from Echo Music) ---
+  try {
+    const kgQuery = `${rootTitle} ${targetArtist || ''}`.trim();
+    const kgSearch = await axios.get('http://lyrics.kugou.com/search', {
+      params: {
+        ver: 1,
+        man: 'yes',
+        client: 'pc',
+        keyword: kgQuery,
+        duration: duration ? duration * 1000 : undefined
+      },
+      timeout: 2200,
+      headers
+    });
+
+    if (kgSearch.data?.candidates?.length > 0) {
+      const cand = kgSearch.data.candidates[0];
+      const kgDownload = await axios.get('http://lyrics.kugou.com/download', {
+        params: {
+          ver: 1,
+          client: 'pc',
+          id: cand.id,
+          accesskey: cand.accesskey,
+          fmt: 'lrc',
+          charset: 'utf8'
+        },
+        timeout: 2200,
+        headers
+      });
+
+      if (kgDownload.data?.content) {
+        const lrcText = Buffer.from(kgDownload.data.content, 'base64').toString('utf8');
+        const synced = parseLrc(lrcText);
+        if (synced.length > 0) {
+          const resData = {
+            found: true,
+            synced: true,
+            lines: synced,
+            plain: lrcText,
+            provider: 'Kugou Lyrics Engine',
+            cleanTitle: cand.song || rootTitle,
+            primaryArtist: cand.singer || targetArtist
+          };
+          lyricsCache.set(cacheKey, resData);
+          return resData;
+        }
+      }
+    }
+  } catch (e) { }
+
+  // --- Tier 5: YouTube Video Native Synchronized Subtitles (InnerTube TimedText) ---
+  if (cleanId) {
+    try {
+      const subUrl = `https://www.youtube.com/api/timedtext?v=${encodeURIComponent(cleanId)}&lang=en&fmt=json3`;
+      const ytSubResp = await axios.get(subUrl, { timeout: 2500, headers });
+      if (ytSubResp.data?.events && Array.isArray(ytSubResp.data.events)) {
+        const lines = [];
+        for (const ev of ytSubResp.data.events) {
+          if (ev.segs && Array.isArray(ev.segs) && ev.tStartMs !== undefined) {
+            const text = ev.segs.map(s => s.utf8 || '').join('').trim();
+            if (text && text !== '\n') {
+              lines.push({
+                time: Math.round((ev.tStartMs / 1000) * 10) / 10,
+                text
+              });
+            }
+          }
+        }
+        if (lines.length > 4) {
+          const resData = {
+            found: true,
+            synced: true,
+            lines,
+            plain: lines.map(l => l.text).join('\n'),
+            provider: 'YouTube Synchronized Captions',
+            cleanTitle: rootTitle,
+            primaryArtist: targetArtist
+          };
+          lyricsCache.set(cacheKey, resData);
+          return resData;
+        }
+      }
+    } catch (e) { }
+  }
+
+  // --- Tier 6: Paxsenix & SimpMusic Community Lyrics API (from Echo Music) ---
+  if (cleanId) {
+    try {
+      const paxResp = await axios.get(`https://api.paxsenix.biz.id/yt/lyrics?id=${encodeURIComponent(cleanId)}`, {
+        timeout: 2200,
+        headers
+      });
+      if (paxResp.data?.ok && paxResp.data?.lyrics) {
+        const synced = parseLrc(paxResp.data.lyrics);
+        const resData = {
+          found: true,
+          synced: synced.length > 0,
+          lines: synced.length > 0 ? synced : formatPlainLyrics(paxResp.data.lyrics, duration),
+          plain: paxResp.data.lyrics,
+          provider: 'Paxsenix Engine',
+          cleanTitle: rootTitle,
+          primaryArtist: targetArtist
+        };
+        lyricsCache.set(cacheKey, resData);
+        return resData;
+      }
+    } catch (e) { }
+  }
+
+  // --- Tier 7: YouLyPlus / LyricsPlus community mirrors (from Echo Music) ---
   const mirrors = [
     'https://lyricsplus-seven.vercel.app',
     'https://lyrics-plus-backend.vercel.app',
