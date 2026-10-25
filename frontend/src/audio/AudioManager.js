@@ -9,6 +9,7 @@
  */
 
 import { PlaybackCutoffGuard } from './PlaybackCutoffGuard';
+import { apiUrl } from '../config';
 
 const isMobilePlatform = () => {
   if (typeof navigator === 'undefined') return false;
@@ -187,6 +188,7 @@ class AudioManager {
 
   setCurrentSongMetadata(song) {
     if (!song) return;
+    this.currentSongMetadata = song;
     this.currentCanonicalDuration = Number(song.duration) || 0;
     this.currentTrackId = song.id || null;
     this.cutoffGuard.onTrackChanged(song.id);
@@ -257,8 +259,28 @@ class AudioManager {
                 }
               }
             },
-            onError: (err) => {
-              console.warn('YouTube engine notice:', err);
+            onError: async (err) => {
+              const code = err?.data;
+              console.warn('YouTube engine notice code:', code);
+              // Error 101 / 150: Video owner does not allow embedding
+              // Error 100: Video removed or private
+              if ((code === 101 || code === 150 || code === 100) && this.currentSongMetadata && !this._retriedAlternative) {
+                this._retriedAlternative = true;
+                const meta = this.currentSongMetadata;
+                try {
+                  const q = encodeURIComponent(`${meta.title} audio`);
+                  const res = await fetch(apiUrl(`/api/search?q=${q}`));
+                  const results = await res.json();
+                  if (Array.isArray(results) && results.length > 0) {
+                    const alt = results.find(r => r.id !== meta.id && r.id !== this.pendingVideoId) || results[0];
+                    if (alt && alt.id) {
+                      console.log('[AudioManager] Auto-recovering from embed restriction with alternative track:', alt.id);
+                      this.playWithYouTube(alt.id);
+                      return;
+                    }
+                  }
+                } catch (_) {}
+              }
             }
           }
         });
@@ -632,6 +654,7 @@ class AudioManager {
     // Generation request ID to eliminate stale race conditions and overlapping audio
     this.playRequestId = (this.playRequestId || 0) + 1;
     const requestId = this.playRequestId;
+    this._retriedAlternative = false;
 
     // 1. Immediately silence and stop ANY previous playback
     if (this.ytPlayer && typeof this.ytPlayer.pauseVideo === 'function') {
