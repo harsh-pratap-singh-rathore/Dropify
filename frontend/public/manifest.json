@@ -1,0 +1,24 @@
+{
+  "name": "Dropify Music",
+  "short_name": "Dropify",
+  "description": "3D Tactile Neo-Pop & Paper Sketch Music Web App with live lyrics, 10-band sketch EQ, circadian suggestions engine, and uninterrupted mobile background playback.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#FAF7F2",
+  "theme_color": "#FAF7F2",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": [
+    "music",
+    "entertainment",
+    "audio"
+  ]
+}

@@ -319,6 +319,7 @@ export function PlayerProvider({ children }) {
     }
 
     setCurrentSong(song);
+    audioManager.setCurrentSongMetadata(song);
     songStartTimeRef.current = Date.now();
     listenedDurationRef.current = 0;
 
@@ -359,6 +360,7 @@ export function PlayerProvider({ children }) {
       setQueueIndex(nextIndex);
       const nextSong = queue[nextIndex];
       setCurrentSong(nextSong);
+      audioManager.setCurrentSongMetadata(nextSong);
       const streamUrl = apiUrl(`/api/stream/${nextSong.id}`);
       audioManager.playTrack(streamUrl, withCrossfade, nextSong.id);
       setIsPlaying(true);
@@ -384,6 +386,7 @@ export function PlayerProvider({ children }) {
       setQueueIndex(prevIndex);
       const prevSong = queue[prevIndex];
       setCurrentSong(prevSong);
+      audioManager.setCurrentSongMetadata(prevSong);
       audioManager.playTrack(apiUrl(`/api/stream/${prevSong.id}`), false, prevSong.id);
       setIsPlaying(true);
     }
