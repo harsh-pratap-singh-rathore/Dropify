@@ -98,7 +98,7 @@ export default function FullscreenPlayer() {
       });
   };
 
-  // Real-time Visualizer Canvas Loop with Audiophile Mirror Spectrum
+  // Real-time Visualizer Canvas Loop with Charcoal Oscillogram
   useEffect(() => {
     if (!isFullscreenPlayerOpen || activeTab !== 'visualizer') return;
 
@@ -106,78 +106,117 @@ export default function FullscreenPlayer() {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
     const bufferLength = 64;
+    const dataArray = new Uint8Array(bufferLength);
+    const peakArray = new Float32Array(bufferLength);
     let frameCount = 0;
+
     const render = () => {
       animId = requestAnimationFrame(render);
       frameCount++;
-      audioManager.getFrequencyData(dataArray);
+
+      try {
+        if (audioManager && typeof audioManager.getFrequencyData === 'function') {
+          audioManager.getFrequencyData(dataArray);
+        }
+      } catch (err) {
+        // Graceful fallback during audio context initialization
+      }
 
       let totalEnergy = 0;
       for (let i = 0; i < bufferLength; i++) {
         totalEnergy += dataArray[i];
       }
-      const isLowEnergy = totalEnergy < 25 && isPlaying;
+      const isSimulated = !isPlaying || totalEnergy < 20;
 
-      // 2D Charcoal Pencil & Graph Paper Visualizer
-      ctx.fillStyle = '#FFFFFF';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      const W = canvas.width;
+      const H = canvas.height;
 
-      // Faint graph paper grid lines
-      ctx.strokeStyle = 'rgba(24, 24, 27, 0.08)';
+      // 1. Charcoal Paper Base Fill
+      ctx.fillStyle = '#FAF7F2';
+      ctx.fillRect(0, 0, W, H);
+
+      // 2. Faint Graph Paper Grid Lines
+      ctx.strokeStyle = 'rgba(24, 24, 27, 0.07)';
       ctx.lineWidth = 1;
-      for (let gy = 0; gy < canvas.height; gy += 20) {
+      for (let gy = 0; gy < H; gy += 24) {
         ctx.beginPath();
         ctx.moveTo(0, gy);
-        ctx.lineTo(canvas.width, gy);
+        ctx.lineTo(W, gy);
         ctx.stroke();
       }
-      for (let gx = 0; gx < canvas.width; gx += 20) {
+      for (let gx = 0; gx < W; gx += 24) {
         ctx.beginPath();
         ctx.moveTo(gx, 0);
-        ctx.lineTo(gx, canvas.height);
+        ctx.lineTo(gx, H);
         ctx.stroke();
       }
 
-      const barWidth = (canvas.width / bufferLength) * 1.5;
-      let x = 0;
+      // 3. Central Baseline Axis
+      ctx.strokeStyle = 'rgba(24, 24, 27, 0.25)';
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath();
+      ctx.moveTo(0, H - 10);
+      ctx.lineTo(W, H - 10);
+      ctx.stroke();
+      ctx.setLineDash([]);
 
-      for (let i = 0; i < bufferLength; i++) {
+      const barWidth = Math.max(4, W / bufferLength);
+      const usableBars = Math.min(bufferLength, Math.floor(W / barWidth));
+
+      for (let i = 0; i < usableBars; i++) {
         let barHeight;
-        if (isLowEnergy) {
-          // Dynamic harmonic sine wave simulation
-          const t = (currentTime * 4.2) + (frameCount * 0.04);
+        if (isSimulated) {
+          // Ambient organic harmonic wave
+          const t = (currentTime * 3.5) + (frameCount * 0.035);
           const s1 = Math.sin(t + i * 0.22);
-          const s2 = Math.cos(t * 0.7 + i * 0.14);
-          const norm = (s1 * 0.45 + s2 * 0.35 + 0.8) / 1.6;
-          barHeight = Math.max(10, norm * canvas.height * 0.85);
+          const s2 = Math.cos(t * 0.65 + i * 0.12);
+          const wave = (s1 * 0.45 + s2 * 0.35 + 0.8) / 1.6;
+          const decay = Math.sin((i / usableBars) * Math.PI);
+          barHeight = isPlaying
+            ? Math.max(12, wave * (H * 0.75) * (0.4 + decay * 0.6))
+            : 8 + Math.sin(frameCount * 0.05 + i * 0.3) * 5;
         } else {
-          barHeight = (dataArray[i] / 255) * canvas.height * 0.85;
+          const raw = dataArray[i] / 255;
+          barHeight = Math.max(6, raw * (H * 0.82));
         }
 
-        const rx = x;
-        const ry = canvas.height - barHeight;
-        const rw = Math.max(3, barWidth - 3);
+        // Peak decay physics
+        if (barHeight > peakArray[i]) {
+          peakArray[i] = barHeight;
+        } else {
+          peakArray[i] = Math.max(0, peakArray[i] - 1.8);
+        }
+
+        const rx = i * barWidth + 2;
+        const ry = (H - 12) - barHeight;
+        const rw = Math.max(2, barWidth - 4);
         const rh = Math.max(4, barHeight);
 
-        // 3D Neon Pop Gradient Bar
+        // 3D Charcoal & Pop Spectrum Gradient
         const barGrad = ctx.createLinearGradient(0, ry, 0, ry + rh);
-        barGrad.addColorStop(0, '#FF3366'); // Crimson
-        barGrad.addColorStop(0.5, '#FFD600'); // Sunshine Amber
-        barGrad.addColorStop(1, '#00D2FF'); // Cyan Aqua
+        barGrad.addColorStop(0, '#FF3366');   // Neon Crimson Top
+        barGrad.addColorStop(0.4, '#FFD600'); // Highlighter Yellow
+        barGrad.addColorStop(0.85, '#00D2FF'); // Cyan Aqua
+        barGrad.addColorStop(1, '#27272A');    // Charcoal Graphite Base
+
         ctx.fillStyle = barGrad;
         ctx.fillRect(rx, ry, rw, rh);
 
-        // 3D Beveled rim
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
-        ctx.fillRect(rx, ry, rw, Math.min(3, rh));
-
-        // Dark charcoal pencil outline
+        // Hand-drawn sketch outline
         ctx.strokeStyle = '#18181B';
         ctx.lineWidth = 1.2;
         ctx.strokeRect(rx, ry, rw, rh);
 
-        x += barWidth;
+        // Charcoal Peak Cap
+        const peakY = (H - 12) - peakArray[i] - 3;
+        if (peakY < ry) {
+          ctx.fillStyle = '#18181B';
+          ctx.fillRect(rx, Math.max(4, peakY), rw, 2.5);
+        }
       }
     };
 
