@@ -208,7 +208,7 @@ class AudioManager {
     if (!container) {
       container = document.createElement('div');
       container.id = 'dropify-yt-embed';
-      container.style.cssText = 'position:fixed;width:1px;height:1px;left:-9999px;top:-9999px;opacity:0.001;pointer-events:none;z-index:-1;';
+      container.style.cssText = 'position:fixed;width:1px;height:1px;bottom:0;right:0;opacity:0.01;pointer-events:none;z-index:-10;';
       document.body.appendChild(container);
     }
 
@@ -242,8 +242,14 @@ class AudioManager {
               if (event.data === window.YT.PlayerState.PLAYING) {
                 this.isYtPlaying = true;
                 this.shouldBePlaying = true;
+                if (typeof navigator !== 'undefined' && 'mediaSession' in navigator) {
+                  try { navigator.mediaSession.playbackState = 'playing'; } catch (_) {}
+                }
               } else if (event.data === window.YT.PlayerState.PAUSED) {
                 this.isYtPlaying = false;
+                if (typeof navigator !== 'undefined' && 'mediaSession' in navigator) {
+                  try { navigator.mediaSession.playbackState = 'paused'; } catch (_) {}
+                }
               } else if (event.data === window.YT.PlayerState.ENDED) {
                 this.isYtPlaying = false;
                 if (this.onEndedCallback) {
@@ -641,39 +647,22 @@ class AudioManager {
 
     this.currentMode = 'audio';
 
-    if (isMobile) {
-      // MOBILE ANDROID / IOS STREAMING ENGINE:
-      // Direct native HTML5 streaming from backend HTTP 206 chunked proxy directly into Android AudioTrack.
-      current.src = streamUrl;
-      current.load();
-      try {
-        await current.play();
-        if (typeof navigator !== 'undefined' && 'mediaSession' in navigator) {
-          try { navigator.mediaSession.playbackState = 'playing'; } catch (_) {}
-        }
-      } catch (err) {
-        if (err.name === 'AbortError') return;
-        console.warn('[Mobile AudioManager] Playback notice:', err.message);
-      }
-      return;
-    }
-
-    // DESKTOP PC STREAMING ENGINE:
-    // Hybrid zero-failure engine: direct HTML5 audio with YouTube engine fallback if stalled
     let fallbackTriggered = false;
     const triggerFallback = () => {
       if (!fallbackTriggered && resolvedVideoId) {
         fallbackTriggered = true;
-        console.log('[AudioManager] Promoting desktop to client-side YouTube engine for:', resolvedVideoId);
+        console.log(`[AudioManager] Promoting ${isMobile ? 'mobile' : 'desktop'} to client-side YouTube engine for:`, resolvedVideoId);
         this.playWithYouTube(resolvedVideoId);
       }
     };
 
+    // Buffer timeout: if native stream does not buffer within 3.5s (mobile) / 4.5s (desktop), fallback to YouTube
+    const timeoutMs = isMobile ? 3500 : 4500;
     this.bufferTimeout = setTimeout(() => {
       if (this.currentMode === 'audio' && current.readyState < 2) {
         triggerFallback();
       }
-    }, 4500);
+    }, timeoutMs);
 
     const onPlayingHandler = () => {
       if (this.bufferTimeout) {
@@ -702,6 +691,9 @@ class AudioManager {
 
     try {
       await current.play();
+      if (typeof navigator !== 'undefined' && 'mediaSession' in navigator) {
+        try { navigator.mediaSession.playbackState = 'playing'; } catch (_) {}
+      }
     } catch (err) {
       if (err.name === 'AbortError') return;
       console.warn('Direct HTML5 play notice, evaluating fallback:', err.message);
@@ -792,6 +784,7 @@ class AudioManager {
     if (this.currentMode === 'yt' && this.ytPlayer && typeof this.ytPlayer.playVideo === 'function') {
       this.ytPlayer.playVideo();
       this.isYtPlaying = true;
+      this.startPollingYt();
       return;
     }
     return this.getCurrentAudio().play();
