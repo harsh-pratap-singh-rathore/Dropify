@@ -54,6 +54,7 @@ export function PlayerProvider({ children }) {
   const [lyricsData, setLyricsData] = useState({ lines: [], synced: false, plain: '' });
   const [activeLyricIndex, setActiveLyricIndex] = useState(-1);
   const [isLoadingLyrics, setIsLoadingLyrics] = useState(false);
+  const [lyricsOffset, setLyricsOffset] = useState(-2.5); // Calibrated -2.5s offset to align Spotify/LRCLIB timestamps with YouTube music video playback
 
   // DSP & Equalizer State
   const [isEqOpen, setIsEqOpen] = useState(false);
@@ -104,11 +105,12 @@ export function PlayerProvider({ children }) {
       setProgress(progress);
       listenedDurationRef.current = currentTime * 1000;
 
-      // Update active synced lyric line
+      // Update active synced lyric line with calibrated timing offset
       if (lyricsData.lines && lyricsData.lines.length > 0) {
+        const adjustedTime = Math.max(0, currentTime + lyricsOffset);
         let index = -1;
         for (let i = 0; i < lyricsData.lines.length; i++) {
-          if (currentTime >= lyricsData.lines[i].time) {
+          if (adjustedTime >= lyricsData.lines[i].time) {
             index = i;
           } else {
             break;
@@ -128,18 +130,19 @@ export function PlayerProvider({ children }) {
         // next track is ready
       }
     };
-  }, [lyricsData, queue, queueIndex]);
+  }, [lyricsData, queue, queueIndex, lyricsOffset]);
 
-  // High-precision 60fps real-time live lyric synchronization ticker
+  // High-precision 60fps real-time live lyric synchronization ticker with calibrated timing offset
   useEffect(() => {
     if (!isPlaying) return;
     let animId;
     const syncTicker = () => {
       if (audioManager.getIsPlaying() && lyricsData?.lines?.length > 0) {
         const t = audioManager.getCurrentTime();
+        const adjustedTime = Math.max(0, t + lyricsOffset);
         let index = -1;
         for (let i = 0; i < lyricsData.lines.length; i++) {
-          if (t >= lyricsData.lines[i].time) {
+          if (adjustedTime >= lyricsData.lines[i].time) {
             index = i;
           } else {
             break;
@@ -152,7 +155,7 @@ export function PlayerProvider({ children }) {
 
     animId = requestAnimationFrame(syncTicker);
     return () => cancelAnimationFrame(animId);
-  }, [isPlaying, lyricsData, audioManager]);
+  }, [isPlaying, lyricsData, audioManager, lyricsOffset]);
 
   // Load lyrics when song changes
   useEffect(() => {
@@ -412,6 +415,8 @@ export function PlayerProvider({ children }) {
         setActiveLyricIndex,
         isLoadingLyrics,
         setIsLoadingLyrics,
+        lyricsOffset,
+        setLyricsOffset,
         isEqOpen,
         setIsEqOpen,
         isEqualizerEnabled,

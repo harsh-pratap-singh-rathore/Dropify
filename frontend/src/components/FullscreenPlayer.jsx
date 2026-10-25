@@ -46,6 +46,8 @@ export default function FullscreenPlayer() {
     setActiveLyricIndex,
     isLoadingLyrics,
     setIsLoadingLyrics,
+    lyricsOffset,
+    setLyricsOffset,
     isFullscreenPlayerOpen,
     setIsFullscreenPlayerOpen,
     setIsEqOpen,
@@ -57,16 +59,14 @@ export default function FullscreenPlayer() {
   const [activeTab, setActiveTab] = useState('lyrics'); // 'lyrics' or 'visualizer'
   const [manualQuery, setManualQuery] = useState('');
   const [showManualSearch, setShowManualSearch] = useState(false);
-  const [timingOffset, setTimingOffset] = useState(0); // in seconds
   const canvasRef = useRef(null);
   const lyricsContainerRef = useRef(null);
 
-  // Automatically reset manual search and timing offset whenever track changes
+  // Automatically reset manual search query whenever track changes
   useEffect(() => {
     if (currentSong?.id) {
       setManualQuery('');
       setShowManualSearch(false);
-      setTimingOffset(0);
     }
   }, [currentSong?.id]);
 
@@ -79,22 +79,6 @@ export default function FullscreenPlayer() {
       }
     }
   }, [activeLyricIndex]);
-
-  // Adjust active lyric with timing offset
-  useEffect(() => {
-    if (lyricsData?.lines && lyricsData.lines.length > 0) {
-      const adjustedTime = currentTime + timingOffset;
-      let index = -1;
-      for (let i = 0; i < lyricsData.lines.length; i++) {
-        if (adjustedTime >= lyricsData.lines[i].time) {
-          index = i;
-        } else {
-          break;
-        }
-      }
-      setActiveLyricIndex(index);
-    }
-  }, [currentTime, timingOffset, lyricsData]);
 
   // Manual Lyrics Search Handler
   const handleManualSearch = (e) => {
@@ -285,24 +269,42 @@ export default function FullscreenPlayer() {
                 </div>
 
                 {lyricsData.synced && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <span className="sketch-font-mono" style={{ fontSize: '0.8rem' }}>Sync Offset:</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px', flexWrap: 'wrap' }}>
+                    <span className="sketch-font-mono" style={{ fontSize: '0.8rem' }}>Sync:</span>
                     <button
                       className="sketch-btn"
-                      style={{ padding: '2px 8px', fontSize: '0.85rem' }}
-                      onClick={() => setTimingOffset((prev) => +(prev - 0.5).toFixed(1))}
+                      style={{ padding: '2px 7px', fontSize: '0.78rem' }}
+                      onClick={() => setLyricsOffset((prev) => +(prev - 2.5).toFixed(1))}
+                      title="Shift back 1 line (-2.5s)"
+                    >
+                      -1 Line
+                    </button>
+                    <button
+                      className="sketch-btn"
+                      style={{ padding: '2px 7px', fontSize: '0.8rem' }}
+                      onClick={() => setLyricsOffset((prev) => +(prev - 0.5).toFixed(1))}
+                      title="Nudge back 0.5s"
                     >
                       <Minus size={11} />
                     </button>
-                    <span className="sketch-font-mono" style={{ fontSize: '0.85rem', fontWeight: 700 }}>
-                      {timingOffset >= 0 ? `+${timingOffset}s` : `${timingOffset}s`}
+                    <span className="sketch-font-mono" style={{ fontSize: '0.82rem', fontWeight: 700, minWidth: '40px', textAlign: 'center' }}>
+                      {lyricsOffset >= 0 ? `+${lyricsOffset}s` : `${lyricsOffset}s`}
                     </span>
                     <button
                       className="sketch-btn"
-                      style={{ padding: '2px 8px', fontSize: '0.85rem' }}
-                      onClick={() => setTimingOffset((prev) => +(prev + 0.5).toFixed(1))}
+                      style={{ padding: '2px 7px', fontSize: '0.8rem' }}
+                      onClick={() => setLyricsOffset((prev) => +(prev + 0.5).toFixed(1))}
+                      title="Nudge forward 0.5s"
                     >
                       <Plus size={11} />
+                    </button>
+                    <button
+                      className="sketch-btn"
+                      style={{ padding: '2px 7px', fontSize: '0.78rem' }}
+                      onClick={() => setLyricsOffset((prev) => +(prev + 2.5).toFixed(1))}
+                      title="Shift forward 1 line (+2.5s)"
+                    >
+                      +1 Line
                     </button>
                   </div>
                 )}
@@ -347,7 +349,7 @@ export default function FullscreenPlayer() {
                       <div
                         key={idx}
                         className={`lyric-line lyric-line-${idx} ${isActive ? 'active' : ''}`}
-                        onClick={() => line.time !== undefined && duration > 0 && seekTo((line.time / duration) * 100)}
+                        onClick={() => line.time !== undefined && duration > 0 && seekTo((Math.max(0, line.time - lyricsOffset) / duration) * 100)}
                         title="Click to jump to this line"
                       >
                         {line.text}
