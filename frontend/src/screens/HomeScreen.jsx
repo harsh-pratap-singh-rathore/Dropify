@@ -138,7 +138,10 @@ function ShelfSection({ sectionTitle, tracks, onPlayTrack }) {
   let icon = <Flame size={20} className="icon-glow" style={{ color: 'var(--pop-crimson)' }} />;
   let badgeColor = 'var(--pop-crimson)';
 
-  if (titleLower.includes('quick') || titleLower.includes('doodle')) {
+  if (titleLower.includes('recent')) {
+    icon = <Clock size={20} style={{ color: 'var(--pop-cyan)' }} />;
+    badgeColor = 'var(--pop-cyan)';
+  } else if (titleLower.includes('quick') || titleLower.includes('doodle')) {
     icon = <Zap size={20} style={{ color: 'var(--pop-amber)' }} />;
     badgeColor = 'var(--pop-amber)';
   } else if (titleLower.includes('new') || titleLower.includes('fresh')) {
@@ -194,7 +197,7 @@ export default function HomeScreen({ onNavigateTaste }) {
   const [isLoading, setIsLoading] = useState(false);
   const [activeMood, setActiveMood] = useState('all');
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const { playSong, currentSong, isPlaying } = usePlayer();
+  const { playSong, currentSong, isPlaying, recentlyPlayed } = usePlayer();
   const circadian = getCircadianInfo();
 
   const fetchFeed = (mood = null, refresh = false) => {
@@ -204,6 +207,7 @@ export default function HomeScreen({ onNavigateTaste }) {
     const params = new URLSearchParams();
     if (mood && mood !== 'all') params.append('mood', mood);
     if (refresh) params.append('refresh', 'true');
+    params.append('_t', Date.now().toString()); // Cache buster
 
     fetch(apiUrl(`/api/home?${params.toString()}`))
       .then((res) => {
@@ -218,9 +222,6 @@ export default function HomeScreen({ onNavigateTaste }) {
         setIsRefreshing(false);
       })
       .catch((err) => {
-        console.warn('Home feed API notice, using local cache:', err.message);
-        setIsLoading(false);
-        setIsRefreshing(false);
       });
   };
 
@@ -347,6 +348,15 @@ export default function HomeScreen({ onNavigateTaste }) {
             })}
           </div>
         </div>
+      )}
+
+      {/* Recently Played Shelf */}
+      {recentlyPlayed && recentlyPlayed.length > 0 && (
+        <ShelfSection
+          sectionTitle="Recently Played"
+          tracks={recentlyPlayed}
+          onPlayTrack={handlePlayTrack}
+        />
       )}
 
       {/* Shelves Grid */}

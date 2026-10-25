@@ -59,6 +59,11 @@ async function searchWithInnerTube(query) {
         const parts = durationFormatted.split(':').map(p => parseInt(p, 10));
         const duration = parts.length === 2 ? parts[0] * 60 + parts[1] : (parts.length === 3 ? parts[0] * 3600 + parts[1] * 60 + parts[2] : 0);
 
+        // Strict song filter: exclude long DJ mixes, 2-3 hour compilations, or audiobooks (>10 mins)
+        if (duration > 600 || parts.length >= 3) {
+          continue;
+        }
+
         tracks.push({
           id: v.videoId,
           title: v.title.runs[0].text,
@@ -80,37 +85,42 @@ async function searchWithYtdl(query) {
   const ytdl = await getYtdl();
   if (!ytdl) throw new Error('Ytdl not initialized');
   const items = await ytdl.search(query.trim(), { limit: 25 });
-  return (items || []).map(v => {
-    const duration = v.lengthSeconds || 0;
-    const min = Math.floor(duration / 60);
-    const sec = Math.floor(duration % 60);
-    const durationFormatted = `${min}:${sec < 10 ? '0' : ''}${sec}`;
-    return {
-      id: v.id,
-      title: v.title,
-      artist: v.author?.name || 'Various Artists',
-      duration,
-      durationFormatted,
-      thumbnail: `https://i.ytimg.com/vi/${v.id}/mqdefault.jpg`,
-      thumbnailHigh: `https://i.ytimg.com/vi/${v.id}/hqdefault.jpg`,
-      views: v.viewCount ? `${v.viewCount.toLocaleString()} views` : ''
-    };
-  });
+  return (items || [])
+    .filter(v => (v.lengthSeconds || 0) <= 600)
+    .map(v => {
+      const duration = v.lengthSeconds || 0;
+      const min = Math.floor(duration / 60);
+      const sec = Math.floor(duration % 60);
+      const durationFormatted = `${min}:${sec < 10 ? '0' : ''}${sec}`;
+      return {
+        id: v.id,
+        title: v.title,
+        artist: v.author?.name || 'Various Artists',
+        duration,
+        durationFormatted,
+        thumbnail: `https://i.ytimg.com/vi/${v.id}/mqdefault.jpg`,
+        thumbnailHigh: `https://i.ytimg.com/vi/${v.id}/hqdefault.jpg`,
+        views: v.viewCount ? `${v.viewCount.toLocaleString()} views` : ''
+      };
+    });
 }
 
 async function searchWithYts(query) {
   const results = await yts(query);
-  return (results.videos || []).slice(0, 30).map(v => ({
-    id: v.videoId,
-    title: v.title,
-    artist: v.author?.name || 'Unknown Artist',
-    duration: v.seconds,
-    durationFormatted: v.timestamp,
-    thumbnail: v.videoId ? `https://i.ytimg.com/vi/${v.videoId}/mqdefault.jpg` : (v.thumbnail || ''),
-    thumbnailHigh: v.videoId ? `https://i.ytimg.com/vi/${v.videoId}/hqdefault.jpg` : (v.thumbnail || ''),
-    views: v.views,
-    ago: v.ago
-  }));
+  return (results.videos || [])
+    .filter(v => (v.seconds || 0) <= 600)
+    .slice(0, 30)
+    .map(v => ({
+      id: v.videoId,
+      title: v.title,
+      artist: v.author?.name || 'Unknown Artist',
+      duration: v.seconds,
+      durationFormatted: v.timestamp,
+      thumbnail: v.videoId ? `https://i.ytimg.com/vi/${v.videoId}/mqdefault.jpg` : (v.thumbnail || ''),
+      thumbnailHigh: v.videoId ? `https://i.ytimg.com/vi/${v.videoId}/hqdefault.jpg` : (v.thumbnail || ''),
+      views: v.views,
+      ago: v.ago
+    }));
 }
 
 /**
@@ -344,6 +354,22 @@ function getCircadianPeriod(hour) {
   return 'night';
 }
 
+const TRENDING_QUERIES = [
+  'top global hit songs official audio',
+  'chart topping hits pop music 2026',
+  'trending music popular songs',
+  'top 50 hit tracks radio',
+  'viral songs 2026 hits'
+];
+
+const QUICK_PICK_QUERIES = [
+  'popular acoustic indie songs',
+  'fresh new songs official audio',
+  'top catchy pop tracks',
+  'acoustic guitar vocal hits',
+  'popular radio hits 2026'
+];
+
 /**
  * Echo Music Dynamic Home Feed Engine
  * Generates fresh, contextual music shelves tailored to the time of day and diverse seeds.
@@ -357,10 +383,14 @@ async function getHomeFeed(options = {}) {
     return inMemoryHomeFeed;
   }
 
+  // Randomize core shelf queries so re-roll always produces brand new songs
+  const trendingQuery = TRENDING_QUERIES[Math.floor(Math.random() * TRENDING_QUERIES.length)];
+  const quickQuery = QUICK_PICK_QUERIES[Math.floor(Math.random() * QUICK_PICK_QUERIES.length)];
+
   // Curate dynamic section seeds
   const chosenSections = [
-    { title: 'Trending Tracks', query: 'Top Global Music 2026 Hits' },
-    { title: 'Spotify Quick Picks', query: 'Spotify Global Top 50 Hits' }
+    { title: 'Trending Tracks', query: trendingQuery },
+    { title: 'Spotify Quick Picks', query: quickQuery }
   ];
 
   // Add 2 randomized sections from the current circadian mood
@@ -368,15 +398,19 @@ async function getHomeFeed(options = {}) {
   chosenSections.push(moodShuffled[0]);
   if (moodShuffled[1]) chosenSections.push(moodShuffled[1]);
 
-  // Add 1 random extra genre seed for variety
+  // Add 1-2 random extra genre seeds for discovery variety
   const extraShuffled = [...EXTRA_GENRE_SEEDS].sort(() => 0.5 - Math.random());
   chosenSections.push(extraShuffled[0]);
+  if (extraShuffled[1]) chosenSections.push(extraShuffled[1]);
 
   try {
     const promises = chosenSections.map(async (sec) => {
       try {
-        const tracks = (await searchMusic(sec.query)).slice(0, 10);
-        return { title: sec.title, tracks };
+        const rawTracks = await searchMusic(sec.query);
+        // Exclude >10min tracks, and shuffle so rotation is obvious and fun
+        const filtered = rawTracks.filter(t => (t.duration || 0) <= 600);
+        const shuffled = filtered.sort(() => 0.5 - Math.random()).slice(0, 10);
+        return { title: sec.title, tracks: shuffled };
       } catch (err) {
         return { title: sec.title, tracks: [] };
       }

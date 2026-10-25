@@ -73,6 +73,16 @@ export function PlayerProvider({ children }) {
   // Liked tracks cache
   const [likedSongIds, setLikedSongIds] = useState(new Set());
 
+  // Recently Played tracks with localStorage persistence
+  const [recentlyPlayed, setRecentlyPlayed] = useState(() => {
+    try {
+      const saved = localStorage.getItem('dropify_recently_played');
+      return saved ? JSON.parse(saved) : [];
+    } catch (_) {
+      return [];
+    }
+  });
+
   const songStartTimeRef = useRef(0);
   const listenedDurationRef = useRef(0);
 
@@ -297,6 +307,16 @@ export function PlayerProvider({ children }) {
     songStartTimeRef.current = Date.now();
     listenedDurationRef.current = 0;
 
+    // Track Recently Played
+    setRecentlyPlayed((prev) => {
+      const filtered = (prev || []).filter((s) => s.id !== song.id);
+      const updated = [song, ...filtered].slice(0, 25);
+      try {
+        localStorage.setItem('dropify_recently_played', JSON.stringify(updated));
+      } catch (_) {}
+      return updated;
+    });
+
     const streamUrl = apiUrl(`/api/stream/${song.id}`);
     await audioManager.playTrack(streamUrl, false, song.id);
     setIsPlaying(true);
@@ -438,6 +458,8 @@ export function PlayerProvider({ children }) {
         isShortcutsOpen,
         setIsShortcutsOpen,
         likedSongIds,
+        recentlyPlayed,
+        setRecentlyPlayed,
         playSong,
         togglePlayPause,
         playNext,

@@ -221,9 +221,9 @@ export default function FullscreenPlayer() {
       </div>
 
       {/* Main Content Area */}
-      <div className="fullscreen-body">
+      <div className={`fullscreen-body ${activeTab === 'lyrics' ? 'lyrics-mode-active' : 'visualizer-mode-active'}`}>
         {/* Left: Vintage Hand-Drawn Vinyl Turntable & Polaroid Metadata */}
-        <div className="fullscreen-turntable-col">
+        <div className={`fullscreen-turntable-col ${activeTab === 'lyrics' ? 'mobile-hidden' : ''}`}>
           <div className="turntable-wrapper">
             <div className={`vinyl-disc ${isPlaying ? 'spinning' : ''}`}>
               <div className="vinyl-label">
@@ -258,11 +258,27 @@ export default function FullscreenPlayer() {
         </div>
 
         {/* Right: Songwriter Journal Lined Paper Lyrics OR Charcoal Visualizer */}
-        <div className="fullscreen-content-col">
+        <div className={`fullscreen-content-col ${activeTab === 'lyrics' ? 'lyrics-expanded' : ''}`}>
           {activeTab === 'lyrics' ? (
-            <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%' }}>
+              {/* Mobile Track Header (Visible when turntable is hidden on mobile) */}
+              <div className="fullscreen-mobile-song-bar">
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <h3 className="sketch-font-title truncate" style={{ fontSize: '1.15rem', margin: 0, lineHeight: 1.2 }}>
+                    {currentSong.title}
+                  </h3>
+                  <p className="sketch-font-hand truncate" style={{ fontSize: '0.95rem', margin: 0, color: 'var(--graphite-muted)' }}>
+                    {currentSong.artist}
+                  </p>
+                </div>
+                <div style={{ display: 'flex', gap: '4px', flexShrink: 0 }}>
+                  <span className="gain-badge-compact" style={{ fontSize: '0.68rem' }}>320k</span>
+                  <span className="gain-badge-compact" style={{ fontSize: '0.68rem' }}>DSP</span>
+                </div>
+              </div>
+
               {/* Lyrics Provider & Timing Offset Controls */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '12px', borderBottom: '2px dashed var(--paper-border-dashed)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '12px', borderBottom: '2px dashed var(--paper-border-dashed)', flexWrap: 'wrap', gap: '8px' }}>
                 <div className="sketch-font-mono" style={{ fontSize: '0.82rem', color: 'var(--graphite-muted)', display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <Sparkles size={13} />
                   <span>{lyricsData.synced ? 'KARAOKE SYNC' : 'PLAIN NOTEBOOK'} • {lyricsData.provider || 'Lyrics Engine'}</span>

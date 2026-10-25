@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Heart, ListMusic, Plus, Play } from 'lucide-react';
+import { Heart, ListMusic, Plus, Play, Clock } from 'lucide-react';
 import TrackCard from '../components/TrackCard';
 import { usePlayer } from '../context/PlayerContext';
 import { apiUrl } from '../config';
 
 export default function LibraryScreen() {
   const [library, setLibrary] = useState({ likedSongs: [], playlists: [] });
-  const [activeTab, setActiveTab] = useState('liked'); // 'liked' or 'playlists'
+  const [activeTab, setActiveTab] = useState('liked'); // 'liked', 'recent', or 'playlists'
   const [newPlaylistName, setNewPlaylistName] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const { playSong } = usePlayer();
+  const { playSong, recentlyPlayed } = usePlayer();
 
   const fetchLibrary = () => {
     fetch(apiUrl('/api/library'))
@@ -49,7 +49,15 @@ export default function LibraryScreen() {
             onClick={() => setActiveTab('liked')}
           >
             <Heart size={16} fill={activeTab === 'liked' ? '#ef4444' : 'none'} color={activeTab === 'liked' ? '#ef4444' : 'var(--graphite-main)'} />
-            <span>Liked Tracks ({library.likedSongs?.length || 0})</span>
+            <span>Liked ({library.likedSongs?.length || 0})</span>
+          </button>
+
+          <button
+            className={`sketch-btn ${activeTab === 'recent' ? 'sketch-btn-primary' : ''}`}
+            onClick={() => setActiveTab('recent')}
+          >
+            <Clock size={16} />
+            <span>Recent ({recentlyPlayed?.length || 0})</span>
           </button>
 
           <button
@@ -69,7 +77,7 @@ export default function LibraryScreen() {
         )}
       </div>
 
-      {activeTab === 'liked' ? (
+      {activeTab === 'liked' && (
         library.likedSongs?.length > 0 ? (
           <div className="shelf-grid">
             {library.likedSongs.map((track) => (
@@ -88,38 +96,63 @@ export default function LibraryScreen() {
             <p className="sketch-font-hand">Songs you like while listening will be jotted down here for quick replay.</p>
           </div>
         )
-      ) : library.playlists?.length > 0 ? (
-        <div className="shelf-grid">
-          {library.playlists.map((pl) => (
-            <div key={pl.id} className="polaroid-frame" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              <div className="washi-tape-top" />
-              <div style={{ width: '100%', height: '140px', background: 'var(--paper-card-subtle)', border: '1.5px solid var(--paper-border)', borderRadius: 'var(--sketch-radius-sm)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <ListMusic size={42} style={{ color: 'var(--graphite-main)' }} />
+      )}
+
+      {activeTab === 'recent' && (
+        recentlyPlayed && recentlyPlayed.length > 0 ? (
+          <div className="shelf-grid">
+            {recentlyPlayed.map((track) => (
+              <TrackCard
+                key={track.id}
+                song={track}
+                onPlay={(t) => playSong(t, recentlyPlayed)}
+                queueContext={recentlyPlayed}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="library-empty-state sketch-card">
+            <Clock size={44} style={{ color: 'var(--pop-cyan)' }} />
+            <h3 className="sketch-font-title">No Recent Tracks Yet</h3>
+            <p className="sketch-font-hand">Tracks you play will be automatically remembered here so you can jump right back in.</p>
+          </div>
+        )
+      )}
+
+      {activeTab === 'playlists' && (
+        library.playlists?.length > 0 ? (
+          <div className="shelf-grid">
+            {library.playlists.map((pl) => (
+              <div key={pl.id} className="polaroid-frame" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <div className="washi-tape-top" />
+                <div style={{ width: '100%', height: '140px', background: 'var(--paper-card-subtle)', border: '1.5px solid var(--paper-border)', borderRadius: 'var(--sketch-radius-sm)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <ListMusic size={42} style={{ color: 'var(--graphite-main)' }} />
+                </div>
+                <div className="playlist-info">
+                  <h3 className="sketch-font-title" style={{ fontSize: '1.25rem' }}>{pl.name}</h3>
+                  <span className="sketch-font-mono" style={{ fontSize: '0.85rem', color: 'var(--graphite-muted)' }}>{pl.songs?.length || 0} tracks</span>
+                </div>
+                {pl.songs?.length > 0 && (
+                  <button
+                    className="sketch-btn"
+                    onClick={() => playSong(pl.songs[0], pl.songs)}
+                    title="Play Playlist"
+                    style={{ marginTop: 'auto' }}
+                  >
+                    <Play size={16} fill="#18181B" />
+                    <span>Play Book</span>
+                  </button>
+                )}
               </div>
-              <div className="playlist-info">
-                <h3 className="sketch-font-title" style={{ fontSize: '1.25rem' }}>{pl.name}</h3>
-                <span className="sketch-font-mono" style={{ fontSize: '0.85rem', color: 'var(--graphite-muted)' }}>{pl.songs?.length || 0} tracks</span>
-              </div>
-              {pl.songs?.length > 0 && (
-                <button
-                  className="sketch-btn"
-                  onClick={() => playSong(pl.songs[0], pl.songs)}
-                  title="Play Playlist"
-                  style={{ marginTop: 'auto' }}
-                >
-                  <Play size={16} fill="#18181B" />
-                  <span>Play Book</span>
-                </button>
-              )}
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div className="library-empty-state sketch-card">
-          <ListMusic size={44} style={{ color: 'var(--graphite-secondary)' }} />
-          <h3 className="sketch-font-title">Create Your First Sketchbook</h3>
-          <p className="sketch-font-hand">Organize your favorite audio doodles into custom sketchbooks.</p>
-        </div>
+            ))}
+          </div>
+        ) : (
+          <div className="library-empty-state sketch-card">
+            <ListMusic size={44} style={{ color: 'var(--graphite-secondary)' }} />
+            <h3 className="sketch-font-title">Create Your First Sketchbook</h3>
+            <p className="sketch-font-hand">Organize your favorite audio doodles into custom sketchbooks.</p>
+          </div>
+        )
       )}
 
       {showCreateModal && (
