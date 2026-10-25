@@ -42,36 +42,36 @@ export default function LibraryScreen() {
 
   return (
     <div className="library-screen">
-      <div className="library-header glass-panel">
+      <div className="library-header sketch-card">
         <div className="library-tabs">
           <button
-            className={`glass-pill ${activeTab === 'liked' ? 'active' : ''}`}
+            className={`sketch-btn ${activeTab === 'liked' ? 'sketch-btn-primary' : ''}`}
             onClick={() => setActiveTab('liked')}
           >
-            <Heart size={16} />
+            <Heart size={16} fill={activeTab === 'liked' ? '#ef4444' : 'none'} color={activeTab === 'liked' ? '#ef4444' : 'var(--graphite-main)'} />
             <span>Liked Tracks ({library.likedSongs?.length || 0})</span>
           </button>
 
           <button
-            className={`glass-pill ${activeTab === 'playlists' ? 'active' : ''}`}
+            className={`sketch-btn ${activeTab === 'playlists' ? 'sketch-btn-primary' : ''}`}
             onClick={() => setActiveTab('playlists')}
           >
             <ListMusic size={16} />
-            <span>Playlists ({library.playlists?.length || 0})</span>
+            <span>Sketchbooks ({library.playlists?.length || 0})</span>
           </button>
         </div>
 
         {activeTab === 'playlists' && (
-          <button className="btn-primary" onClick={() => setShowCreateModal(true)}>
+          <button className="sketch-btn sketch-btn-primary" onClick={() => setShowCreateModal(true)}>
             <Plus size={16} />
-            <span>New Playlist</span>
+            <span>New Sketchbook</span>
           </button>
         )}
       </div>
 
       {activeTab === 'liked' ? (
         library.likedSongs?.length > 0 ? (
-          <div className="library-grid">
+          <div className="shelf-grid">
             {library.likedSongs.map((track) => (
               <TrackCard
                 key={track.id}
@@ -82,66 +82,69 @@ export default function LibraryScreen() {
             ))}
           </div>
         ) : (
-          <div className="library-empty-state glass-card">
-            <Heart size={44} className="empty-icon" />
-            <h3>Your Liked Songs Collection</h3>
-            <p>Songs you like while listening will appear here for fast access.</p>
+          <div className="library-empty-state sketch-card">
+            <Heart size={44} style={{ color: '#ef4444' }} />
+            <h3 className="sketch-font-title">Your Liked Notebook</h3>
+            <p className="sketch-font-hand">Songs you like while listening will be jotted down here for quick replay.</p>
           </div>
         )
       ) : library.playlists?.length > 0 ? (
-        <div className="playlists-grid">
+        <div className="shelf-grid">
           {library.playlists.map((pl) => (
-            <div key={pl.id} className="playlist-card glass-card">
-              <div className="playlist-icon-box">
-                <ListMusic size={32} />
+            <div key={pl.id} className="polaroid-frame" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <div className="washi-tape-top" />
+              <div style={{ width: '100%', height: '140px', background: 'var(--paper-card-subtle)', border: '1.5px solid var(--paper-border)', borderRadius: 'var(--sketch-radius-sm)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <ListMusic size={42} style={{ color: 'var(--graphite-main)' }} />
               </div>
               <div className="playlist-info">
-                <h3>{pl.name}</h3>
-                <span>{pl.songs?.length || 0} tracks</span>
+                <h3 className="sketch-font-title" style={{ fontSize: '1.25rem' }}>{pl.name}</h3>
+                <span className="sketch-font-mono" style={{ fontSize: '0.85rem', color: 'var(--graphite-muted)' }}>{pl.songs?.length || 0} tracks</span>
               </div>
               {pl.songs?.length > 0 && (
                 <button
-                  className="btn-icon"
+                  className="sketch-btn"
                   onClick={() => playSong(pl.songs[0], pl.songs)}
                   title="Play Playlist"
+                  style={{ marginTop: 'auto' }}
                 >
-                  <Play size={18} fill="#fff" />
+                  <Play size={16} fill="#18181B" />
+                  <span>Play Book</span>
                 </button>
               )}
             </div>
           ))}
         </div>
       ) : (
-        <div className="library-empty-state glass-card">
-          <ListMusic size={44} className="empty-icon" />
-          <h3>Create Your First Playlist</h3>
-          <p>Organize your favorite tracks into personalized playlists.</p>
+        <div className="library-empty-state sketch-card">
+          <ListMusic size={44} style={{ color: 'var(--graphite-secondary)' }} />
+          <h3 className="sketch-font-title">Create Your First Sketchbook</h3>
+          <p className="sketch-font-hand">Organize your favorite audio doodles into custom sketchbooks.</p>
         </div>
       )}
 
       {showCreateModal && (
         <div className="modal-backdrop" onClick={() => setShowCreateModal(false)}>
-          <div className="modal-content glass-panel" onClick={(e) => e.stopPropagation()}>
-            <h3>Create Playlist</h3>
-            <form onSubmit={handleCreatePlaylist} className="create-playlist-form">
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <h3 className="sketch-font-title" style={{ fontSize: '1.6rem' }}>Create New Sketchbook</h3>
+            <form onSubmit={handleCreatePlaylist} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <input
                 type="text"
-                placeholder="Playlist name..."
+                placeholder="Sketchbook name (e.g. Midnight Acoustic)..."
                 value={newPlaylistName}
                 onChange={(e) => setNewPlaylistName(e.target.value)}
                 autoFocus
-                className="modal-input"
+                style={{ padding: '12px 18px', background: 'var(--paper-card-subtle)', border: '2px solid var(--paper-border)', borderRadius: 'var(--sketch-radius-pill)', outline: 'none', fontFamily: 'var(--font-hand)', fontSize: '1.2rem', color: 'var(--graphite-main)' }}
               />
-              <div className="modal-btn-row">
+              <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
                 <button
                   type="button"
-                  className="glass-pill"
+                  className="sketch-btn"
                   onClick={() => setShowCreateModal(false)}
                 >
                   Cancel
                 </button>
-                <button type="submit" className="btn-primary">
-                  Create
+                <button type="submit" className="sketch-btn sketch-btn-primary">
+                  Create Book
                 </button>
               </div>
             </form>

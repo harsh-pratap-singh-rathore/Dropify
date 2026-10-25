@@ -149,23 +149,24 @@ export default function HomeScreen({ onNavigateTaste }) {
 
   return (
     <div className="home-screen">
-      {/* Echo Brain Hero Banner */}
-      <div className="hero-banner glass-panel">
+      {/* Hand-Drawn Notebook Hero Banner */}
+      <div className="hero-banner sketch-card">
+        <div className="washi-tape-top" />
         <div className="hero-content">
-          <div className="hero-badge glass-pill">
-            <Sparkles size={16} className="icon-glow" />
-            <span>Echo Brain • Circadian Audio Intelligence</span>
+          <div className="hero-badge">
+            <Sparkles size={16} />
+            <span>Echo Brain • Handwritten Audio Intelligence</span>
           </div>
-          <h1 className="hero-title">Experience Pure Sound with Dropify</h1>
-          <p className="hero-desc">
-            Ad-free YouTube Music catalog streaming with Web Audio 10-band parametric EQ,
-            Mid/Side stereo wideness, and millisecond synchronized lyrics.
+          <h1 className="hero-title sketch-font-title">What's on your audio notebook today?</h1>
+          <p className="hero-desc sketch-font-hand">
+            Stream millions of tracks in 2D hand-drawn sketch aesthetic with Web Audio 10-band sketch EQ,
+            karaoke notebook lyrics, and polaroid album sleeves.
           </p>
 
           <div className="hero-actions">
-            <button className="btn-primary" onClick={onNavigateTaste}>
-              <Play size={18} fill="#fff" />
-              <span>Launch Smart Taste Mix</span>
+            <button className="sketch-btn sketch-btn-primary" onClick={onNavigateTaste}>
+              <Play size={18} fill="#18181B" />
+              <span>Open Sketch Taste Mix</span>
             </button>
           </div>
         </div>
@@ -176,34 +177,46 @@ export default function HomeScreen({ onNavigateTaste }) {
         <div className="quick-picks-section">
           <div className="shelf-header">
             <div className="shelf-title-row">
-              <Zap size={20} className="icon-glow" />
-              <h2 className="shelf-title">Quick Picks</h2>
-              <span className="shelf-badge glass-pill">Spotify Speed</span>
+              <Zap size={20} />
+              <h2 className="shelf-title sketch-font-title">Quick Doodles</h2>
+              <span className="shelf-count">Instant Spin</span>
             </div>
           </div>
-          <div className="quick-picks-grid">
+          <div className="quick-picks-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '14px', marginTop: '14px' }}>
             {quickPicks.slice(0, 6).map((track) => {
               const isCurrent = currentSong && currentSong.id === track.id;
               return (
                 <div
                   key={track.id}
-                  className={`quick-pick-card glass-panel ${isCurrent ? 'active' : ''}`}
+                  className={`quick-pick-card sketch-card ${isCurrent ? 'active' : ''}`}
                   onClick={() => handlePlayTrack(track, quickPicks)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    padding: '8px 12px',
+                    cursor: 'pointer',
+                    background: isCurrent ? 'var(--highlighter-yellow)' : 'var(--paper-card)',
+                    borderRadius: 'var(--sketch-radius-sm)'
+                  }}
                 >
                   <img
                     src={track.thumbnail || `https://i.ytimg.com/vi/${track.id}/mqdefault.jpg`}
                     alt={track.title}
                     className="quick-pick-thumb"
                     loading="lazy"
+                    style={{ width: '44px', height: '44px', borderRadius: '4px', border: '1.5px solid var(--paper-border)', objectFit: 'cover' }}
                   />
-                  <div className="quick-pick-info">
-                    <span className="quick-pick-title" title={track.title}>
+                  <div className="quick-pick-info" style={{ flex: 1, overflow: 'hidden' }}>
+                    <div className="quick-pick-title sketch-font-hand" style={{ fontSize: '1.05rem', fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                       {track.title}
-                    </span>
-                    <span className="quick-pick-artist">{track.artist}</span>
+                    </div>
+                    <div className="quick-pick-artist sketch-font-hand" style={{ fontSize: '0.88rem', color: 'var(--graphite-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {track.artist}
+                    </div>
                   </div>
-                  <button className="quick-pick-play-btn" aria-label="Play">
-                    <Play size={16} fill="#fff" />
+                  <button className="play-glyph-btn" style={{ width: '32px', height: '32px', flexShrink: 0 }} aria-label="Play">
+                    <Play size={14} fill="#18181B" />
                   </button>
                 </div>
               );

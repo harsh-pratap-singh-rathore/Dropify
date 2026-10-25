@@ -49,21 +49,12 @@ export default function MusicFlowModal() {
   const nextLine = lyricsData.lines?.[activeLyricIndex + 1]?.text || '';
 
   return (
-    <div className="flow-modal-overlay">
-      {/* Full-bleed blurred background */}
-      <div
-        className="flow-bg-artwork"
-        style={{
-          backgroundImage: `url(${currentFlowTrack?.thumbnail || ''})`
-        }}
-      />
-      <div className="flow-scrim" />
-
+    <div className="fullscreen-overlay" style={{ zIndex: 3500 }}>
       {/* Top Header */}
-      <div className="flow-header">
-        <div className="flow-tag glass-pill">
+      <div className="fullscreen-header">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--highlighter-yellow)', padding: '4px 14px', border: '1.5px solid var(--paper-border)', borderRadius: 'var(--sketch-radius-pill)' }}>
           <Radio size={16} />
-          <span>Music Flow — For You</span>
+          <span className="sketch-font-hand" style={{ fontSize: '1rem', fontWeight: 700 }}>Music Flow • Notebook Journal</span>
         </div>
         <button className="btn-icon" onClick={() => setIsMusicFlowOpen(false)}>
           <X size={20} />
@@ -71,58 +62,61 @@ export default function MusicFlowModal() {
       </div>
 
       {/* Central Flow Stage */}
-      <div className="flow-stage">
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '24px', padding: '24px' }}>
         {/* Synchronized Lyrics First Overlay */}
-        <div className="flow-lyrics-overlay">
+        <div style={{ maxWidth: '600px', textAlign: 'center', minHeight: '60px' }}>
           {currentLine ? (
-            <div className="flow-lyric-pair">
-              <div className="current-lyric-line">{currentLine}</div>
-              {nextLine && <div className="upcoming-lyric-line">{nextLine}</div>}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div className="highlighter-mark sketch-font-hand" style={{ fontSize: '1.8rem', fontWeight: 700 }}>{currentLine}</div>
+              {nextLine && <div className="sketch-font-hand" style={{ fontSize: '1.25rem', color: 'var(--graphite-muted)' }}>{nextLine}</div>}
             </div>
           ) : (
-            <div className="flow-instrumental-note">
+            <div className="sketch-font-hand" style={{ fontSize: '1.25rem', color: 'var(--graphite-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
               <Sparkles size={16} />
-              <span>Enjoy the music momentum</span>
+              <span>Enjoy the acoustic momentum</span>
             </div>
           )}
         </div>
 
-        {/* Center Artwork with Translucent Play Glyph */}
-        <div className="flow-artwork-wrapper" onClick={togglePlayPause}>
-          <img
-            src={currentFlowTrack?.thumbnail || ''}
-            alt={currentFlowTrack?.title}
-            className="flow-cover-art"
-          />
-          <div className={`flow-play-glyph ${!isPlaying ? 'show' : ''}`}>
-            {isPlaying ? <Pause size={36} /> : <Play size={36} fill="#fff" />}
+        {/* Center Artwork as Polaroid */}
+        <div className="polaroid-frame" style={{ width: '280px', cursor: 'pointer' }} onClick={togglePlayPause}>
+          <div className="washi-tape-top" />
+          <div style={{ position: 'relative', width: '100%', aspectRatio: '1/1', overflow: 'hidden', borderRadius: 'var(--sketch-radius-sm)', border: '1.5px solid var(--paper-border)' }}>
+            <img
+              src={currentFlowTrack?.thumbnail || ''}
+              alt={currentFlowTrack?.title}
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+            />
+            <div style={{ position: 'absolute', inset: 0, background: 'rgba(250,247,242,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: !isPlaying ? 1 : 0, transition: 'opacity 0.2s ease' }}>
+              <div className="play-glyph-btn" style={{ width: '56px', height: '56px' }}>
+                {isPlaying ? <Pause size={28} /> : <Play size={28} fill="#18181B" style={{ marginLeft: '3px' }} />}
+              </div>
+            </div>
+          </div>
+
+          <div style={{ marginTop: '12px', textAlign: 'center' }}>
+            <h2 className="sketch-font-title" style={{ fontSize: '1.35rem', marginBottom: '2px' }}>{currentFlowTrack?.title}</h2>
+            <p className="sketch-font-hand" style={{ fontSize: '1.05rem', color: 'var(--graphite-muted)' }}>{currentFlowTrack?.artist}</p>
           </div>
         </div>
 
-        {/* Metadata & Actions */}
-        <div className="flow-info-bar">
-          <div className="flow-meta">
-            <h2 className="flow-title">{currentFlowTrack?.title}</h2>
-            <p className="flow-artist">{currentFlowTrack?.artist}</p>
-          </div>
-
+        {/* Actions & Navigation Controls */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+          <button className="btn-icon" onClick={handlePrev} disabled={flowIndex === 0} title="Previous Flow">
+            <ChevronUp size={22} />
+          </button>
           <button
-            className={`btn-icon ${isLiked ? 'liked' : ''}`}
+            className={`card-like-btn ${isLiked ? 'liked' : ''}`}
             onClick={() => currentFlowTrack && toggleLike(currentFlowTrack)}
+            title={isLiked ? 'Unlike' : 'Like'}
+            style={{ padding: '8px' }}
           >
-            <Heart size={22} fill={isLiked ? '#ed5564' : 'none'} />
+            <Heart size={26} fill={isLiked ? '#ef4444' : 'none'} color={isLiked ? '#ef4444' : 'var(--graphite-main)'} />
+          </button>
+          <button className="btn-icon" onClick={handleNext} disabled={flowIndex >= feed.length - 1} title="Next Flow">
+            <ChevronDown size={22} />
           </button>
         </div>
-      </div>
-
-      {/* Right-side Vertical Navigation Arrows */}
-      <div className="flow-nav-controls">
-        <button className="btn-icon flow-nav-btn" onClick={handlePrev} disabled={flowIndex === 0}>
-          <ChevronUp size={24} />
-        </button>
-        <button className="btn-icon flow-nav-btn" onClick={handleNext} disabled={flowIndex >= feed.length - 1}>
-          <ChevronDown size={24} />
-        </button>
       </div>
     </div>
   );

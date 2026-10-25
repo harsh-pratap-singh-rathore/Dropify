@@ -27,9 +27,10 @@ export default function TrackCard({ song, onPlay, queueContext = [] }) {
 
   return (
     <div
-      className={`track-card glass-card ${isCurrent ? 'active-track' : ''}`}
+      className={`track-card polaroid-frame ${isCurrent ? 'active-track' : ''}`}
       onClick={handleClickPlay}
     >
+      <div className="washi-tape-top" />
       <div className="card-thumb-container">
         {!isLoaded && <div className="card-thumb-skeleton shimmer" />}
         <img
@@ -57,30 +58,30 @@ export default function TrackCard({ song, onPlay, queueContext = [] }) {
 
         <div className={`card-play-overlay ${isCurrent ? 'visible' : ''}`}>
           <button className="play-glyph-btn" aria-label="Play Track">
-            {isCurrent && isPlaying ? <Pause size={20} /> : <Play size={20} fill="#fff" />}
+            {isCurrent && isPlaying ? <Pause size={20} /> : <Play size={20} fill="#18181B" />}
           </button>
         </div>
       </div>
 
       <div className="card-meta">
-        <div className="card-title" title={song.title}>
+        <div className="card-title sketch-font-hand" title={song.title}>
           {song.title}
         </div>
-        <div className="card-artist" title={song.artist}>
+        <div className="card-artist sketch-font-hand" title={song.artist}>
           {song.artist}
         </div>
       </div>
 
       <div className="card-actions">
         {song.durationFormatted && (
-          <span className="card-duration">{song.durationFormatted}</span>
+          <span className="card-duration sketch-font-mono">{song.durationFormatted}</span>
         )}
         <button
           className={`card-like-btn ${isLiked ? 'liked' : ''}`}
           onClick={handleLike}
           title={isLiked ? 'Unlike' : 'Like song'}
         >
-          <Heart size={16} fill={isLiked ? '#ed5564' : 'none'} color={isLiked ? '#ed5564' : 'rgba(255,255,255,0.6)'} />
+          <Heart size={16} fill={isLiked ? '#ef4444' : 'none'} color={isLiked ? '#ef4444' : 'var(--graphite-main)'} />
         </button>
       </div>
     </div>

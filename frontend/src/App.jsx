@@ -169,21 +169,19 @@ function MainApp() {
 
   return (
     <div className="app-layout">
-      {/* Animated Liquid Glass Aurora Background Orbs */}
-      <div className="aurora-mesh-container" aria-hidden="true">
-        <div className="aurora-orb orb-crimson"></div>
-        <div className="aurora-orb orb-violet"></div>
-        <div className="aurora-orb orb-cyan"></div>
-      </div>
+      {/* Notebook Binder Margin & Page Edge */}
+      <div className="sketch-notebook-margin" aria-hidden="true" />
 
-      {/* Dynamic Ambient Blur Background Layer */}
+      {/* Dynamic Graphite Vignette Wash Layer */}
       {currentSong?.thumbnail && (
         <div
           className="ambient-glow"
           style={{
-            backgroundImage: `radial-gradient(circle, rgba(237, 85, 100, 0.28) 0%, rgba(6, 8, 13, 0.94) 80%), url(${currentSong.thumbnailHigh || currentSong.thumbnail})`,
+            backgroundImage: `radial-gradient(circle, rgba(24, 24, 27, 0.05) 0%, rgba(250, 247, 242, 0.92) 80%), url(${currentSong.thumbnailHigh || currentSong.thumbnail})`,
             backgroundSize: 'cover',
-            backgroundPosition: 'center'
+            backgroundPosition: 'center',
+            opacity: 0.18,
+            filter: 'grayscale(100%) contrast(120%)'
           }}
         />
       )}

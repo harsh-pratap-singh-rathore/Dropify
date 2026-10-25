@@ -20,26 +20,27 @@ export default function ShortcutsModal() {
 
   return (
     <div className="modal-backdrop" onClick={() => setIsShortcutsOpen(false)}>
-      <div className="modal-content glass-panel shortcuts-modal-content" onClick={(e) => e.stopPropagation()}>
+      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+        <div className="washi-tape-top" />
         <div className="modal-header">
           <div className="modal-title">
-            <Command size={20} className="icon-glow" />
-            <span>Audiophile Keyboard Shortcuts</span>
+            <Command size={20} />
+            <span className="sketch-font-title">Studio Keyboard Shortcuts</span>
           </div>
           <button className="btn-icon" onClick={() => setIsShortcutsOpen(false)} aria-label="Close">
             <X size={18} />
           </button>
         </div>
 
-        <p className="shortcuts-subtitle">
-          Control Dropify with studio-grade keyboard gestures from anywhere in the app.
+        <p className="shortcuts-subtitle sketch-font-hand">
+          Control Dropify with studio keyboard gestures from anywhere in your notebook.
         </p>
 
         <div className="shortcuts-grid">
           {SHORTCUTS.map((item, idx) => (
-            <div key={idx} className="shortcut-card glass-card">
+            <div key={idx} className="shortcut-card">
               <div className="shortcut-left">
-                <span className="shortcut-icon-pill">{item.icon}</span>
+                <span style={{ display: 'flex', color: 'var(--graphite-secondary)' }}>{item.icon}</span>
                 <span className="shortcut-desc">{item.desc}</span>
               </div>
               <kbd className="shortcut-kbd">{item.key}</kbd>
@@ -47,9 +48,9 @@ export default function ShortcutsModal() {
           ))}
         </div>
 
-        <div className="shortcuts-footer">
-          <button className="btn-primary" onClick={() => setIsShortcutsOpen(false)}>
-            Got it, Let's Vibe
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '12px' }}>
+          <button className="sketch-btn sketch-btn-primary" onClick={() => setIsShortcutsOpen(false)}>
+            Got it, Let's Doodle
           </button>
         </div>
       </div>

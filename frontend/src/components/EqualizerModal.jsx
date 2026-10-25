@@ -38,11 +38,12 @@ export default function EqualizerModal() {
 
   return (
     <div className="modal-backdrop" onClick={() => setIsEqOpen(false)}>
-      <div className="modal-content glass-panel" onClick={(e) => e.stopPropagation()}>
+      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+        <div className="washi-tape-top" />
         <div className="modal-header">
           <div className="modal-title">
-            <Sliders size={20} className="icon-glow" />
-            <span>Parametric Equalizer & Audio DSP</span>
+            <Sliders size={20} />
+            <span className="sketch-font-title">Parametric Equalizer &amp; DSP Graph</span>
           </div>
           <button className="btn-icon" onClick={() => setIsEqOpen(false)}>
             <X size={18} />
@@ -52,12 +53,12 @@ export default function EqualizerModal() {
         {/* Master Toggle & Presets */}
         <div className="eq-top-bar">
           <div className="toggle-row">
-            <span className="label-bold">DSP Status:</span>
+            <span className="label-bold sketch-font-hand">DSP Engine:</span>
             <button
-              className={`glass-pill ${isEqualizerEnabled ? 'active' : ''}`}
+              className={`sketch-btn ${isEqualizerEnabled ? 'sketch-btn-primary' : ''}`}
               onClick={() => setIsEqualizerEnabled(!isEqualizerEnabled)}
             >
-              {isEqualizerEnabled ? 'Active (Biquad Enabled)' : 'Bypassed'}
+              {isEqualizerEnabled ? 'Active (10-Band Biquad)' : 'Bypassed'}
             </button>
           </div>
 
@@ -65,7 +66,7 @@ export default function EqualizerModal() {
             {Object.keys(PRESETS).map((pName) => (
               <button
                 key={pName}
-                className="glass-pill preset-btn"
+                className="category-chip"
                 onClick={() => handleApplyPreset(pName)}
               >
                 {pName}
@@ -74,12 +75,12 @@ export default function EqualizerModal() {
           </div>
         </div>
 
-        {/* 10-Band EQ Sliders */}
+        {/* 10-Band EQ Sliders on Graph Paper */}
         <div className="eq-bands-grid">
           {eqGains.map((gain, index) => (
             <div key={FREQ_LABELS[index]} className="eq-slider-col">
-              <span className="gain-val">{gain > 0 ? `+${gain}` : gain}dB</span>
-              <div className="vertical-slider-wrapper">
+              <span className="gain-badge">{gain > 0 ? `+${gain}` : gain}dB</span>
+              <div className="vertical-slider-wrap">
                 <input
                   type="range"
                   min="-12"
@@ -87,7 +88,8 @@ export default function EqualizerModal() {
                   step="0.5"
                   value={gain}
                   onChange={(e) => updateEqGain(index, parseFloat(e.target.value))}
-                  className="vertical-slider"
+                  className="eq-vertical-slider"
+                  style={{ writingMode: 'vertical-lr', direction: 'rtl' }}
                 />
               </div>
               <span className="freq-label">{FREQ_LABELS[index]}</span>
@@ -96,13 +98,13 @@ export default function EqualizerModal() {
         </div>
 
         {/* Advanced Audio Extensions: Stereo Widener & Equal-Power Crossfade */}
-        <div className="dsp-advanced-row">
-          <div className="dsp-card glass-card">
-            <div className="dsp-card-title">
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '14px', marginTop: '6px' }}>
+          <div className="sketch-card" style={{ padding: '14px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', fontFamily: 'var(--font-hand)', fontSize: '1.15rem', fontWeight: 700 }}>
               <Activity size={18} />
               <span>Mid/Side Stereo Widener</span>
             </div>
-            <div className="dsp-card-control">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <input
                 type="range"
                 min="0"
@@ -110,19 +112,20 @@ export default function EqualizerModal() {
                 step="0.05"
                 value={stereoWidth}
                 onChange={(e) => updateStereoWidth(parseFloat(e.target.value))}
-                className="wide-slider"
+                className="seek-slider"
+                style={{ flex: 1 }}
               />
-              <span className="control-val">{stereoWidth.toFixed(2)}x Width</span>
+              <span className="sketch-font-mono" style={{ fontSize: '0.85rem', fontWeight: 700 }}>{stereoWidth.toFixed(2)}x</span>
             </div>
-            <span className="control-hint">Expands acoustic soundstage via Mid/Side matrixing</span>
+            <span className="sketch-font-hand" style={{ fontSize: '0.85rem', color: 'var(--graphite-muted)' }}>Expands soundstage via Mid/Side matrixing</span>
           </div>
 
-          <div className="dsp-card glass-card">
-            <div className="dsp-card-title">
+          <div className="sketch-card" style={{ padding: '14px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', fontFamily: 'var(--font-hand)', fontSize: '1.15rem', fontWeight: 700 }}>
               <Disc size={18} />
               <span>Equal-Power Crossfade</span>
             </div>
-            <div className="dsp-card-control">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <input
                 type="range"
                 min="0"
@@ -130,11 +133,12 @@ export default function EqualizerModal() {
                 step="0.5"
                 value={crossfadeDuration}
                 onChange={(e) => setCrossfadeDuration(parseFloat(e.target.value))}
-                className="wide-slider"
+                className="seek-slider"
+                style={{ flex: 1 }}
               />
-              <span className="control-val">{crossfadeDuration}s</span>
+              <span className="sketch-font-mono" style={{ fontSize: '0.85rem', fontWeight: 700 }}>{crossfadeDuration}s</span>
             </div>
-            <span className="control-hint">Sine/Cosine constant acoustic power curve</span>
+            <span className="sketch-font-hand" style={{ fontSize: '0.85rem', color: 'var(--graphite-muted)' }}>Sine/Cosine constant acoustic power curve</span>
           </div>
         </div>
       </div>

@@ -6,14 +6,14 @@ import { apiUrl } from '../config';
 
 const CHIPS = [
   'Top Hits 2026',
+  'Acoustic Journal',
+  'Charcoal Beats',
+  'Lo-Fi Sketch',
+  'Indie Notebook',
+  'Deep Focus',
   'Synthwave',
   'Phonk',
-  'Lo-Fi Chill',
-  'Hip Hop',
-  'Electronic EDM',
-  'Acoustic Indie',
-  'Deep House',
-  'Rock Classics'
+  'Bollywood Acoustic'
 ];
 
 export default function SearchScreen({ initialQuery = '' }) {
@@ -107,11 +107,11 @@ export default function SearchScreen({ initialQuery = '' }) {
   return (
     <div className="search-screen" ref={containerRef}>
       <div className="search-header-area">
-        <form onSubmit={handleFormSubmit} className="search-main-input-wrapper glass-panel">
+        <form onSubmit={handleFormSubmit} className="search-main-input-wrapper sketch-card" style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 20px', borderRadius: 'var(--sketch-radius-pill)' }}>
           <Search size={22} className="search-icon-lg" />
           <input
             type="text"
-            placeholder="Search millions of songs, artists, or genres..."
+            placeholder="Search tracks, songwriters, or doodle a title..."
             value={query}
             onChange={(e) => {
               setQuery(e.target.value);
@@ -121,6 +121,7 @@ export default function SearchScreen({ initialQuery = '' }) {
               if (suggestions.length > 0) setShowSuggestions(true);
             }}
             className="search-main-input"
+            style={{ flex: 1, border: 'none', outline: 'none', background: 'transparent', fontFamily: 'var(--font-hand)', fontSize: '1.25rem', fontWeight: 600, color: 'var(--graphite-main)' }}
           />
           {query && (
             <button
@@ -131,20 +132,20 @@ export default function SearchScreen({ initialQuery = '' }) {
                 setSuggestions([]);
               }}
               title="Clear search"
+              style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--graphite-muted)' }}
             >
               <X size={18} />
             </button>
           )}
-          <button type="submit" className="btn-primary search-submit-btn">
+          <button type="submit" className="sketch-btn sketch-btn-primary">
             Search
           </button>
 
           {/* Live Autocomplete Suggestions Overlay */}
           {showSuggestions && suggestions.length > 0 && (
-            <div className="search-suggestions-dropdown glass-panel">
-              <div className="suggestions-header">
-                <Sparkles size={14} className="icon-glow" />
-                <span>Live Suggestions</span>
+            <div className="suggestions-dropdown" style={{ top: 'calc(100% + 12px)' }}>
+              <div style={{ padding: '4px 10px 8px', fontSize: '0.8rem', color: 'var(--graphite-muted)', fontFamily: 'var(--font-mono)' }}>
+                NOTEBOOK SUGGESTIONS:
               </div>
               {suggestions.map((item, idx) => (
                 <div
@@ -152,20 +153,20 @@ export default function SearchScreen({ initialQuery = '' }) {
                   className="suggestion-item"
                   onClick={() => handleSuggestionClick(item)}
                 >
-                  <Search size={15} className="suggestion-icon" />
-                  <span className="suggestion-text">{item}</span>
-                  <ArrowRight size={14} className="suggestion-arrow" />
+                  <Search size={15} />
+                  <span>{item}</span>
+                  <ArrowRight size={14} style={{ marginLeft: 'auto', opacity: 0.5 }} />
                 </div>
               ))}
             </div>
           )}
         </form>
 
-        <div className="search-chips-row">
+        <div className="category-chips-row" style={{ marginTop: '14px' }}>
           {CHIPS.map((chip) => (
             <button
               key={chip}
-              className={`glass-pill ${activeChip === chip ? 'active' : ''}`}
+              className={`category-chip ${activeChip === chip ? 'active' : ''}`}
               onClick={() => handleChipClick(chip)}
             >
               {chip}
@@ -175,17 +176,18 @@ export default function SearchScreen({ initialQuery = '' }) {
       </div>
 
       {isLoading ? (
-        <div className="search-loading">
-          <div className="spinner-glow"></div>
-          <div className="pulse-text">Searching YouTube catalog & audio formats...</div>
+        <div className="search-loading" style={{ textAlign: 'center', padding: '60px 20px', fontFamily: 'var(--font-hand)', fontSize: '1.3rem' }}>
+          <div className="animate-sketch-wobble" style={{ display: 'inline-block', padding: '8px 24px', background: 'var(--highlighter-yellow)', border: '2px solid var(--paper-border)', borderRadius: 'var(--sketch-radius-pill)' }}>
+            Sketching results from audio catalog...
+          </div>
         </div>
       ) : results.length > 0 ? (
         <div className="search-results-section">
-          <div className="section-title-row">
-            <Music size={20} className="icon-glow" />
-            <h2>Search Results ({results.length})</h2>
+          <div className="section-title-row" style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '18px', borderBottom: '2px dashed var(--paper-border-dashed)', paddingBottom: '8px' }}>
+            <Music size={22} />
+            <h2 className="sketch-font-title" style={{ fontSize: '1.6rem' }}>Search Results ({results.length})</h2>
           </div>
-          <div className="search-results-grid">
+          <div className="shelf-grid">
             {results.map((track) => (
               <TrackCard
                 key={track.id}
@@ -197,10 +199,10 @@ export default function SearchScreen({ initialQuery = '' }) {
           </div>
         </div>
       ) : (
-        <div className="search-empty-state glass-card">
-          <TrendingUp size={48} className="empty-state-icon" />
-          <h3>Discover Trending Soundtracks</h3>
-          <p>Type an artist, track name, or choose from one of the curated genres above.</p>
+        <div className="library-empty-state sketch-card">
+          <TrendingUp size={48} style={{ color: 'var(--graphite-secondary)' }} />
+          <h3 className="sketch-font-title">Doodle &amp; Discover Music</h3>
+          <p className="sketch-font-hand">Type any track or singer name, or click one of the quick genre chips above to fill your sketchbook.</p>
         </div>
       )}
     </div>

@@ -50,99 +50,84 @@ export default function PlayerBar() {
 
   return (
     <div className="player-bar-wrapper">
-      {/* Dynamic Frosted Ambient Glow behind island */}
-      <div className={`player-ambient-glow ${isPlaying ? 'glow-active' : ''}`} aria-hidden="true" />
-
-      <div className="player-bar glass-panel liquid-island">
-        {/* Specular glossy highlight reflection */}
-        <div className="island-specular-sheen" aria-hidden="true" />
-
+      <div className="player-bar liquid-island">
         {/* Track Thumbnail, Metadata & Mini Animated Equalizer */}
-        <div className="player-left" onClick={() => setIsFullscreenPlayerOpen(true)} title="Click to open Fullscreen Player">
+        <div className="player-left" onClick={() => setIsFullscreenPlayerOpen(true)} title="Click to open Songwriter Journal">
           <div className="player-thumb-wrapper">
             <img
               src={currentSong.thumbnail || `https://i.ytimg.com/vi/${currentSong.id}/hqdefault.jpg`}
               alt={currentSong.title}
               className="player-thumb"
             />
-            {isPlaying && (
-              <div className="thumb-live-indicator" title="Audio playing">
-                <span className="live-dot" />
-              </div>
-            )}
           </div>
 
           <div className="player-song-info">
             <div className="player-title-row">
-              <span className="player-title" title={currentSong.title}>
+              <span className="player-title sketch-font-hand" title={currentSong.title}>
                 {currentSong.title}
               </span>
               {/* Mini Animated Equalizer Visualizer */}
               {isPlaying && (
-                <div className="mini-eq-bars" title="DSP Audio Stream">
-                  <span className="eq-bar bar-1"></span>
-                  <span className="eq-bar bar-2"></span>
-                  <span className="eq-bar bar-3"></span>
-                  <span className="eq-bar bar-4"></span>
+                <div className="card-playing-indicator" style={{ position: 'static', height: '14px', padding: '1px 4px' }} title="Pencil Audio Stream">
+                  <span className="bar bar-1"></span>
+                  <span className="bar bar-2"></span>
+                  <span className="bar bar-3"></span>
                 </div>
               )}
             </div>
-            <div className="player-meta-sub">
-              <span className="player-artist" title={currentSong.artist}>
+            <div className="player-meta-sub" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span className="player-artist sketch-font-hand" title={currentSong.artist}>
                 {currentSong.artist}
               </span>
-              <span className="player-spec-chip">160k Opus</span>
+              <span className="gain-badge" style={{ fontSize: '0.7rem' }}>320k Opus</span>
             </div>
           </div>
 
           <button
-            className={`player-like-btn stretchy-btn ${isLiked ? 'liked' : ''}`}
+            className={`card-like-btn ${isLiked ? 'liked' : ''}`}
             onClick={(e) => {
               e.stopPropagation();
               toggleLike(currentSong);
             }}
             title={isLiked ? 'Unlike' : 'Like'}
+            style={{ marginLeft: '6px' }}
           >
-            <Heart size={18} fill={isLiked ? '#ed5564' : 'none'} color={isLiked ? '#ed5564' : 'currentColor'} />
+            <Heart size={18} fill={isLiked ? '#ef4444' : 'none'} color={isLiked ? '#ef4444' : 'var(--graphite-main)'} />
           </button>
         </div>
 
-        {/* Center Controls & Stretchy Timeline */}
-        <div className="player-center">
-          <div className="player-controls">
-            <button className="ctrl-btn stretchy-btn" onClick={playPrevious} title="Previous (Shift+Left)">
-              <SkipBack size={19} />
+        {/* Center Controls & Pencil Timeline */}
+        <div className="controls-center">
+          <div className="playback-buttons">
+            <button className="btn-control" onClick={playPrevious} title="Previous (Shift+Left)">
+              <SkipBack size={20} />
             </button>
 
             <button
-              className="ctrl-btn play-main stretchy-play-btn"
+              className="btn-control-play"
               onClick={togglePlayPause}
               title={isPlaying ? 'Pause (Space)' : 'Play (Space)'}
             >
-              <div className="play-pulse-ring" />
-              {isPlaying ? <Pause size={20} /> : <Play size={20} fill="#fff" style={{ marginLeft: '2px' }} />}
+              {isPlaying ? <Pause size={20} /> : <Play size={20} fill="#18181B" style={{ marginLeft: '2px' }} />}
             </button>
 
-            <button className="ctrl-btn stretchy-btn" onClick={() => playNext(true)} title="Next (Shift+Right / Crossfade)">
-              <SkipForward size={19} />
+            <button className="btn-control" onClick={() => playNext(true)} title="Next (Shift+Right / Crossfade)">
+              <SkipForward size={20} />
             </button>
           </div>
 
-          <div className="player-timeline">
-            <span className="time-text time-text-neon">{formatSeconds(currentTime)}</span>
-            <div className="stretchy-seek-container">
-              <input
-                type="range"
-                min="0"
-                max="100"
-                step="0.1"
-                value={progress || 0}
-                onChange={handleSeekChange}
-                className="seek-slider stretchy-slider"
-              />
-              <div className="seek-glow-fill" style={{ width: `${progress || 0}%` }} />
-            </div>
-            <span className="time-text time-text-neon">{formatSeconds(duration)}</span>
+          <div className="seek-bar-container">
+            <span className="time-text sketch-font-mono">{formatSeconds(currentTime)}</span>
+            <input
+              type="range"
+              min="0"
+              max="100"
+              step="0.1"
+              value={progress || 0}
+              onChange={handleSeekChange}
+              className="seek-slider"
+            />
+            <span className="time-text sketch-font-mono">{formatSeconds(duration)}</span>
           </div>
         </div>
 

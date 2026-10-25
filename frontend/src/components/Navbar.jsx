@@ -165,20 +165,20 @@ export default function Navbar({ activeTab, setActiveTab, onSearch }) {
 
         {/* Floating Live Autocomplete Dropdown */}
         {showSuggestions && suggestions.length > 0 && (
-          <div className="navbar-suggestions-dropdown glass-panel">
-            <div className="nav-suggestions-header">
-              <Sparkles size={13} className="icon-glow" />
-              <span>Instant Suggestions</span>
+          <div className="navbar-suggestions-dropdown suggestions-dropdown">
+            <div className="nav-suggestions-header" style={{ padding: '6px 10px', fontSize: '0.82rem', color: 'var(--graphite-muted)', fontFamily: 'var(--font-mono)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <Sparkles size={13} />
+              <span>PENCIL AUTOCOMPLETE</span>
             </div>
             {suggestions.map((item, idx) => (
               <div
                 key={idx}
-                className="nav-suggestion-item"
+                className="suggestion-item"
                 onClick={() => handleSelectSuggestion(item)}
               >
-                <Search size={14} className="nav-suggestion-icon" />
-                <span className="nav-suggestion-text">{item}</span>
-                <ArrowRight size={13} className="nav-suggestion-arrow" />
+                <Search size={14} />
+                <span>{item}</span>
+                <ArrowRight size={13} style={{ marginLeft: 'auto', opacity: 0.5 }} />
               </div>
             ))}
           </div>

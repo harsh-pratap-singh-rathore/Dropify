@@ -135,41 +135,54 @@ export default function FullscreenPlayer() {
       }
       const isLowEnergy = totalEnergy < 25 && isPlaying;
 
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      const barWidth = (canvas.width / bufferLength) * 1.6;
+      // 2D Charcoal Pencil & Graph Paper Visualizer
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Faint graph paper grid lines
+      ctx.strokeStyle = 'rgba(24, 24, 27, 0.08)';
+      ctx.lineWidth = 1;
+      for (let gy = 0; gy < canvas.height; gy += 20) {
+        ctx.beginPath();
+        ctx.moveTo(0, gy);
+        ctx.lineTo(canvas.width, gy);
+        ctx.stroke();
+      }
+      for (let gx = 0; gx < canvas.width; gx += 20) {
+        ctx.beginPath();
+        ctx.moveTo(gx, 0);
+        ctx.lineTo(gx, canvas.height);
+        ctx.stroke();
+      }
+
+      const barWidth = (canvas.width / bufferLength) * 1.5;
       let x = 0;
 
       for (let i = 0; i < bufferLength; i++) {
         let barHeight;
         if (isLowEnergy) {
-          // Organic dynamic harmonic wave simulation synced with playback tempo
+          // Dynamic harmonic sine wave simulation
           const t = (currentTime * 4.2) + (frameCount * 0.04);
           const s1 = Math.sin(t + i * 0.22);
           const s2 = Math.cos(t * 0.7 + i * 0.14);
           const norm = (s1 * 0.45 + s2 * 0.35 + 0.8) / 1.6;
-          barHeight = Math.max(8, norm * canvas.height * 0.82);
+          barHeight = Math.max(10, norm * canvas.height * 0.85);
         } else {
-          barHeight = (dataArray[i] / 255) * canvas.height * 0.82;
+          barHeight = (dataArray[i] / 255) * canvas.height * 0.85;
         }
 
-        const gradient = ctx.createLinearGradient(0, canvas.height, 0, canvas.height - barHeight);
-        gradient.addColorStop(0, '#ed5564');
-        gradient.addColorStop(0.5, '#ff758c');
-        gradient.addColorStop(1, '#8b5cf6');
-
-        ctx.fillStyle = gradient;
         const rx = x;
         const ry = canvas.height - barHeight;
-        const rw = Math.max(2, barWidth - 3);
-        const rh = Math.max(3, barHeight);
+        const rw = Math.max(3, barWidth - 3);
+        const rh = Math.max(4, barHeight);
 
-        ctx.beginPath();
-        if (ctx.roundRect) {
-          ctx.roundRect(rx, ry, rw, rh, [4, 4, 0, 0]);
-        } else {
-          ctx.rect(rx, ry, rw, rh);
-        }
-        ctx.fill();
+        // Charcoal fill with pencil border
+        ctx.fillStyle = '#18181B';
+        ctx.fillRect(rx, ry, rw, rh);
+
+        // Pencil tip highlight
+        ctx.fillStyle = '#FFF176';
+        ctx.fillRect(rx, ry, rw, Math.min(4, rh));
 
         x += barWidth;
       }
@@ -186,202 +199,160 @@ export default function FullscreenPlayer() {
 
   return (
     <div className="fullscreen-overlay">
-      {/* Animated Liquid Frosted Aura Orbs */}
-      <div className="fullscreen-liquid-aura" aria-hidden="true">
-        <div className="aura-blob blob-1"></div>
-        <div className="aura-blob blob-2"></div>
-        <div className="aura-blob blob-3"></div>
-      </div>
-
-      {/* Blurred Ambient Glowing Backdrop */}
-      <div
-        className="fullscreen-bg"
-        style={{
-          backgroundImage: `url(${albumArt})`
-        }}
-      />
-      <div className="fullscreen-frosted-scrim" />
-
-      {/* Header with Liquid Glass Blur */}
-      <div className="fullscreen-header glass-panel header-island">
-        <button className="btn-icon stretchy-btn" onClick={() => setIsFullscreenPlayerOpen(false)} aria-label="Close Player">
-          <ChevronDown size={24} />
+      {/* Header with Sketchbook Binder Tabs */}
+      <div className="fullscreen-header">
+        <button className="btn-icon" onClick={() => setIsFullscreenPlayerOpen(false)} aria-label="Close Journal">
+          <ChevronDown size={22} />
         </button>
 
         <div className="fullscreen-tab-pills">
           <button
-            className={`glass-pill stretchy-pill ${activeTab === 'lyrics' ? 'active' : ''}`}
+            className={`glass-pill ${activeTab === 'lyrics' ? 'active' : ''}`}
             onClick={() => setActiveTab('lyrics')}
           >
             <AlignLeft size={16} />
-            <span>Lyrics</span>
+            <span>Songwriter Lyrics</span>
           </button>
           <button
-            className={`glass-pill stretchy-pill ${activeTab === 'visualizer' ? 'active' : ''}`}
+            className={`glass-pill ${activeTab === 'visualizer' ? 'active' : ''}`}
             onClick={() => setActiveTab('visualizer')}
           >
             <Disc size={16} />
-            <span>Visualizer</span>
+            <span>Charcoal Visualizer</span>
           </button>
         </div>
 
-        <button className="btn-icon stretchy-btn" onClick={() => setIsEqOpen(true)} title="DSP Equalizer">
+        <button className="btn-icon" onClick={() => setIsEqOpen(true)} title="Pencil DSP Equalizer">
           <Sliders size={20} />
         </button>
       </div>
 
       {/* Main Content Area */}
       <div className="fullscreen-body">
-        {/* Left: 3D Stretchy Album Art with Spinning Vinyl & Glass Metadata */}
-        <div className="fullscreen-left">
-          <div className="artwork-stage">
-            {/* Spinning Vinyl Record peeking out */}
-            <div className={`vinyl-disc ${isPlaying ? 'spinning' : 'paused'}`}>
-              <div className="vinyl-grooves"></div>
-              <div className="vinyl-center-label" style={{ backgroundImage: `url(${albumArt})` }}></div>
+        {/* Left: Vintage Hand-Drawn Vinyl Turntable & Polaroid Metadata */}
+        <div className="fullscreen-turntable-col">
+          <div className="turntable-wrapper">
+            <div className={`vinyl-disc ${isPlaying ? 'spinning' : ''}`}>
+              <div className="vinyl-label">
+                <img src={albumArt} alt={currentSong.title} className="vinyl-thumb" />
+              </div>
             </div>
+            <div className="vinyl-spindle" />
 
-            {/* Stretchy Glassmorphic Jacket with Specular Glare */}
-            <div className="artwork-box glass-panel stretchy-box">
-              <img
-                src={albumArt}
-                alt={currentSong.title}
-                className="fullscreen-cover"
-              />
-              <div className="jacket-specular-glare"></div>
+            {/* Hand-Drawn Tonearm Needle */}
+            <div className={`sketch-tonearm ${isPlaying ? 'playing' : ''}`}>
+              <div className="tonearm-pivot" />
+              <div className="tonearm-rod" />
+              <div className="tonearm-head" />
             </div>
           </div>
 
-          <div className="fullscreen-track-details glass-card track-meta-glass">
-            <div className="track-title-large" title={currentSong.title}>{currentSong.title}</div>
-            <div className="track-artist-large">{currentSong.artist}</div>
-
-            {/* Audiophile Pipeline Specs Badge */}
-            <div className="audiophile-specs-row">
-              <span className="spec-badge">
-                <Sparkles size={11} className="icon-glow" /> 160kbps Opus
-              </span>
-              <span className="spec-badge">10-Band EQ</span>
-              <span className="spec-badge">3D Stereo</span>
+          <div className="sketch-card" style={{ width: '100%', maxWidth: '380px', padding: '16px', textAlign: 'center', position: 'relative' }}>
+            <div className="washi-tape-top" />
+            <h2 className="sketch-font-title" style={{ fontSize: '1.45rem', marginBottom: '4px' }}>
+              {currentSong.title}
+            </h2>
+            <div className="sketch-font-hand" style={{ fontSize: '1.15rem', color: 'var(--graphite-muted)', marginBottom: '8px' }}>
+              {currentSong.artist}
             </div>
-          </div>
 
-          <div className="fullscreen-actions-row">
-            <button
-              className={`btn-icon-large stretchy-btn ${isLiked ? 'liked' : ''}`}
-              onClick={() => toggleLike(currentSong)}
-              title={isLiked ? 'Unlike' : 'Like'}
-            >
-              <Heart size={22} fill={isLiked ? '#ed5564' : 'none'} color={isLiked ? '#ed5564' : '#fff'} />
-            </button>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '8px' }}>
+              <span className="gain-badge">320k Opus</span>
+              <span className="gain-badge">10-Band EQ</span>
+              <span className="gain-badge">Stationery Sync</span>
+            </div>
           </div>
         </div>
 
-        {/* Right: Synchronized Lyrics OR Visualizer */}
-        <div className="fullscreen-right">
+        {/* Right: Songwriter Journal Lined Paper Lyrics OR Charcoal Visualizer */}
+        <div className="fullscreen-content-col">
           {activeTab === 'lyrics' ? (
-            <div className="lyrics-view-container glass-card lyrics-frosted-card" ref={lyricsContainerRef}>
+            <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
               {/* Lyrics Provider & Timing Offset Controls */}
-              <div className="lyrics-controls-bar">
-                {lyricsData.provider ? (
-                  <div className="lyrics-provider-tag frosted-pill">
-                    <Sparkles size={13} className="icon-glow" />
-                    <span>{lyricsData.synced ? 'Synced' : 'Plain'} • {lyricsData.provider}</span>
-                  </div>
-                ) : (
-                  <div className="lyrics-provider-tag frosted-pill">
-                    <span>Searching lyric sources...</span>
-                  </div>
-                )}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '12px', borderBottom: '2px dashed var(--paper-border-dashed)' }}>
+                <div className="sketch-font-mono" style={{ fontSize: '0.82rem', color: 'var(--graphite-muted)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Sparkles size={13} />
+                  <span>{lyricsData.synced ? 'KARAOKE SYNC' : 'PLAIN NOTEBOOK'} • {lyricsData.provider || 'Lyrics Engine'}</span>
+                </div>
 
-                {/* Timing Offset Adjuster */}
                 {lyricsData.synced && (
-                  <div className="timing-offset-pill glass-pill stretchy-pill">
-                    <span className="offset-label">Sync:</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span className="sketch-font-mono" style={{ fontSize: '0.8rem' }}>Sync Offset:</span>
                     <button
-                      className="offset-btn"
+                      className="sketch-btn"
+                      style={{ padding: '2px 8px', fontSize: '0.85rem' }}
                       onClick={() => setTimingOffset((prev) => +(prev - 0.5).toFixed(1))}
-                      title="Delay 0.5s"
                     >
-                      <Minus size={12} />
+                      <Minus size={11} />
                     </button>
-                    <span className="offset-val">{timingOffset >= 0 ? `+${timingOffset}s` : `${timingOffset}s`}</span>
+                    <span className="sketch-font-mono" style={{ fontSize: '0.85rem', fontWeight: 700 }}>
+                      {timingOffset >= 0 ? `+${timingOffset}s` : `${timingOffset}s`}
+                    </span>
                     <button
-                      className="offset-btn"
+                      className="sketch-btn"
+                      style={{ padding: '2px 8px', fontSize: '0.85rem' }}
                       onClick={() => setTimingOffset((prev) => +(prev + 0.5).toFixed(1))}
-                      title="Advance 0.5s"
                     >
-                      <Plus size={12} />
+                      <Plus size={11} />
                     </button>
-                    {timingOffset !== 0 && (
-                      <button
-                        className="offset-reset"
-                        onClick={() => setTimingOffset(0)}
-                        title="Reset to 0s"
-                      >
-                        Reset
-                      </button>
-                    )}
                   </div>
                 )}
 
                 <button
-                  className="manual-search-toggle-btn glass-pill stretchy-pill"
+                  className="sketch-btn"
+                  style={{ padding: '4px 12px', fontSize: '0.9rem' }}
                   onClick={() => setShowManualSearch(!showManualSearch)}
-                  title="Search alternative lyrics"
                 >
                   <Search size={13} />
-                  <span>Search</span>
+                  <span>Search Lyrics</span>
                 </button>
               </div>
 
-              {/* Manual Search Bar */}
+              {/* Manual Search Form */}
               {showManualSearch && (
-                <form onSubmit={handleManualSearch} className="manual-lyrics-form glass-panel">
-                  <Search size={16} className="icon-glow" />
+                <form onSubmit={handleManualSearch} style={{ display: 'flex', gap: '8px', padding: '12px 0' }}>
                   <input
                     type="text"
-                    placeholder="Enter track or artist to re-match lyrics..."
+                    placeholder="Search lyric syllables for this track..."
                     value={manualQuery}
                     onChange={(e) => setManualQuery(e.target.value)}
-                    className="manual-lyrics-input"
+                    style={{ flex: 1, padding: '6px 14px', background: 'var(--paper-card-subtle)', border: '1.5px solid var(--paper-border)', borderRadius: 'var(--sketch-radius-pill)', outline: 'none', fontFamily: 'var(--font-hand)', fontSize: '1.05rem' }}
                   />
-                  <button type="submit" className="btn-primary" style={{ padding: '6px 14px', fontSize: '0.85rem' }}>
+                  <button type="submit" className="sketch-btn sketch-btn-primary" style={{ padding: '4px 14px' }}>
                     Match
                   </button>
                 </form>
               )}
 
               {isLoadingLyrics ? (
-                <div className="lyrics-placeholder">
-                  <div className="spinner-glow"></div>
-                  <div className="pulse-text">Resolving synchronized syllables across global databases...</div>
+                <div style={{ textAlign: 'center', padding: '60px 20px', fontFamily: 'var(--font-hand)', fontSize: '1.3rem' }}>
+                  <div className="animate-sketch-wobble" style={{ display: 'inline-block', padding: '8px 24px', background: 'var(--highlighter-yellow)', border: '2px solid var(--paper-border)', borderRadius: 'var(--sketch-radius-pill)' }}>
+                    Penciling synchronized syllables into notebook...
+                  </div>
                 </div>
               ) : lyricsData.lines && lyricsData.lines.length > 0 ? (
-                <div className="lyrics-lines-list">
+                <div className="lyrics-scroll-container" ref={lyricsContainerRef}>
                   {lyricsData.lines.map((line, idx) => {
                     const isActive = idx === activeLyricIndex;
-                    const isPassed = idx < activeLyricIndex;
                     return (
                       <div
                         key={idx}
-                        className={`lyric-line lyric-line-${idx} ${isActive ? 'active' : ''} ${
-                          isPassed ? 'passed' : ''
-                        }`}
+                        className={`lyric-line lyric-line-${idx} ${isActive ? 'active' : ''}`}
                         onClick={() => line.time !== undefined && duration > 0 && seekTo((line.time / duration) * 100)}
-                        title="Click to jump to this lyric"
+                        title="Click to jump to this line"
                       >
-                        <span className="lyric-text">{line.text}</span>
-                        {isActive && <span className="lyric-glow-halo" aria-hidden="true"></span>}
+                        {line.text}
                       </div>
                     );
                   })}
                 </div>
               ) : (
-                <div className="lyrics-placeholder">
-                  <p>{lyricsData.plain || 'No synchronized lyrics available for this track.'}</p>
+                <div style={{ textAlign: 'center', padding: '60px 20px' }}>
+                  <p className="sketch-font-hand" style={{ fontSize: '1.3rem', color: 'var(--graphite-muted)' }}>
+                    {lyricsData.plain || 'No synchronized lyrics available for this audio sketch.'}
+                  </p>
                   <button
-                    className="btn-primary"
+                    className="sketch-btn sketch-btn-primary"
                     style={{ marginTop: '16px' }}
                     onClick={() => {
                       const cleanHint = lyricsData?.cleanTitle || currentSong.title.replace(/[\(\[|].*?[\)\]]/g, '').trim();
@@ -396,76 +367,42 @@ export default function FullscreenPlayer() {
               )}
             </div>
           ) : (
-            <div className="visualizer-container glass-panel">
-              <div className="visualizer-header">
-                <Sparkles size={16} className="icon-glow" />
-                <span>Web Audio 64-Band FFT Spectrum</span>
+            <div className="visualizer-canvas-container">
+              <div style={{ alignSelf: 'flex-start', paddingBottom: '10px', display: 'flex', alignItems: 'center', gap: '8px', fontFamily: 'var(--font-mono)', fontSize: '0.85rem' }}>
+                <Sparkles size={14} />
+                <span>64-BAND CHARCOAL AUDIO OSCILLOGRAM</span>
               </div>
-              <canvas ref={canvasRef} width={500} height={300} className="visualizer-canvas" />
+              <canvas ref={canvasRef} width={620} height={280} />
             </div>
           )}
         </div>
       </div>
 
-      {/* Bottom Controls: Floating Liquid Glass Island */}
-      <div className="fullscreen-bottom glass-panel bottom-controls-island">
-        <div className="fullscreen-timeline">
-          <span className="time-text time-text-neon">{formatSeconds(currentTime)}</span>
-          <div className="stretchy-seek-wrapper">
-            <input
-              type="range"
-              min="0"
-              max="100"
-              step="0.1"
-              value={progress || 0}
-              onChange={(e) => seekTo(parseFloat(e.target.value))}
-              className="seek-slider-large stretchy-slider"
-            />
-            <div className="seek-glow-trail" style={{ width: `${progress || 0}%` }}></div>
-          </div>
-          <span className="time-text time-text-neon">{formatSeconds(duration)}</span>
+      {/* Bottom Controls Deck */}
+      <div className="fullscreen-bottom-deck">
+        <div className="seek-bar-container" style={{ maxWidth: '800px' }}>
+          <span className="time-text sketch-font-mono">{formatSeconds(currentTime)}</span>
+          <input
+            type="range"
+            min="0"
+            max="100"
+            step="0.1"
+            value={progress || 0}
+            onChange={(e) => seekTo(parseFloat(e.target.value))}
+            className="seek-slider"
+          />
+          <span className="time-text sketch-font-mono">{formatSeconds(duration)}</span>
         </div>
 
-        <div className="fullscreen-controls-row">
-          <div className="fullscreen-volume-cluster">
-            <button
-              className="ctrl-btn-subtle stretchy-btn"
-              onClick={() => handleVolumeChange(volume === 0 ? 0.8 : 0)}
-              title={volume === 0 ? 'Unmute' : 'Mute'}
-            >
-              {volume === 0 ? <VolumeX size={18} /> : <Volume2 size={18} />}
-            </button>
-            <input
-              type="range"
-              min="0"
-              max="1"
-              step="0.01"
-              value={volume}
-              onChange={(e) => handleVolumeChange(parseFloat(e.target.value))}
-              className="fullscreen-volume-slider stretchy-slider"
-              title={`Volume: ${Math.round(volume * 100)}%`}
-            />
-          </div>
-
-          <div className="fullscreen-main-playback">
-            <button className="ctrl-btn-lg stretchy-btn" onClick={playPrevious} aria-label="Previous">
-              <SkipBack size={26} />
-            </button>
-            <button className="play-btn-circle stretchy-play" onClick={togglePlayPause} aria-label="Play/Pause">
-              <div className="play-ripple-aura"></div>
-              {isPlaying ? <Pause size={30} /> : <Play size={30} fill="#fff" />}
-            </button>
-            <button className="ctrl-btn-lg stretchy-btn" onClick={() => playNext(true)} aria-label="Next">
-              <SkipForward size={26} />
-            </button>
-          </div>
-
-          <button
-            className="ctrl-btn-subtle stretchy-btn"
-            onClick={() => setIsEqOpen(true)}
-            title="10-Band EQ & DSP"
-          >
-            <Sliders size={20} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: '32px' }}>
+          <button className="btn-control" onClick={playPrevious} aria-label="Previous">
+            <SkipBack size={26} />
+          </button>
+          <button className="btn-control-play" style={{ width: '56px', height: '56px' }} onClick={togglePlayPause} aria-label="Play/Pause">
+            {isPlaying ? <Pause size={28} /> : <Play size={28} fill="#18181B" style={{ marginLeft: '3px' }} />}
+          </button>
+          <button className="btn-control" onClick={() => playNext(true)} aria-label="Next">
+            <SkipForward size={26} />
           </button>
         </div>
       </div>
