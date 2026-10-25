@@ -118,6 +118,41 @@ export function PlayerProvider({ children }) {
     return () => cancelAnimationFrame(animId);
   }, [isPlaying, lyricsData, audioManager]);
 
+// Clean YouTube titles & channels into clean song name & primary artist
+function cleanSongMeta(rawTitle = '', rawArtist = '') {
+  let title = (rawTitle || '').trim();
+  let artist = (rawArtist || '').trim();
+  title = title.replace(/[\(\[\{【「][^\)\]\}】」]*(?:official|video|music\s+video|audio|lyric|lyrics|visualizer|live|remaster|remastered|4k|hd|prod\.|topic|edit|clip|soundtrack|song|version)[^\)\]\}】」]*[\)\]\}】」]/gi, ' ');
+  let pipeArtists = [];
+  if (title.includes('|')) {
+    const pipeParts = title.split('|').map(p => p.trim()).filter(Boolean);
+    title = pipeParts[0];
+    pipeArtists = pipeParts.slice(1);
+  }
+  if (title.includes(' - ')) {
+    const parts = title.split(/\s+-\s+/);
+    if (parts.length >= 2) {
+      const p0 = parts[0].trim();
+      const p1 = parts.slice(1).join(' - ').trim();
+      const isChannel = /(?:music|records|vevo|t-series|zee|sony|yrf|tips|speed|white|desimelodies|universal|warner|vibe)/i.test(artist);
+      if (pipeArtists.length > 0) {
+        title = p0;
+        const singer = pipeArtists.find(a => /(?:arijit|pritam|shreya|atif|sidhu|diljit|karan|badshah|honey|jubin|armaan|sonu|mohit|neha|sunidhi|kk|anirudh)/i.test(a));
+        artist = singer || pipeArtists[pipeArtists.length - 1];
+      } else if (isChannel || !artist || artist.toLowerCase() === 'unknown artist') {
+        artist = p0;
+        title = p1;
+      } else if (p0.toLowerCase().includes(artist.toLowerCase())) {
+        title = p1;
+      } else if (p1.toLowerCase().includes(artist.toLowerCase())) {
+        title = p0;
+      }
+    }
+  }
+  title = title.replace(/[\(\)\[\]\{\}\|]/g, ' ').replace(/\s+/g, ' ').trim();
+  return { title, artist };
+}
+
   // Load lyrics when song changes
   useEffect(() => {
     if (!currentSong) return;
@@ -126,9 +161,11 @@ export function PlayerProvider({ children }) {
     setLyricsData({ lines: [], synced: false, plain: '' });
     setActiveLyricIndex(-1);
 
+    const { title: cleanTitle, artist: cleanArtist } = cleanSongMeta(currentSong.title, currentSong.artist);
+
     const queryParams = new URLSearchParams({
-      title: currentSong.title,
-      artist: currentSong.artist || '',
+      title: cleanTitle || currentSong.title,
+      artist: cleanArtist || currentSong.artist || '',
       duration: currentSong.duration || ''
     });
 
