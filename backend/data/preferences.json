@@ -1,6 +1,6 @@
 {
   "audioQuality": "HIGH",
-  "crossfadeDuration": 4,
+  "crossfadeDuration": 5,
   "crossfadeEnabled": true,
   "automixEnabled": true,
   "stereoWidenerEnabled": true,

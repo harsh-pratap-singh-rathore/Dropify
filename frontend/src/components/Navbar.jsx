@@ -10,7 +10,17 @@ export default function Navbar({ activeTab, setActiveTab, onSearch }) {
   const [isListening, setIsListening] = useState(false);
   const debounceTimerRef = useRef(null);
   const searchContainerRef = useRef(null);
+  const recognitionRef = useRef(null);
   const { setIsEqOpen, setIsMusicFlowOpen, playSong, setIsFullscreenPlayerOpen, setIsShortcutsOpen } = usePlayer();
+
+  // Cleanup speech recognition on unmount
+  useEffect(() => {
+    return () => {
+      if (recognitionRef.current) {
+        try { recognitionRef.current.abort(); } catch (_) {}
+      }
+    };
+  }, []);
 
   // Live autocomplete suggestions in Navbar
   useEffect(() => {
@@ -86,6 +96,7 @@ export default function Navbar({ activeTab, setActiveTab, onSearch }) {
         return;
       }
       const recognition = new SpeechRecognition();
+      recognitionRef.current = recognition;
       recognition.continuous = false;
       recognition.interimResults = true;
       recognition.lang = 'en-US';

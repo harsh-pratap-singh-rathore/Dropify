@@ -18,8 +18,46 @@ app.use((req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'SAMEORIGIN');
   res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('Permissions-Policy', 'camera=(), microphone=(self), geolocation=()');
   next();
 });
+
+// Lightweight In-Memory Sliding-Window IP Rate Limiter
+const rateLimitMap = new Map();
+const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute window
+const MAX_REQUESTS_PER_WINDOW = 120; // 120 requests/minute/IP
+
+function rateLimiter(req, res, next) {
+  const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket.remoteAddress || 'unknown';
+  const now = Date.now();
+  let record = rateLimitMap.get(ip);
+  if (!record || now - record.startTime > RATE_LIMIT_WINDOW_MS) {
+    record = { count: 1, startTime: now };
+    rateLimitMap.set(ip, record);
+  } else {
+    record.count++;
+    if (record.count > MAX_REQUESTS_PER_WINDOW) {
+      return res.status(429).json({
+        error: 'Too many requests',
+        message: 'Rate limit exceeded. Please wait a minute before making more requests.'
+      });
+    }
+  }
+  next();
+}
+
+// Garbage collection to prevent memory leaks in rateLimitMap
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, record] of rateLimitMap.entries()) {
+    if (now - record.startTime > RATE_LIMIT_WINDOW_MS) {
+      rateLimitMap.delete(ip);
+    }
+  }
+}, 5 * 60 * 1000).unref();
+
+app.use(rateLimiter);
 
 // Helper regex to validate YouTube video IDs
 const YT_ID_REGEX = /^[a-zA-Z0-9_-]{5,32}$/;

@@ -1458,17 +1458,23 @@
 }
 
 /* --------------------------------------------------------------------------
-   10. Responsive Breakpoints
+   10. Responsive Breakpoints & Accessibility
    -------------------------------------------------------------------------- */
+:focus-visible {
+  outline: 2.5px solid var(--paper-border) !important;
+  outline-offset: 2px !important;
+}
+
 @media (max-width: 900px) {
   .fullscreen-body {
     flex-direction: column;
     padding: 16px;
     gap: 24px;
+    overflow-y: auto;
   }
   .turntable-wrapper {
-    width: 260px;
-    height: 260px;
+    width: 240px;
+    height: 240px;
   }
   .shortcuts-grid {
     grid-template-columns: 1fr;
@@ -1476,6 +1482,9 @@
 }
 
 @media (max-width: 768px) {
+  .content-container {
+    padding: 95px 18px 130px;
+  }
   .navbar-container {
     width: calc(100% - 24px);
     padding: 0 14px;
@@ -1485,12 +1494,62 @@
     display: none;
   }
   .player-bar.liquid-island {
-    padding: 8px 14px;
+    padding: 8px 12px;
+  }
+  .player-left {
+    min-width: 0;
+    flex: 1;
+    overflow: hidden;
+  }
+  .controls-center {
+    margin: 0 6px;
+    max-width: 140px;
+  }
+  .seek-bar-container {
+    display: none;
   }
   .player-right {
     display: none;
   }
   .hero-title {
     font-size: 2rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .content-container {
+    padding: 86px 12px 140px;
+  }
+  .hero-banner {
+    padding: 24px 18px;
+  }
+  .hero-title {
+    font-size: 1.65rem;
+  }
+  .shelf-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+  .nav-btn span {
+    display: none;
+  }
+  .nav-btn {
+    padding: 6px 10px;
+  }
+  .brand-name {
+    font-size: 1.15rem;
+  }
+  .shelf-title {
+    font-size: 1.3rem;
+  }
+  .turntable-wrapper {
+    width: 200px;
+    height: 200px;
+  }
+  .lyric-line {
+    font-size: 1.25rem;
+  }
+  .lyric-line.active {
+    font-size: 1.5rem;
   }
 }
