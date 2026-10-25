@@ -1547,6 +1547,8 @@
 .preset-btn:hover {
   background: var(--highlighter-yellow);
   transform: translateY(-1px);
+}
+
 .eq-modal-content {
   max-width: 680px;
   max-height: 90vh;
