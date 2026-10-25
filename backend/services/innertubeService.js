@@ -527,79 +527,20 @@ async function resolveAudioFormat(videoId) {
 async function streamAudio(videoId, req, res) {
   try {
     const format = await resolveAudioFormat(videoId);
-    const range = req.headers.range;
-
-    const headers = {
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36'
-    };
-
-    if (range) {
-      headers['Range'] = range;
+    if (!format || !format.url) {
+      throw new Error('No streaming URL resolved');
     }
 
-    const upstreamRes = await axios.get(format.url, {
-      headers,
-      responseType: 'stream',
-      validateStatus: (status) => status >= 200 && status < 300
-    });
-
-    res.status(upstreamRes.status);
-    res.setHeader('Accept-Ranges', 'bytes');
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Headers', '*');
-    res.setHeader('Access-Control-Expose-Headers', 'Content-Range, Content-Length, Accept-Ranges');
-    res.setHeader('Content-Type', upstreamRes.headers['content-type'] || format.mimeType || 'audio/webm');
+    res.setHeader('Access-Control-Expose-Headers', '*');
 
-    if (upstreamRes.headers['content-range']) {
-      res.setHeader('Content-Range', upstreamRes.headers['content-range']);
-    }
-    if (upstreamRes.headers['content-length']) {
-      res.setHeader('Content-Length', upstreamRes.headers['content-length']);
-    }
-
-    upstreamRes.data.pipe(res);
-
-    req.on('close', () => {
-      try {
-        upstreamRes.data.destroy();
-      } catch (err) {}
-    });
-
+    // 302 Redirect directly to Google CDN edge - exactly how Echo Music streams to client
+    return res.redirect(302, format.url);
   } catch (error) {
-    console.warn(`Direct stream error for ${videoId}, falling back to ytdl.download:`, error.message);
-    try {
-      const ytdl = await getYtdl();
-      if (!ytdl) throw new Error('Ytdl not initialized');
-      const audioStream = ytdl.download(videoId, {
-        filter: f => f.hasAudio && !f.hasVideo,
-        quality: 'highestaudio',
-        highWaterMark: 1 << 22
-      });
-
-      res.setHeader('Accept-Ranges', 'bytes');
-      res.setHeader('Access-Control-Allow-Origin', '*');
-      res.setHeader('Access-Control-Allow-Headers', '*');
-      res.setHeader('Content-Type', 'audio/webm');
-
-      audioStream.pipe(res);
-
-      req.on('close', () => {
-        try {
-          audioStream.destroy();
-        } catch (err) {}
-      });
-
-      audioStream.on('error', (streamErr) => {
-        console.error('Fallback ytdl stream error:', streamErr.message);
-        if (!res.headersSent) {
-          res.status(500).json({ error: 'Stream failed', message: streamErr.message });
-        }
-      });
-    } catch (fallbackError) {
-      console.error('All streaming methods failed:', fallbackError.message);
-      if (!res.headersSent) {
-        res.status(500).json({ error: 'Playback stream failed', message: fallbackError.message });
-      }
+    console.warn(`Direct stream error for ${videoId}:`, error.message);
+    if (!res.headersSent) {
+      res.status(500).json({ error: 'Playback stream failed', message: error.message });
     }
   }
 }
@@ -608,5 +549,6 @@ module.exports = {
   searchMusic,
   getHomeFeed,
   getSongDetails,
-  streamAudio
+  streamAudio,
+  resolveAudioFormat
 };
