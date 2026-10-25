@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Sparkles, Play, Flame, Disc3, Zap, Clock } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Sparkles, Play, Flame, Disc3, Zap, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
 import TrackCard from '../components/TrackCard';
 import { usePlayer } from '../context/PlayerContext';
 import { apiUrl } from '../config';
@@ -119,6 +119,68 @@ const CLIENT_FALLBACK_SECTIONS = {
   ]
 };
 
+function ShelfSection({ sectionTitle, tracks, onPlayTrack }) {
+  const rowRef = useRef(null);
+
+  const scrollLeft = () => {
+    if (rowRef.current) {
+      rowRef.current.scrollBy({ left: -380, behavior: 'smooth' });
+    }
+  };
+
+  const scrollRight = () => {
+    if (rowRef.current) {
+      rowRef.current.scrollBy({ left: 380, behavior: 'smooth' });
+    }
+  };
+
+  const titleLower = sectionTitle.toLowerCase();
+  let icon = <Flame size={20} className="icon-glow" style={{ color: 'var(--pop-crimson)' }} />;
+  let badgeColor = 'var(--pop-crimson)';
+
+  if (titleLower.includes('quick') || titleLower.includes('doodle')) {
+    icon = <Zap size={20} style={{ color: 'var(--pop-amber)' }} />;
+    badgeColor = 'var(--pop-amber)';
+  } else if (titleLower.includes('new') || titleLower.includes('fresh')) {
+    icon = <Sparkles size={20} style={{ color: 'var(--pop-cyan)' }} />;
+    badgeColor = 'var(--pop-cyan)';
+  } else if (titleLower.includes('chart') || titleLower.includes('top') || titleLower.includes('global')) {
+    icon = <Disc3 size={20} style={{ color: 'var(--pop-violet)' }} />;
+    badgeColor = 'var(--pop-violet)';
+  }
+
+  return (
+    <div className="home-shelf">
+      <div className="shelf-header">
+        <div className="shelf-title-row">
+          {icon}
+          <h2 className="shelf-title sketch-font-title">{sectionTitle}</h2>
+          <span className="shelf-count" style={{ borderColor: badgeColor }}>{tracks.length} tracks</span>
+        </div>
+        <div className="shelf-scroll-controls">
+          <button className="shelf-nav-btn" onClick={scrollLeft} aria-label="Scroll left" title="Scroll left">
+            <ChevronLeft size={18} />
+          </button>
+          <button className="shelf-nav-btn" onClick={scrollRight} aria-label="Scroll right" title="Scroll right">
+            <ChevronRight size={18} />
+          </button>
+        </div>
+      </div>
+
+      <div className="shelf-row" ref={rowRef}>
+        {tracks.map((track) => (
+          <TrackCard
+            key={track.id}
+            song={track}
+            onPlay={(t) => onPlayTrack(t, tracks)}
+            queueContext={tracks}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function HomeScreen({ onNavigateTaste }) {
   const [sections, setSections] = useState(CLIENT_FALLBACK_SECTIONS);
   const [isLoading, setIsLoading] = useState(false);
@@ -165,7 +227,7 @@ export default function HomeScreen({ onNavigateTaste }) {
 
           <div className="hero-actions">
             <button className="sketch-btn sketch-btn-primary" onClick={onNavigateTaste}>
-              <Play size={18} fill="#18181B" />
+              <Play size={18} fill="#ffffff" color="#ffffff" />
               <span>Open Sketch Taste Mix</span>
             </button>
           </div>
@@ -216,7 +278,7 @@ export default function HomeScreen({ onNavigateTaste }) {
                     </div>
                   </div>
                   <button className="play-glyph-btn" style={{ width: '32px', height: '32px', flexShrink: 0 }} aria-label="Play">
-                    <Play size={14} fill="#18181B" />
+                    <Play size={14} fill="#ffffff" color="#ffffff" />
                   </button>
                 </div>
               );
@@ -247,26 +309,12 @@ export default function HomeScreen({ onNavigateTaste }) {
         Object.entries(sections).map(([sectionTitle, tracks]) => {
           if (!Array.isArray(tracks) || tracks.length === 0 || sectionTitle === 'Spotify Quick Picks') return null;
           return (
-            <div key={sectionTitle} className="home-shelf">
-              <div className="shelf-header">
-                <div className="shelf-title-row">
-                  <Flame size={20} className="icon-glow" />
-                  <h2 className="shelf-title">{sectionTitle}</h2>
-                  <span className="shelf-count">{tracks.length} tracks</span>
-                </div>
-              </div>
-
-              <div className="shelf-row">
-                {tracks.map((track) => (
-                  <TrackCard
-                    key={track.id}
-                    song={track}
-                    onPlay={(t) => handlePlayTrack(t, tracks)}
-                    queueContext={tracks}
-                  />
-                ))}
-              </div>
-            </div>
+            <ShelfSection
+              key={sectionTitle}
+              sectionTitle={sectionTitle}
+              tracks={tracks}
+              onPlayTrack={handlePlayTrack}
+            />
           );
         })
       )}

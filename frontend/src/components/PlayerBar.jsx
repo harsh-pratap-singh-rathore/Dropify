@@ -108,7 +108,7 @@ export default function PlayerBar() {
               onClick={togglePlayPause}
               title={isPlaying ? 'Pause (Space)' : 'Play (Space)'}
             >
-              {isPlaying ? <Pause size={20} /> : <Play size={20} fill="#18181B" style={{ marginLeft: '2px' }} />}
+              {isPlaying ? <Pause size={22} color="#ffffff" /> : <Play size={22} fill="#ffffff" color="#ffffff" style={{ marginLeft: '2px' }} />}
             </button>
 
             <button className="btn-control" onClick={() => playNext(true)} title="Next (Shift+Right / Crossfade)">

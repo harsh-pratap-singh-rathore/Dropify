@@ -26,17 +26,37 @@
   --highlighter-green: #A5D6A7;
   --washi-tape: rgba(230, 220, 200, 0.88);
 
+  /* Vibrant Neo-Pop 3D Color Tokens */
+  --pop-crimson: #FF3366;
+  --pop-coral: #FF5E62;
+  --pop-sunset: #FF6B4A;
+  --pop-amber: #FFB800;
+  --pop-yellow: #FFD600;
+  --pop-lime: #00E676;
+  --pop-cyan: #00D2FF;
+  --pop-violet: #7928CA;
+  --pop-purple: #8B5CF6;
+  --pop-magenta: #EC4899;
+
+  /* Vibrant 3D Gradients */
+  --grad-sunset: linear-gradient(135deg, #FF3366 0%, #FF8A00 100%);
+  --grad-cyber: linear-gradient(135deg, #7928CA 0%, #FF0080 100%);
+  --grad-ocean: linear-gradient(135deg, #00D2FF 0%, #3A7BD5 100%);
+  --grad-aurora: linear-gradient(135deg, #00E676 0%, #00B0FF 100%);
+  --grad-sunshine: linear-gradient(135deg, #FFD600 0%, #FF6B4A 100%);
+
   /* Hand-Drawn Asymmetric Wobbly Border Radii */
   --sketch-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
   --sketch-radius-alt: 15px 225px 15px 255px / 255px 15px 225px 15px;
   --sketch-radius-sm: 180px 10px 170px 10px / 10px 170px 10px 180px;
   --sketch-radius-pill: 255px 25px 225px 25px / 25px 225px 25px 255px;
 
-  /* Tactile Sketch Shadows */
-  --sketch-shadow-sm: 2px 2px 0px #18181B;
-  --sketch-shadow: 4px 4px 0px #18181B;
-  --sketch-shadow-hover: 6px 6px 0px #18181B;
-  --sketch-shadow-active: 1px 1px 0px #18181B;
+  /* 3D Tactile Extrusion & Depth Shadows */
+  --sketch-shadow-sm: 0 3px 0 #18181B, 0 4px 8px rgba(24, 24, 27, 0.08);
+  --sketch-shadow: 0 5px 0 #18181B, 0 10px 20px rgba(24, 24, 27, 0.12);
+  --sketch-shadow-hover: 0 8px 0 #18181B, 0 16px 28px rgba(24, 24, 27, 0.16);
+  --sketch-shadow-active: 0 1.5px 0 #18181B, 0 2px 4px rgba(24, 24, 27, 0.1);
+  --shadow-3d-lg: 0 10px 0 #18181B, 0 22px 36px rgba(24, 24, 27, 0.2);
 
   /* Font Families */
   --font-title: 'Architects Daughter', cursive, sans-serif;

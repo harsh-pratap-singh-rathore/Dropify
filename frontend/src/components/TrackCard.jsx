@@ -58,7 +58,7 @@ export default function TrackCard({ song, onPlay, queueContext = [] }) {
 
         <div className={`card-play-overlay ${isCurrent ? 'visible' : ''}`}>
           <button className="play-glyph-btn" aria-label="Play Track">
-            {isCurrent && isPlaying ? <Pause size={20} /> : <Play size={20} fill="#18181B" />}
+            {isCurrent && isPlaying ? <Pause size={20} color="#ffffff" fill="#ffffff" /> : <Play size={20} fill="#ffffff" color="#ffffff" style={{ marginLeft: '2px' }} />}
           </button>
         </div>
       </div>

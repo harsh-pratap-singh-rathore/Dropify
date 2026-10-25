@@ -176,13 +176,22 @@ export default function FullscreenPlayer() {
         const rw = Math.max(3, barWidth - 3);
         const rh = Math.max(4, barHeight);
 
-        // Charcoal fill with pencil border
-        ctx.fillStyle = '#18181B';
+        // 3D Neon Pop Gradient Bar
+        const barGrad = ctx.createLinearGradient(0, ry, 0, ry + rh);
+        barGrad.addColorStop(0, '#FF3366'); // Crimson
+        barGrad.addColorStop(0.5, '#FFD600'); // Sunshine Amber
+        barGrad.addColorStop(1, '#00D2FF'); // Cyan Aqua
+        ctx.fillStyle = barGrad;
         ctx.fillRect(rx, ry, rw, rh);
 
-        // Pencil tip highlight
-        ctx.fillStyle = '#FFF176';
-        ctx.fillRect(rx, ry, rw, Math.min(4, rh));
+        // 3D Beveled rim
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+        ctx.fillRect(rx, ry, rw, Math.min(3, rh));
+
+        // Dark charcoal pencil outline
+        ctx.strokeStyle = '#18181B';
+        ctx.lineWidth = 1.2;
+        ctx.strokeRect(rx, ry, rw, rh);
 
         x += barWidth;
       }
@@ -399,7 +408,7 @@ export default function FullscreenPlayer() {
             <SkipBack size={26} />
           </button>
           <button className="btn-control-play" style={{ width: '56px', height: '56px' }} onClick={togglePlayPause} aria-label="Play/Pause">
-            {isPlaying ? <Pause size={28} /> : <Play size={28} fill="#18181B" style={{ marginLeft: '3px' }} />}
+            {isPlaying ? <Pause size={28} color="#ffffff" /> : <Play size={28} fill="#ffffff" color="#ffffff" style={{ marginLeft: '3px' }} />}
           </button>
           <button className="btn-control" onClick={() => playNext(true)} aria-label="Next">
             <SkipForward size={26} />

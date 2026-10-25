@@ -356,62 +356,100 @@
   margin-top: 8px;
 }
 
-.btn-primary {
+.btn-primary,
+.sketch-btn-primary {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 10px;
-  background: var(--highlighter-yellow);
-  color: var(--graphite-main);
-  border: 2px solid var(--paper-border);
+  background: var(--grad-sunset);
+  color: #ffffff;
+  border: 2px solid #18181B;
   border-radius: var(--sketch-radius-pill);
-  box-shadow: var(--sketch-shadow);
+  box-shadow: 0 4px 0 #18181B, 0 6px 16px rgba(255, 51, 102, 0.35);
   padding: 10px 24px;
   font-family: var(--font-hand);
   font-size: 1.15rem;
   font-weight: 700;
   cursor: pointer;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
+  user-select: none;
 }
 
-.btn-primary:hover {
-  transform: translate(-2px, -2px) rotate(0.8deg);
-  box-shadow: var(--sketch-shadow-hover);
-  background: var(--highlighter-yellow-bold);
+.btn-primary:hover,
+.sketch-btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 0 #18181B, 0 10px 22px rgba(255, 51, 102, 0.45);
+  background: linear-gradient(135deg, #FF1E56 0%, #FF9900 100%);
+  color: #ffffff;
 }
 
-.btn-primary:active {
-  transform: translate(2px, 2px);
-  box-shadow: var(--sketch-shadow-active);
+.btn-primary:active,
+.sketch-btn-primary:active {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 #18181B;
 }
 
-.btn-secondary {
+.btn-secondary,
+.sketch-btn {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-  background: var(--paper-card);
+  justify-content: center;
+  gap: 8px;
+  background: #ffffff;
   color: var(--graphite-main);
   border: 2px solid var(--paper-border);
   border-radius: var(--sketch-radius-pill);
-  box-shadow: var(--sketch-shadow-sm);
-  padding: 10px 22px;
+  box-shadow: 0 3px 0 var(--paper-border), 0 5px 12px rgba(0, 0, 0, 0.08);
+  padding: 8px 20px;
   font-family: var(--font-hand);
-  font-size: 1.1rem;
+  font-size: 1.05rem;
   font-weight: 700;
   cursor: pointer;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
+  user-select: none;
 }
 
-.btn-secondary:hover {
-  transform: translate(-2px, -2px);
-  box-shadow: var(--sketch-shadow);
+.btn-secondary:hover,
+.sketch-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 0 var(--paper-border), 0 8px 16px rgba(0, 0, 0, 0.12);
   background: var(--paper-card-subtle);
 }
 
-/* Shelf Lists */
+.btn-secondary:active,
+.sketch-btn:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 var(--paper-border);
+}
+
+/* Quick Pick Cards (3D Tactile Mini Player) */
+.quick-pick-card {
+  box-shadow: 0 4px 0 var(--paper-border), 0 6px 12px rgba(0, 0, 0, 0.06);
+  border: 2px solid var(--paper-border);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.quick-pick-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 7px 0 var(--paper-border), 0 10px 18px rgba(0, 0, 0, 0.1);
+}
+
+.quick-pick-card:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 var(--paper-border);
+}
+
+.quick-pick-card.active {
+  border-color: #18181B;
+  box-shadow: 0 0 0 2px var(--pop-crimson), 0 6px 0 #18181B;
+}
+
+/* Shelf Lists & Smooth Horizontal Carousel */
 .home-shelf {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 14px;
 }
 
 .shelf-header {
@@ -419,75 +457,153 @@
   align-items: center;
   justify-content: space-between;
   border-bottom: 2px dashed var(--paper-border-dashed);
-  padding-bottom: 10px;
+  padding-bottom: 8px;
 }
 
 .shelf-title-row {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
 }
 
 .shelf-title {
   font-family: var(--font-title);
-  font-size: 1.6rem;
+  font-size: 1.55rem;
   font-weight: 700;
   color: var(--graphite-main);
 }
 
 .shelf-count {
   font-family: var(--font-hand);
-  font-size: 1rem;
+  font-size: 0.92rem;
   font-weight: 700;
-  color: var(--graphite-muted);
-  background: var(--paper-card-subtle);
-  border: 1.5px solid var(--paper-border);
+  color: var(--graphite-secondary);
+  background: #ffffff;
+  border: 2px solid var(--paper-border);
   border-radius: var(--sketch-radius-pill);
   padding: 2px 10px;
+  box-shadow: 0 2px 0 var(--paper-border);
 }
 
+.shelf-scroll-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.shelf-nav-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 2px solid var(--paper-border);
+  color: var(--graphite-main);
+  box-shadow: 0 3px 0 var(--paper-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
+}
+
+.shelf-nav-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 0 var(--paper-border);
+  background: var(--highlighter-yellow);
+}
+
+.shelf-nav-btn:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 var(--paper-border);
+}
+
+/* Shelf Horizontal Carousel Row */
+.shelf-row {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 10px 4px 18px 4px;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: var(--paper-border) transparent;
+}
+
+.shelf-row::-webkit-scrollbar {
+  height: 6px;
+}
+
+.shelf-row::-webkit-scrollbar-track {
+  background: rgba(24, 24, 27, 0.04);
+  border-radius: 4px;
+}
+
+.shelf-row::-webkit-scrollbar-thumb {
+  background: var(--paper-border);
+  border-radius: 4px;
+}
+
+.shelf-row .track-card {
+  width: 160px;
+  min-width: 160px;
+  max-width: 160px;
+  flex-shrink: 0;
+}
+
+/* Compact Shelf Grid (Search, Library) */
 .shelf-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 22px;
+  grid-template-columns: repeat(auto-fill, minmax(148px, 168px));
+  gap: 16px;
+  justify-content: start;
 }
 
 /* --------------------------------------------------------------------------
-   4. Polaroid Track Card
+   4. Polaroid Track Card (Compact 3D Tactile Edition)
    -------------------------------------------------------------------------- */
 .track-card {
   background: #ffffff;
   border: 2px solid var(--paper-border);
-  border-radius: var(--sketch-radius);
-  box-shadow: var(--sketch-shadow);
-  padding: 10px 10px 18px 10px;
+  border-radius: 14px;
+  box-shadow: 0 4px 0 var(--paper-border), 0 8px 16px rgba(0, 0, 0, 0.06);
+  padding: 8px 8px 12px 8px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
   cursor: pointer;
   position: relative;
   transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
+  overflow: hidden;
 }
 
 .track-card:hover {
-  transform: translateY(-5px) rotate(1deg) scale(1.02);
-  box-shadow: var(--sketch-shadow-hover);
+  transform: translateY(-5px);
+  box-shadow: 0 8px 0 var(--paper-border), 0 16px 24px rgba(0, 0, 0, 0.12);
 }
 
 .track-card.active-track {
-  background: var(--paper-card-warm);
-  border-color: var(--paper-border);
-  box-shadow: 0 0 0 3px var(--highlighter-yellow-bold), var(--sketch-shadow-hover);
+  background: #ffffff;
+  border-color: #18181B;
+  box-shadow: 0 0 0 3px var(--pop-crimson), 0 8px 0 var(--paper-border), 0 16px 24px rgba(255, 51, 102, 0.2);
 }
+
+/* Colorful Alternating Washi Tapes */
+.track-card:nth-child(4n+1) .washi-tape-top { background: rgba(255, 51, 102, 0.75); }
+.track-card:nth-child(4n+2) .washi-tape-top { background: rgba(0, 210, 255, 0.75); }
+.track-card:nth-child(4n+3) .washi-tape-top { background: rgba(255, 214, 0, 0.85); }
+.track-card:nth-child(4n+4) .washi-tape-top { background: rgba(121, 40, 202, 0.7); }
 
 .card-thumb-container {
   width: 100%;
   aspect-ratio: 1 / 1;
-  border-radius: var(--sketch-radius-sm);
+  height: 144px;
+  max-height: 144px;
+  border-radius: 10px;
   border: 1.5px solid var(--paper-border);
   overflow: hidden;
   position: relative;
-  background: var(--paper-card-subtle);
+  background: #f4f0ea;
 }
 
 .card-thumb {
@@ -495,7 +611,7 @@
   height: 100%;
   object-fit: cover;
   display: block;
-  transition: transform 0.3s ease, filter 0.3s ease;
+  transition: transform 0.3s ease;
 }
 
 .track-card:hover .card-thumb {
@@ -505,7 +621,7 @@
 .card-play-overlay {
   position: absolute;
   inset: 0;
-  background: rgba(250, 247, 242, 0.75);
+  background: rgba(250, 247, 242, 0.65);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -518,52 +634,58 @@
   opacity: 1;
 }
 
+/* 3D Play Glyph Button */
 .play-glyph-btn {
-  width: 48px;
-  height: 48px;
+  width: 42px;
+  height: 42px;
   border-radius: 50%;
-  background: var(--highlighter-yellow);
-  border: 2px solid var(--paper-border);
-  color: var(--graphite-main);
-  box-shadow: var(--sketch-shadow-sm);
+  background: var(--grad-sunset);
+  border: 2px solid #18181B;
+  color: #ffffff;
+  box-shadow: 0 4px 0 #18181B, 0 6px 14px rgba(255, 51, 102, 0.4);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transform: scale(0.9);
-  transition: transform 0.15s ease, background 0.15s ease;
+  transform: scale(0.92);
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
 }
 
 .play-glyph-btn:hover {
-  transform: scale(1.1) rotate(5deg);
-  background: var(--highlighter-yellow-bold);
+  transform: translateY(-2px) scale(1.06);
+  box-shadow: 0 6px 0 #18181B, 0 8px 18px rgba(255, 51, 102, 0.5);
 }
 
+.play-glyph-btn:active {
+  transform: translateY(2px) scale(0.95);
+  box-shadow: 0 1px 0 #18181B;
+}
+
+/* Live Audio Indicator for active playing song */
 .card-playing-indicator {
   position: absolute;
-  top: 10px;
-  right: 10px;
+  top: 8px;
+  right: 8px;
   display: flex;
   gap: 3px;
   align-items: flex-end;
   height: 18px;
   padding: 3px 6px;
-  background: var(--paper-card);
-  border: 1.5px solid var(--paper-border);
-  border-radius: var(--sketch-radius-pill);
-  box-shadow: 1px 1px 0px var(--paper-border);
+  background: #ffffff;
+  border: 1.5px solid #18181B;
+  border-radius: 12px;
+  box-shadow: 0 2px 0 #18181B;
   z-index: 2;
 }
 
 .card-playing-indicator .bar {
   width: 3px;
-  background: var(--graphite-main);
   border-radius: 1px;
 }
 
-.card-playing-indicator .bar-1 { height: 60%; animation: eq-bounce 0.8s infinite alternate ease-in-out; }
-.card-playing-indicator .bar-2 { height: 90%; animation: eq-bounce 0.6s infinite alternate ease-in-out; }
-.card-playing-indicator .bar-3 { height: 40%; animation: eq-bounce 1s infinite alternate ease-in-out; }
+.card-playing-indicator .bar-1 { background: #FF3366; height: 60%; animation: eq-bounce 0.8s infinite alternate ease-in-out; }
+.card-playing-indicator .bar-2 { background: #FFD600; height: 90%; animation: eq-bounce 0.6s infinite alternate ease-in-out; }
+.card-playing-indicator .bar-3 { background: #00D2FF; height: 40%; animation: eq-bounce 1s infinite alternate ease-in-out; }
 
 @keyframes eq-bounce {
   0% { height: 25%; }
@@ -573,22 +695,24 @@
 .card-meta {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 2px;
+  padding: 0 2px;
 }
 
 .card-title {
   font-family: var(--font-hand);
-  font-size: 1.15rem;
+  font-size: 0.98rem;
   font-weight: 700;
   color: var(--graphite-main);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  line-height: 1.25;
 }
 
 .card-artist {
   font-family: var(--font-hand);
-  font-size: 0.95rem;
+  font-size: 0.82rem;
   color: var(--graphite-muted);
   white-space: nowrap;
   overflow: hidden;
@@ -599,14 +723,14 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-top: 4px;
+  margin-top: 2px;
   border-top: 1px dashed var(--paper-border-light);
-  padding-top: 6px;
+  padding: 4px 2px 0;
 }
 
 .card-duration {
   font-family: var(--font-mono);
-  font-size: 0.85rem;
+  font-size: 0.75rem;
   color: var(--graphite-muted);
 }
 
@@ -623,7 +747,7 @@
 }
 
 .card-like-btn:hover {
-  transform: scale(1.2);
+  transform: scale(1.25);
   color: #ef4444;
 }
 
@@ -650,19 +774,17 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 24px;
-  background: var(--paper-card);
-  border: 2.5px solid var(--paper-border);
+  padding: 10px 22px;
+  background: #ffffff;
+  border: 2.5px solid #18181B;
   border-radius: var(--sketch-radius-pill);
-  box-shadow: var(--sketch-shadow-hover);
+  box-shadow: 0 8px 0 #18181B, 0 18px 36px rgba(0, 0, 0, 0.18);
   position: relative;
-  background-image: radial-gradient(circle, rgba(24, 24, 27, 0.04) 1px, transparent 1px);
-  background-size: 16px 16px;
   transition: box-shadow 0.2s ease, transform 0.2s ease;
 }
 
 .player-bar.liquid-island:hover {
-  box-shadow: 7px 7px 0px var(--paper-border);
+  box-shadow: 0 11px 0 #18181B, 0 22px 44px rgba(0, 0, 0, 0.22);
   transform: translateY(-2px);
 }
 
@@ -679,7 +801,7 @@
   height: 52px;
   border-radius: var(--sketch-radius-sm);
   border: 2px solid var(--paper-border);
-  box-shadow: 2px 2px 0px var(--paper-border);
+  box-shadow: 0 3px 0 var(--paper-border);
   overflow: hidden;
   position: relative;
   background: var(--paper-card-subtle);
@@ -725,7 +847,7 @@
   text-overflow: ellipsis;
 }
 
-/* Center Controls & Pencil Eraser Seek Scrubber */
+/* Center Controls & 3D Tactile Play Button */
 .controls-center {
   display: flex;
   flex-direction: column;
@@ -760,29 +882,29 @@
 }
 
 .btn-control-play {
-  width: 44px;
-  height: 44px;
+  width: 46px;
+  height: 46px;
   border-radius: 50%;
-  background: var(--highlighter-yellow);
-  border: 2px solid var(--paper-border);
-  color: var(--graphite-main);
-  box-shadow: 2.5px 2.5px 0px var(--paper-border);
+  background: var(--grad-sunset);
+  border: 2px solid #18181B;
+  color: #ffffff;
+  box-shadow: 0 4px 0 #18181B, 0 6px 16px rgba(255, 51, 102, 0.35);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: transform 0.15s ease, background 0.15s ease;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+  position: relative;
 }
 
 .btn-control-play:hover {
-  transform: scale(1.1) rotate(-4deg);
-  background: var(--highlighter-yellow-bold);
-  box-shadow: var(--sketch-shadow);
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 6px 0 #18181B, 0 8px 20px rgba(255, 51, 102, 0.45);
 }
 
 .btn-control-play:active {
-  transform: translate(2px, 2px);
-  box-shadow: 1px 1px 0px var(--paper-border);
+  transform: translateY(3px) scale(0.98);
+  box-shadow: 0 1px 0 #18181B, 0 2px 4px rgba(255, 51, 102, 0.25);
 }
 
 .seek-bar-container {
@@ -801,7 +923,7 @@
   text-align: center;
 }
 
-/* Pencil Drawn Slider Track */
+/* 3D Tactile Seek Slider Track & Bead Thumb */
 .seek-slider {
   -webkit-appearance: none;
   width: 100%;
@@ -815,12 +937,12 @@
 
 .seek-slider::-webkit-slider-thumb {
   -webkit-appearance: none;
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
-  background: #ff80ab; /* Pencil pink eraser thumb */
-  border: 2px solid var(--paper-border);
-  box-shadow: 1.5px 1.5px 0px var(--paper-border);
+  background: var(--grad-sunset);
+  border: 2px solid #18181B;
+  box-shadow: 0 2px 0 #18181B, 0 3px 6px rgba(255, 51, 102, 0.35);
   cursor: pointer;
   transition: transform 0.12s ease;
 }
@@ -947,12 +1069,12 @@
 
 .turntable-wrapper {
   position: relative;
-  width: 380px;
-  height: 380px;
+  width: 360px;
+  height: 360px;
   border-radius: 50%;
-  background: #111113;
-  border: 5px solid var(--paper-border);
-  box-shadow: 8px 8px 0px var(--paper-border);
+  background: radial-gradient(circle, #27272a 0%, #18181b 70%, #09090b 100%);
+  border: 4px solid var(--paper-border);
+  box-shadow: 0 12px 0 var(--paper-border), 0 24px 48px rgba(0, 0, 0, 0.25);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -990,8 +1112,8 @@
   border: 3px solid var(--paper-border);
   overflow: hidden;
   position: relative;
-  background: var(--paper-card);
-  box-shadow: 0 0 0 8px rgba(24, 24, 27, 0.85);
+  background: #ffffff;
+  box-shadow: 0 0 0 8px rgba(24, 24, 27, 0.9), 0 0 0 12px rgba(255, 255, 255, 0.2);
 }
 
 .vinyl-thumb {
@@ -1002,12 +1124,13 @@
 
 .vinyl-spindle {
   position: absolute;
-  width: 18px;
-  height: 18px;
-  background: var(--paper-card);
+  width: 22px;
+  height: 22px;
+  background: radial-gradient(circle, #ffffff 0%, #cbd5e1 55%, #64748b 100%);
   border: 2.5px solid var(--paper-border);
   border-radius: 50%;
-  z-index: 3;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.35);
+  z-index: 4;
 }
 
 /* Hand-Drawn Tonearm */
@@ -1383,23 +1506,36 @@
 }
 
 .category-chip {
-  background: var(--paper-card-warm);
+  background: #ffffff;
   border: 2px solid var(--paper-border);
   border-radius: var(--sketch-radius-pill);
-  box-shadow: 2px 2px 0px var(--paper-border);
-  padding: 8px 18px;
+  box-shadow: 0 3px 0 var(--paper-border), 0 4px 8px rgba(0, 0, 0, 0.06);
+  padding: 6px 16px;
   font-family: var(--font-hand);
   font-size: 1.05rem;
   font-weight: 700;
+  color: var(--graphite-main);
   cursor: pointer;
-  transition: transform 0.15s ease, background 0.15s ease;
+  transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.15s ease;
+  user-select: none;
 }
 
-.category-chip:hover,
+.category-chip:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 0 var(--paper-border), 0 6px 12px rgba(0, 0, 0, 0.1);
+  background: var(--paper-card-subtle);
+}
+
+.category-chip:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 var(--paper-border);
+}
+
 .category-chip.active {
-  background: var(--highlighter-yellow);
-  transform: translateY(-2px) rotate(-1deg);
-  box-shadow: var(--sketch-shadow);
+  background: var(--grad-sunset);
+  color: #ffffff;
+  border-color: #18181B;
+  box-shadow: 0 4px 0 #18181B, 0 6px 14px rgba(255, 51, 102, 0.35);
 }
 
 /* --------------------------------------------------------------------------
@@ -1529,6 +1665,15 @@
   .shelf-grid {
     grid-template-columns: repeat(2, 1fr);
     gap: 12px;
+  }
+  .shelf-row .track-card {
+    width: 140px;
+    min-width: 140px;
+    max-width: 140px;
+  }
+  .shelf-row .card-thumb-container {
+    height: 124px;
+    max-height: 124px;
   }
   .nav-btn span {
     display: none;
