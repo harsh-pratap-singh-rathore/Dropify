@@ -181,6 +181,89 @@ export function PlayerProvider({ children }) {
       });
   }, [currentSong]);
 
+  // HTML5 Media Session API Integration for Native Mobile Lockscreen Controls & Background Playback
+  useEffect(() => {
+    if (typeof window === 'undefined' || !('mediaSession' in navigator) || !currentSong) return;
+
+    const highThumb = currentSong.thumbnailHigh || currentSong.thumbnail || (currentSong.id ? `https://i.ytimg.com/vi/${currentSong.id}/hqdefault.jpg` : '');
+    const midThumb = currentSong.thumbnail || (currentSong.id ? `https://i.ytimg.com/vi/${currentSong.id}/mqdefault.jpg` : '');
+
+    try {
+      navigator.mediaSession.metadata = new window.MediaMetadata({
+        title: currentSong.title,
+        artist: currentSong.artist || 'Dropify Artist',
+        album: 'Dropify Music',
+        artwork: [
+          { src: midThumb, sizes: '96x96', type: 'image/jpeg' },
+          { src: midThumb, sizes: '128x128', type: 'image/jpeg' },
+          { src: highThumb, sizes: '256x256', type: 'image/jpeg' },
+          { src: highThumb, sizes: '512x512', type: 'image/jpeg' }
+        ]
+      });
+    } catch (e) {
+      console.warn('MediaSession metadata notice:', e);
+    }
+  }, [currentSong]);
+
+  // Sync MediaSession action handlers and playbackState
+  useEffect(() => {
+    if (typeof window === 'undefined' || !('mediaSession' in navigator)) return;
+
+    try {
+      navigator.mediaSession.playbackState = isPlaying ? 'playing' : 'paused';
+
+      navigator.mediaSession.setActionHandler('play', () => {
+        togglePlayPause();
+      });
+      navigator.mediaSession.setActionHandler('pause', () => {
+        togglePlayPause();
+      });
+      navigator.mediaSession.setActionHandler('previoustrack', () => {
+        playPrevious();
+      });
+      navigator.mediaSession.setActionHandler('nexttrack', () => {
+        playNext(true);
+      });
+      navigator.mediaSession.setActionHandler('seekto', (details) => {
+        if (details.seekTime !== undefined && duration > 0) {
+          seekTo((details.seekTime / duration) * 100);
+        }
+      });
+      navigator.mediaSession.setActionHandler('seekbackward', (details) => {
+        const offset = details.seekOffset || 10;
+        if (duration > 0) {
+          seekTo(Math.max(0, ((currentTime - offset) / duration) * 100));
+        }
+      });
+      navigator.mediaSession.setActionHandler('seekforward', (details) => {
+        const offset = details.seekOffset || 10;
+        if (duration > 0) {
+          seekTo(Math.min(100, ((currentTime + offset) / duration) * 100));
+        }
+      });
+    } catch (e) {
+      console.warn('MediaSession action handler notice:', e);
+    }
+  }, [isPlaying, currentSong, duration, currentTime, queue, queueIndex]);
+
+  // Sync MediaSession position state for the lockscreen seekbar
+  useEffect(() => {
+    if (
+      typeof window === 'undefined' ||
+      !('mediaSession' in navigator) ||
+      !('setPositionState' in navigator.mediaSession) ||
+      duration <= 0
+    ) return;
+
+    try {
+      navigator.mediaSession.setPositionState({
+        duration: Math.max(0, duration),
+        playbackRate: 1,
+        position: Math.min(Math.max(0, currentTime), duration)
+      });
+    } catch (_) {}
+  }, [currentTime, duration]);
+
   const recordStats = (skipped = false) => {
     if (!currentSong) return;
     const listened = listenedDurationRef.current || 0;

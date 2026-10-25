@@ -52,6 +52,22 @@ function calculateRelevance(item, targetTitle, targetArtist, targetDuration) {
     return -1;
   }
 
+  // Strict Duration Sanity Check: If durations differ by > 45s, reject!
+  if (targetDuration && item.duration) {
+    const diff = Math.abs(item.duration - targetDuration);
+    if (diff > 45) {
+      return -1; // REJECT: Length difference is too large to be the same song
+    }
+  }
+
+  // Require at least 50% significant word overlap if not exact/contained
+  if (!exactTrack && !containsTrack && tgtSigWords.length > 1) {
+    const overlapRatio = sigMatches / tgtSigWords.length;
+    if (overlapRatio < 0.5) {
+      return -1; // REJECT: Insufficient title overlap
+    }
+  }
+
   let score = 0;
   if (exactTrack) score += 60;
   else if (containsTrack) score += 40;
@@ -62,18 +78,20 @@ function calculateRelevance(item, targetTitle, targetArtist, targetDuration) {
     const itemArtWords = new Set(itemArtist.split(/\s+/));
     const artMatches = tgtArtSig.filter(w => itemArtWords.has(w)).length;
     if (itemArtist === tgtArtist || itemArtist.includes(tgtArtist) || tgtArtist.includes(itemArtist)) {
-      score += 30;
+      score += 35;
     } else if (artMatches > 0) {
       score += 20;
+    } else if (tgtArtSig.length > 0) {
+      score -= 30; // Artist mismatch penalty
     }
   }
 
   if (targetDuration && item.duration) {
     const diff = Math.abs(item.duration - targetDuration);
-    if (diff <= 5) score += 20;
-    else if (diff <= 15) score += 12;
+    if (diff <= 5) score += 25;
+    else if (diff <= 15) score += 15;
     else if (diff <= 30) score += 5;
-    else if (diff > 60) score -= 25;
+    else if (diff > 35) score -= 20;
   }
 
   if (item.syncedLyrics && item.syncedLyrics.length > 50) score += 10;
@@ -342,7 +360,8 @@ async function getLyrics(trackName, artistName, durationSeconds = null, videoId 
     .filter(a => a && a.length > 1 && !IS_LABEL_NAME.test(a));
   const candidateArtists = Array.from(new Set(validArtists));
 
-  const cacheKey = `${(candidateTitles[0] || cleanTitle).toLowerCase()}_${(candidateArtists[0] || primaryArtist || '').toLowerCase()}`;
+  const cleanId = (videoId || '').trim();
+  const cacheKey = `${cleanId ? cleanId + '_' : ''}${(candidateTitles[0] || cleanTitle).toLowerCase()}_${(candidateArtists[0] || primaryArtist || '').toLowerCase()}`;
   if (lyricsCache.has(cacheKey)) {
     const cached = lyricsCache.get(cacheKey);
     if (cached.found) return cached;

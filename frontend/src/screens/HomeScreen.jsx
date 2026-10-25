@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Sparkles, Play, Flame, Disc3, Zap, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Sparkles, Play, Flame, Disc3, Zap, Clock, ChevronLeft, ChevronRight, RotateCw, Compass } from 'lucide-react';
 import TrackCard from '../components/TrackCard';
 import { usePlayer } from '../context/PlayerContext';
 import { apiUrl } from '../config';
@@ -181,13 +181,31 @@ function ShelfSection({ sectionTitle, tracks, onPlayTrack }) {
   );
 }
 
+function getCircadianInfo() {
+  const h = new Date().getHours();
+  if (h >= 5 && h < 12) return { greeting: 'Good Morning', moment: 'Morning Momentum ☕', mood: 'morning' };
+  if (h >= 12 && h < 17) return { greeting: 'Good Afternoon', moment: 'Deep Focus Flow ⚡', mood: 'afternoon' };
+  if (h >= 17 && h < 21) return { greeting: 'Good Evening', moment: 'Golden Hour Sunset 🌅', mood: 'evening' };
+  return { greeting: 'Late Night Notes', moment: 'Midnight Lo-Fi Chill 🌙', mood: 'night' };
+}
+
 export default function HomeScreen({ onNavigateTaste }) {
   const [sections, setSections] = useState(CLIENT_FALLBACK_SECTIONS);
   const [isLoading, setIsLoading] = useState(false);
+  const [activeMood, setActiveMood] = useState('all');
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const { playSong, currentSong, isPlaying } = usePlayer();
+  const circadian = getCircadianInfo();
 
-  useEffect(() => {
-    fetch(apiUrl('/api/home'))
+  const fetchFeed = (mood = null, refresh = false) => {
+    if (refresh) setIsRefreshing(true);
+    else setIsLoading(true);
+
+    const params = new URLSearchParams();
+    if (mood && mood !== 'all') params.append('mood', mood);
+    if (refresh) params.append('refresh', 'true');
+
+    fetch(apiUrl(`/api/home?${params.toString()}`))
       .then((res) => {
         if (!res.ok) throw new Error('HTTP ' + res.status);
         return res.json();
@@ -196,11 +214,24 @@ export default function HomeScreen({ onNavigateTaste }) {
         if (data && typeof data === 'object' && !data.error && Object.keys(data).length > 0) {
           setSections(data);
         }
+        setIsLoading(false);
+        setIsRefreshing(false);
       })
       .catch((err) => {
         console.warn('Home feed API notice, using local cache:', err.message);
+        setIsLoading(false);
+        setIsRefreshing(false);
       });
+  };
+
+  useEffect(() => {
+    fetchFeed();
   }, []);
+
+  const handleMoodSelect = (moodKey) => {
+    setActiveMood(moodKey);
+    fetchFeed(moodKey, true);
+  };
 
   const handlePlayTrack = (track, list) => {
     playSong(track, list);
@@ -209,29 +240,60 @@ export default function HomeScreen({ onNavigateTaste }) {
   const quickPicks = (Array.isArray(sections['Spotify Quick Picks']) && sections['Spotify Quick Picks']) ||
                      (Array.isArray(sections['Trending Tracks']) && sections['Trending Tracks'].slice(0, 6)) || [];
 
+  const MOOD_FILTERS = [
+    { id: 'all', label: 'All Mixes' },
+    { id: 'morning', label: 'Morning Coffee ☕' },
+    { id: 'afternoon', label: 'Focus Flow ⚡' },
+    { id: 'evening', label: 'Sunset Chill 🌅' },
+    { id: 'night', label: 'Midnight Lo-Fi 🌙' }
+  ];
+
   return (
     <div className="home-screen">
-      {/* Hand-Drawn Notebook Hero Banner */}
+      {/* Hand-Drawn Notebook Hero Banner with Circadian Intelligence */}
       <div className="hero-banner sketch-card">
         <div className="washi-tape-top" />
         <div className="hero-content">
           <div className="hero-badge">
             <Sparkles size={16} />
-            <span>Echo Brain • Handwritten Audio Intelligence</span>
+            <span>Echo Brain • {circadian.moment}</span>
           </div>
-          <h1 className="hero-title sketch-font-title">What's on your audio notebook today?</h1>
+          <h1 className="hero-title sketch-font-title">{circadian.greeting}! Ready for today's audio notebook?</h1>
           <p className="hero-desc sketch-font-hand">
-            Stream millions of tracks in 2D hand-drawn sketch aesthetic with Web Audio 10-band sketch EQ,
-            karaoke notebook lyrics, and polaroid album sleeves.
+            Stream millions of tracks tailored to your circadian mood with 10-band sketch DSP EQ,
+            synchronized songwriter lyrics, and 3D tactile controls.
           </p>
 
-          <div className="hero-actions">
+          <div className="hero-actions" style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
             <button className="sketch-btn sketch-btn-primary" onClick={onNavigateTaste}>
               <Play size={18} fill="#ffffff" color="#ffffff" />
               <span>Open Sketch Taste Mix</span>
             </button>
+
+            <button
+              className="sketch-btn"
+              onClick={() => fetchFeed(activeMood, true)}
+              disabled={isRefreshing}
+              title="Generate a brand new set of suggestions from Echo Music catalog"
+            >
+              <RotateCw size={16} className={isRefreshing ? 'spin-icon' : ''} />
+              <span>{isRefreshing ? 'Penciling New Mix...' : 'Re-roll Suggestions'}</span>
+            </button>
           </div>
         </div>
+      </div>
+
+      {/* Circadian Mood Filter Chips */}
+      <div className="mood-chips-container" style={{ display: 'flex', gap: '10px', overflowX: 'auto', padding: '4px 2px' }}>
+        {MOOD_FILTERS.map((m) => (
+          <button
+            key={m.id}
+            className={`category-chip ${activeMood === m.id ? 'active' : ''}`}
+            onClick={() => handleMoodSelect(m.id)}
+          >
+            {m.label}
+          </button>
+        ))}
       </div>
 
       {/* Spotify-style Quick Picks Section */}

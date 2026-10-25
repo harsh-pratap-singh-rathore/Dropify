@@ -72,10 +72,14 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// 3. Home Feed
+// 3. Dynamic Home Feed with Circadian Moods & Seed Rotation
 app.get('/api/home', async (req, res) => {
   try {
-    const feed = typeof innertube?.getHomeFeed === 'function' ? await innertube.getHomeFeed() : {};
+    const { mood, refresh } = req.query;
+    const forceRefresh = refresh === 'true' || refresh === '1';
+    const feed = typeof innertube?.getHomeFeed === 'function'
+      ? await innertube.getHomeFeed({ mood, forceRefresh })
+      : {};
     res.json(feed || {});
   } catch (error) {
     console.error('Failed to fetch home feed:', error.message);

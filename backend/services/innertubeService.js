@@ -278,33 +278,102 @@ try {
   console.warn('Using default home feed cache:', e.message);
 }
 
+// Echo Music Circadian Mood Seeds & Themes Catalog (35+ Seeds)
+const MOOD_CATALOG = {
+  morning: {
+    greeting: 'Good Morning',
+    moment: 'Morning Momentum',
+    sections: [
+      { title: 'Morning Acoustic Coffee', query: 'acoustic morning coffee indie' },
+      { title: 'Upbeat Morning Energy', query: 'upbeat positive morning pop hits' },
+      { title: 'Fresh Daily Discoveries', query: 'fresh hits discover 2026' },
+      { title: 'Bollywood Morning Melodies', query: 'bollywood acoustic soul unplugged' },
+      { title: 'Feel-Good Indie Folk', query: 'indie folk acoustic sunshine' }
+    ]
+  },
+  afternoon: {
+    greeting: 'Good Afternoon',
+    moment: 'Deep Focus Flow',
+    sections: [
+      { title: 'Deep Work Beats', query: 'lo-fi beats to study relax' },
+      { title: 'Instrumental Concentration', query: 'chill instrumental electronic beats' },
+      { title: 'Indie Afternoon Chill', query: 'indie afternoon acoustic pop' },
+      { title: 'Synthwave Velocity', query: 'retrowave synthwave 80s chill' },
+      { title: 'Global Radio Top 50', query: 'global top 50 hits 2026' }
+    ]
+  },
+  evening: {
+    greeting: 'Good Evening',
+    moment: 'Golden Hour Sunset',
+    sections: [
+      { title: 'Golden Hour Anthems', query: 'sunset golden hour acoustic hits' },
+      { title: 'Trending Global Anthems', query: 'trending music viral hits' },
+      { title: 'Desi Pop & Punjabi Energy', query: 'punjabi pop hits 2026 arijit diljit' },
+      { title: 'Electronic Sunset Chill', query: 'future bass electronic sunset vibes' },
+      { title: 'Evening Wind-Down', query: 'acoustic guitar chill evening unplugged' }
+    ]
+  },
+  night: {
+    greeting: 'Late Night Notes',
+    moment: 'Midnight Lo-Fi & Chill',
+    sections: [
+      { title: 'Midnight Lo-Fi Doodles', query: 'midnight lofi chill beats sleep' },
+      { title: 'Late Night Drives', query: 'synthwave night drive retro' },
+      { title: 'Dark Ambient Chill', query: 'dark ambient acoustic soul' },
+      { title: 'Smooth Midnight R&B', query: 'smooth rnb late night vibes' },
+      { title: 'Sleep & Peaceful Piano', query: 'peaceful piano acoustic calm' }
+    ]
+  }
+};
+
+const EXTRA_GENRE_SEEDS = [
+  { title: 'Bollywood Classics Reimagined', query: 'bollywood unplugged acoustic covers' },
+  { title: 'Global Viral Radar', query: 'viral hits global top 50 2026' },
+  { title: 'Phonk & Workout Drive', query: 'gym workout phonk hype music' },
+  { title: 'Lo-Fi Chillhop Coffee', query: 'chillhop jazz beats lofi study' },
+  { title: 'Indie Dream Pop', query: 'dream pop indie alternative' },
+  { title: 'Punjabi Top Hits', query: 'top punjabi pop songs' },
+  { title: 'Acoustic Soul', query: 'acoustic soul guitar vocals' },
+  { title: 'Synthpop & Neon Beats', query: 'synthpop modern electronic hits' }
+];
+
+function getCircadianPeriod(hour) {
+  if (hour >= 5 && hour < 12) return 'morning';
+  if (hour >= 12 && hour < 17) return 'afternoon';
+  if (hour >= 17 && hour < 21) return 'evening';
+  return 'night';
+}
+
 /**
- * Gets curated home feed playlists and trending music
- * Always returns instantly with zero chance of failure
+ * Echo Music Dynamic Home Feed Engine
+ * Generates fresh, contextual music shelves tailored to the time of day and diverse seeds.
  */
-async function getHomeFeed() {
-  if (inMemoryHomeFeed && Object.keys(inMemoryHomeFeed).length > 0) {
-    if (Date.now() - lastHomeRefresh > 3600000) {
-      refreshHomeFeedParallel().catch(() => {});
-    }
+async function getHomeFeed(options = {}) {
+  const { mood = null, forceRefresh = false, hour = new Date().getHours() } = options;
+  const period = mood && MOOD_CATALOG[mood] ? mood : getCircadianPeriod(hour);
+  const moodConfig = MOOD_CATALOG[period];
+
+  if (!forceRefresh && inMemoryHomeFeed && Object.keys(inMemoryHomeFeed).length > 0 && (Date.now() - lastHomeRefresh < 1200000)) {
     return inMemoryHomeFeed;
   }
 
-  return inMemoryHomeFeed || DEFAULT_HOME_FEED;
-}
-
-async function refreshHomeFeedParallel() {
-  const sections = [
+  // Curate dynamic section seeds
+  const chosenSections = [
     { title: 'Trending Tracks', query: 'Top Global Music 2026 Hits' },
-    { title: 'Spotify Quick Picks', query: 'Spotify Global Top 50 Hits' },
-    { title: 'Chill & Relax', query: 'Lo-Fi Chill Beats relaxing' },
-    { title: 'Electronic & Synth', query: 'Synthwave EDM Future Bass' },
-    { title: 'Acoustic & Indie', query: 'Indie Acoustic Coffee Shop' },
-    { title: 'Workout Energy', query: 'Workout Gym Hype motivation music' }
+    { title: 'Spotify Quick Picks', query: 'Spotify Global Top 50 Hits' }
   ];
 
+  // Add 2 randomized sections from the current circadian mood
+  const moodShuffled = [...moodConfig.sections].sort(() => 0.5 - Math.random());
+  chosenSections.push(moodShuffled[0]);
+  if (moodShuffled[1]) chosenSections.push(moodShuffled[1]);
+
+  // Add 1 random extra genre seed for variety
+  const extraShuffled = [...EXTRA_GENRE_SEEDS].sort(() => 0.5 - Math.random());
+  chosenSections.push(extraShuffled[0]);
+
   try {
-    const promises = sections.map(async (sec) => {
+    const promises = chosenSections.map(async (sec) => {
       try {
         const tracks = (await searchMusic(sec.query)).slice(0, 10);
         return { title: sec.title, tracks };
@@ -331,8 +400,8 @@ async function refreshHomeFeedParallel() {
 
     return inMemoryHomeFeed || results;
   } catch (error) {
-    console.error('Home feed refresh error:', error.message);
-    return inMemoryHomeFeed || {};
+    console.error('Home feed dynamic refresh error:', error.message);
+    return inMemoryHomeFeed || DEFAULT_HOME_FEED;
   }
 }
 

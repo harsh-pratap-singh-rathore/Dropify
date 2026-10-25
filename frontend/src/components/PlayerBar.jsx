@@ -50,7 +50,49 @@ export default function PlayerBar() {
 
   return (
     <div className="player-bar-wrapper">
-      <div className="player-bar liquid-island">
+      {/* Mobile Mini-Player Sheet (Active on Mobile Screens) */}
+      <div className="mobile-mini-player" onClick={() => setIsFullscreenPlayerOpen(true)} role="button" aria-label="Open Fullscreen Player">
+        <div className="mobile-mini-progress-bar" style={{ width: `${progress || 0}%` }} />
+        <div className="mobile-mini-left">
+          <img
+            src={currentSong.thumbnail || `https://i.ytimg.com/vi/${currentSong.id}/mqdefault.jpg`}
+            alt={currentSong.title}
+            className="mobile-mini-thumb"
+          />
+          <div className="mobile-mini-info">
+            <span className="mobile-mini-title sketch-font-hand">{currentSong.title}</span>
+            <span className="mobile-mini-artist sketch-font-hand">{currentSong.artist}</span>
+          </div>
+        </div>
+
+        <div className="mobile-mini-actions" onClick={(e) => e.stopPropagation()}>
+          <button
+            className={`card-like-btn ${isLiked ? 'liked' : ''}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              toggleLike(currentSong);
+            }}
+            title={isLiked ? 'Unlike' : 'Like'}
+          >
+            <Heart size={18} fill={isLiked ? '#ef4444' : 'none'} color={isLiked ? '#ef4444' : 'var(--graphite-main)'} />
+          </button>
+
+          <button
+            className="btn-control-play mobile-play-btn"
+            onClick={togglePlayPause}
+            aria-label={isPlaying ? 'Pause' : 'Play'}
+          >
+            {isPlaying ? <Pause size={18} color="#ffffff" /> : <Play size={18} fill="#ffffff" color="#ffffff" style={{ marginLeft: '2px' }} />}
+          </button>
+
+          <button className="btn-control" onClick={() => playNext(true)} aria-label="Next Track">
+            <SkipForward size={18} />
+          </button>
+        </div>
+      </div>
+
+      {/* Desktop Player Dock (Active on Tablets and PCs) */}
+      <div className="player-bar liquid-island desktop-player-bar">
         {/* Track Thumbnail, Metadata & Mini Animated Equalizer */}
         <div className="player-left" onClick={() => setIsFullscreenPlayerOpen(true)} title="Click to open Songwriter Journal">
           <div className="player-thumb-wrapper">
@@ -96,7 +138,7 @@ export default function PlayerBar() {
           </button>
         </div>
 
-        {/* Center Controls & Pencil Timeline */}
+        {/* Center Controls & Timeline */}
         <div className="controls-center">
           <div className="playback-buttons">
             <button className="btn-control" onClick={playPrevious} title="Previous (Shift+Left)">
@@ -136,7 +178,7 @@ export default function PlayerBar() {
           <button
             className="btn-icon-subtle stretchy-btn"
             onClick={() => setIsFullscreenPlayerOpen(true)}
-            title="Synchronized Lyrics & Fullscreen"
+            title="Synchronized Lyrics & Fullscreen (F)"
           >
             <AlignLeft size={18} />
           </button>

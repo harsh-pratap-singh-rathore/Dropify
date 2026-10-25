@@ -10,9 +10,8 @@ import HomeScreen from './screens/HomeScreen';
 import SearchScreen from './screens/SearchScreen';
 import LibraryScreen from './screens/LibraryScreen';
 import TasteMixScreen from './screens/TasteMixScreen';
+import MobileBottomNav from './components/MobileBottomNav';
 import './App.css';
-
-import { Compass, Search, Radio, Sparkles, Heart } from 'lucide-react';
 
 function MainApp() {
   const [activeTab, setActiveTab] = useState('home');
@@ -204,52 +203,8 @@ function MainApp() {
       {/* Bottom Floating Player Bar */}
       <PlayerBar />
 
-      {/* Mobile Bottom Navigation Bar (Spotify Mobile Experience) */}
-      <nav className="mobile-bottom-nav glass-panel">
-        <button
-          className={`mobile-nav-btn ${activeTab === 'home' ? 'active' : ''}`}
-          onClick={() => handleTabSwitch('home')}
-        >
-          <Compass size={20} />
-          <span>Home</span>
-        </button>
-
-        <button
-          className={`mobile-nav-btn ${activeTab === 'search' ? 'active' : ''}`}
-          onClick={() => handleTabSwitch('search')}
-        >
-          <Search size={20} />
-          <span>Search</span>
-        </button>
-
-        <button
-          className="mobile-nav-btn flow-nav-btn"
-          onClick={() => {
-            setIsFullscreenPlayerOpen(false);
-            setIsMusicFlowOpen(true);
-          }}
-          title="Music Flow"
-        >
-          <Radio size={20} />
-          <span>Flow</span>
-        </button>
-
-        <button
-          className={`mobile-nav-btn ${activeTab === 'taste' ? 'active' : ''}`}
-          onClick={() => handleTabSwitch('taste')}
-        >
-          <Sparkles size={20} />
-          <span>Taste</span>
-        </button>
-
-        <button
-          className={`mobile-nav-btn ${activeTab === 'library' ? 'active' : ''}`}
-          onClick={() => handleTabSwitch('library')}
-        >
-          <Heart size={20} />
-          <span>Library</span>
-        </button>
-      </nav>
+      {/* Mobile Web App Bottom Navigation Bar (Spotify / Apple Music PWA Experience) */}
+      <MobileBottomNav activeTab={activeTab} setActiveTab={handleTabSwitch} />
 
       {/* Fullscreen Player Experience */}
       <FullscreenPlayer />

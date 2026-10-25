@@ -12,6 +12,22 @@ class AudioManager {
     this.primaryAudio.crossOrigin = 'anonymous';
     this.secondaryAudio.crossOrigin = 'anonymous';
 
+    // Mobile Background Playback & Lockscreen Attributes
+    this.primaryAudio.playsInline = true;
+    this.secondaryAudio.playsInline = true;
+    this.primaryAudio.setAttribute('playsinline', 'true');
+    this.primaryAudio.setAttribute('webkit-playsinline', 'true');
+    this.secondaryAudio.setAttribute('playsinline', 'true');
+    this.secondaryAudio.setAttribute('webkit-playsinline', 'true');
+
+    // Mobile silent audio keepalive to prevent mobile OS lockscreen suspension
+    this.silentAudio = typeof Audio !== 'undefined' ? new Audio('data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA') : null;
+    if (this.silentAudio) {
+      this.silentAudio.loop = true;
+      this.silentAudio.playsInline = true;
+      this.silentAudio.setAttribute('playsinline', 'true');
+    }
+
     this.primarySource = null;
     this.secondarySource = null;
 
@@ -146,6 +162,7 @@ class AudioManager {
     }
 
     try {
+      this.startSilentKeepalive();
       this.ytPlayer.loadVideoById(videoId);
       this.ytPlayer.playVideo();
       this.isYtPlaying = true;
@@ -424,7 +441,20 @@ class AudioManager {
     }, duration * 1000);
   }
 
+  startSilentKeepalive() {
+    if (this.silentAudio) {
+      this.silentAudio.play().catch(() => {});
+    }
+  }
+
+  stopSilentKeepalive() {
+    if (this.silentAudio) {
+      this.silentAudio.pause();
+    }
+  }
+
   pause() {
+    this.stopSilentKeepalive();
     if (this.currentMode === 'yt' && this.ytPlayer && typeof this.ytPlayer.pauseVideo === 'function') {
       this.ytPlayer.pauseVideo();
       this.isYtPlaying = false;
@@ -436,6 +466,7 @@ class AudioManager {
   async resume() {
     this.ensureAudioContext();
     if (this.currentMode === 'yt' && this.ytPlayer && typeof this.ytPlayer.playVideo === 'function') {
+      this.startSilentKeepalive();
       this.ytPlayer.playVideo();
       this.isYtPlaying = true;
       return;
