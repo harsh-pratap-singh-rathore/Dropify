@@ -1,0 +1,51 @@
+{
+  "appId": "com.dropify.desktop",
+  "productName": "Dropify",
+  "directories": {
+    "output": "release"
+  },
+  "files": [
+    "electron/**/*",
+    "backend/**/*",
+    "frontend/dist/**/*",
+    "package.json"
+  ],
+  "asar": true,
+  "asarUnpack": [
+    "backend/**/*",
+    "frontend/dist/**/*",
+    "node_modules/@distube/**/*",
+    "node_modules/yt-search/**/*",
+    "node_modules/axios/**/*",
+    "node_modules/express/**/*"
+  ],
+  "win": {
+    "target": [
+      {
+        "target": "nsis",
+        "arch": [
+          "x64"
+        ]
+      },
+      {
+        "target": "portable",
+        "arch": [
+          "x64"
+        ]
+      }
+    ],
+    "icon": "electron/assets/icon.png",
+    "requestedExecutionLevel": "asInvoker"
+  },
+  "nsis": {
+    "oneClick": false,
+    "allowToChangeInstallationDirectory": true,
+    "createDesktopShortcut": true,
+    "createStartMenuShortcut": true,
+    "shortcutName": "Dropify",
+    "runAfterFinish": true
+  },
+  "portable": {
+    "artifactName": "Dropify-Portable-${version}.exe"
+  }
+}

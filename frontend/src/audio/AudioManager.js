@@ -10,6 +10,9 @@
 
 import { PlaybackCutoffGuard } from './PlaybackCutoffGuard';
 import { apiUrl } from '../config';
+import { applyAutoEqToAudioManager, calculateBassSwapDucking } from './AutoEqParser';
+
+export { AutoEqParser, calculateBassSwapDucking } from './AutoEqParser';
 
 const isMobilePlatform = () => {
   if (typeof navigator === 'undefined') return false;
@@ -68,6 +71,8 @@ class AudioManager {
 
     this.primarySource = null;
     this.secondarySource = null;
+    this.primaryDuckFilter = null;
+    this.secondaryDuckFilter = null;
 
     this.eqBands = [];
     this.eqFrequencies = [32, 64, 125, 250, 500, 1000, 2000, 4000, 8000, 16000];
@@ -379,13 +384,29 @@ class AudioManager {
       this.primaryGain.gain.setValueAtTime(1.0, this.audioCtx.currentTime);
       this.secondaryGain.gain.setValueAtTime(0.0, this.audioCtx.currentTime);
 
+      // DJ Automix 150 Hz Low-Shelf Bass-Swap Ducking Filters
+      // Reverse-engineered from Echo Music's AutomixDuckAudioProcessor.kt
+      this.primaryDuckFilter = this.audioCtx.createBiquadFilter();
+      this.primaryDuckFilter.type = 'lowshelf';
+      this.primaryDuckFilter.frequency.setValueAtTime(150, this.audioCtx.currentTime);
+      this.primaryDuckFilter.gain.setValueAtTime(0.0, this.audioCtx.currentTime);
+
+      this.secondaryDuckFilter = this.audioCtx.createBiquadFilter();
+      this.secondaryDuckFilter.type = 'lowshelf';
+      this.secondaryDuckFilter.frequency.setValueAtTime(150, this.audioCtx.currentTime);
+      this.secondaryDuckFilter.gain.setValueAtTime(0.0, this.audioCtx.currentTime);
+
       // Media Element Sources
       try {
         this.primarySource = this.audioCtx.createMediaElementSource(this.primaryAudio);
         this.secondarySource = this.audioCtx.createMediaElementSource(this.secondaryAudio);
 
-        this.primarySource.connect(this.primaryGain);
-        this.secondarySource.connect(this.secondaryGain);
+        // Audio Graph: Source -> 150Hz Duck Filter -> Crossfade Gain -> Pre-EQ Mixer
+        this.primarySource.connect(this.primaryDuckFilter);
+        this.primaryDuckFilter.connect(this.primaryGain);
+
+        this.secondarySource.connect(this.secondaryDuckFilter);
+        this.secondaryDuckFilter.connect(this.secondaryGain);
 
         // Pre-EQ Mixer
         const preEqMixer = this.audioCtx.createGain();
@@ -699,6 +720,7 @@ class AudioManager {
       current.currentTime = 0;
     } catch (_) {}
 
+    this.resetDuckGains();
     this.currentStreamUrl = streamUrl;
     this.shouldBePlaying = true;
     this.ensureAudioContext();
@@ -794,6 +816,9 @@ class AudioManager {
     const outgoingAudio = this.getCurrentAudio();
     const incomingAudio = this.getStandbyAudio();
 
+    const outgoingDuck = this.activePlayer === 'primary' ? this.primaryDuckFilter : this.secondaryDuckFilter;
+    const incomingDuck = this.activePlayer === 'primary' ? this.secondaryDuckFilter : this.primaryDuckFilter;
+
     incomingAudio.src = newStreamUrl;
     incomingAudio.load();
     try {
@@ -801,6 +826,20 @@ class AudioManager {
     } catch (err) {
       if (err.name === 'AbortError') return;
       console.warn('Crossfade incoming play notice:', err.message);
+    }
+
+    // Set initial ducking levels: incoming ducked to -18 dB, outgoing at 0 dB
+    if (incomingDuck && this.audioCtx) {
+      try {
+        incomingDuck.gain.cancelScheduledValues(now);
+        incomingDuck.gain.setValueAtTime(-18.0, now);
+      } catch (_) {}
+    }
+    if (outgoingDuck && this.audioCtx) {
+      try {
+        outgoingDuck.gain.cancelScheduledValues(now);
+        outgoingDuck.gain.setValueAtTime(0.0, now);
+      } catch (_) {}
     }
 
     const steps = 30;
@@ -813,6 +852,11 @@ class AudioManager {
 
       if (outgoingGain) outgoingGain.gain.setValueAtTime(outVal, timeAt);
       if (incomingGain) incomingGain.gain.setValueAtTime(inVal, timeAt);
+
+      // DJ Automix 150 Hz Low-Shelf Bass-Swap Ducking
+      const { outDuckDb, inDuckDb } = calculateBassSwapDucking(progress);
+      if (outgoingDuck) outgoingDuck.gain.setValueAtTime(outDuckDb, timeAt);
+      if (incomingDuck) incomingDuck.gain.setValueAtTime(inDuckDb, timeAt);
     }
 
     if (this.crossfadeTimeout) {
@@ -825,7 +869,25 @@ class AudioManager {
       this.activePlayer = this.activePlayer === 'primary' ? 'secondary' : 'primary';
       this.isCrossfading = false;
       this.crossfadeTimeout = null;
+      this.resetDuckGains();
     }, duration * 1000);
+  }
+
+  resetDuckGains() {
+    if (!this.audioCtx) return;
+    const now = this.audioCtx.currentTime;
+    if (this.primaryDuckFilter) {
+      try {
+        this.primaryDuckFilter.gain.cancelScheduledValues(now);
+        this.primaryDuckFilter.gain.setValueAtTime(0.0, now);
+      } catch (_) {}
+    }
+    if (this.secondaryDuckFilter) {
+      try {
+        this.secondaryDuckFilter.gain.cancelScheduledValues(now);
+        this.secondaryDuckFilter.gain.setValueAtTime(0.0, now);
+      } catch (_) {}
+    }
   }
 
   startSilentKeepalive() {}
@@ -833,6 +895,7 @@ class AudioManager {
 
   pause() {
     this.shouldBePlaying = false;
+    this.resetDuckGains();
     if (this.bufferTimeout) {
       clearTimeout(this.bufferTimeout);
       this.bufferTimeout = null;
@@ -901,6 +964,28 @@ class AudioManager {
     if (this.eqBands[index] && this.isEqualizerEnabled && this.audioCtx) {
       this.eqBands[index].gain.setValueAtTime(gainDb, this.audioCtx.currentTime);
     }
+  }
+
+  /**
+   * Applies an AutoEQ headphone preset (either raw AutoEQ text or parsed object)
+   * into the 10-band equalizer DSP chain using RBJ biquad frequency response math.
+   */
+  applyAutoEqPreset(presetOrText) {
+    this.ensureAudioContext();
+    return applyAutoEqToAudioManager(this, presetOrText);
+  }
+
+  getEqualizerGains() {
+    return this.eqBands.map((band) => (band ? band.gain.value : 0.0));
+  }
+
+  resetEqualizer() {
+    this.ensureAudioContext();
+    this.eqBands.forEach((band) => {
+      if (band && this.audioCtx) {
+        band.gain.setValueAtTime(0.0, this.audioCtx.currentTime);
+      }
+    });
   }
 
   setStereoWidth(width) {

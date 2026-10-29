@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { usePlayer } from '../context/PlayerContext';
 import { apiUrl } from '../config';
+import AmbientGlowCanvas from './AmbientGlowCanvas';
 
 function formatSeconds(sec) {
   if (!sec || isNaN(sec)) return '0:00';
@@ -221,7 +222,19 @@ export default function FullscreenPlayer() {
   const albumArt = currentSong.thumbnailHigh || currentSong.thumbnail || (currentSong.id ? `https://i.ytimg.com/vi/${currentSong.id}/hqdefault.jpg` : '');
 
   return (
-    <div className="fullscreen-overlay">
+    <div className={`fullscreen-overlay ${activeTab === 'ambient' ? 'ambient-glow-theme' : ''}`}>
+      {/* 6 Harmonic Orbital Ambient Glow Canvas (Echo Music AmbientGlowBackground) */}
+      <AmbientGlowCanvas
+        albumArt={albumArt}
+        trackSeed={`${currentSong.id || ''}-${currentSong.title || ''}-${currentSong.artist || ''}`}
+        isPlaying={isPlaying}
+        audioManager={audioManager}
+        style={{
+          opacity: activeTab === 'ambient' ? 1.0 : 0.16,
+          transition: 'opacity 0.6s ease'
+        }}
+      />
+
       {/* Header with Sketchbook Binder Tabs */}
       <div className="fullscreen-header">
         <button className="btn-icon" onClick={() => setIsFullscreenPlayerOpen(false)} aria-label="Close Journal">
@@ -243,6 +256,13 @@ export default function FullscreenPlayer() {
             <Disc size={16} />
             <span>Charcoal Visualizer</span>
           </button>
+          <button
+            className={`glass-pill ${activeTab === 'ambient' ? 'active' : ''}`}
+            onClick={() => setActiveTab('ambient')}
+          >
+            <Sparkles size={16} />
+            <span>Ambient Glow</span>
+          </button>
         </div>
 
         <button className="btn-icon" onClick={() => setIsEqOpen(true)} title="Pencil DSP Equalizer">
@@ -251,7 +271,13 @@ export default function FullscreenPlayer() {
       </div>
 
       {/* Main Content Area */}
-      <div className={`fullscreen-body ${activeTab === 'lyrics' ? 'lyrics-mode-active' : 'visualizer-mode-active'}`}>
+      <div className={`fullscreen-body ${
+        activeTab === 'lyrics'
+          ? 'lyrics-mode-active'
+          : activeTab === 'visualizer'
+          ? 'visualizer-mode-active'
+          : 'ambient-mode-active'
+      }`}>
         {/* Mobile Left Boxy Artwork Card (Visible on mobile during lyrics mode) */}
         {activeTab === 'lyrics' && (
           <div className="fullscreen-mobile-artwork-col mobile-only">
@@ -428,13 +454,63 @@ export default function FullscreenPlayer() {
                 </div>
               )}
             </div>
-          ) : (
+          ) : activeTab === 'visualizer' ? (
             <div className="visualizer-canvas-container">
               <div style={{ alignSelf: 'flex-start', paddingBottom: '10px', display: 'flex', alignItems: 'center', gap: '8px', fontFamily: 'var(--font-mono)', fontSize: '0.85rem' }}>
                 <Sparkles size={14} />
                 <span>64-BAND CHARCOAL AUDIO OSCILLOGRAM</span>
               </div>
               <canvas ref={canvasRef} width={620} height={280} />
+            </div>
+          ) : (
+            <div className="ambient-mode-panel" style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%', position: 'relative' }}>
+              <div className="sketch-card" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', padding: '24px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '14px', borderBottom: '1.5px solid rgba(255, 255, 255, 0.15)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontFamily: 'var(--font-mono)', fontSize: '0.88rem' }}>
+                    <Sparkles size={15} color="#ff3366" />
+                    <span>6 HARMONIC ORBITAL AMBIENT GLOW</span>
+                  </div>
+                  <span className="gain-badge">Echo Music Aura</span>
+                </div>
+
+                <div className="lyrics-scroll-container" ref={lyricsContainerRef} style={{ padding: '24px 8px' }}>
+                  {lyricsData.lines && lyricsData.lines.length > 0 ? (
+                    lyricsData.lines.map((line, idx) => {
+                      const isActive = idx === activeLyricIndex;
+                      return (
+                        <div
+                          key={idx}
+                          className={`lyric-line lyric-line-${idx} ${isActive ? 'active' : ''}`}
+                          style={{
+                            fontSize: isActive ? '1.55rem' : '1.2rem',
+                            fontWeight: isActive ? 700 : 400,
+                            color: isActive ? '#ffffff' : 'rgba(255, 255, 255, 0.5)',
+                            textShadow: isActive ? '0 0 16px rgba(255, 255, 255, 0.7)' : 'none',
+                            transition: 'all 0.3s ease',
+                            cursor: 'pointer'
+                          }}
+                          onClick={() => line.time !== undefined && duration > 0 && seekTo((Math.max(0, line.time - lyricsOffset) / duration) * 100)}
+                          title="Click to jump to this line"
+                        >
+                          {line.text}
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div style={{ textAlign: 'center', margin: 'auto', padding: '30px' }}>
+                      <p className="sketch-font-title" style={{ fontSize: '1.5rem', marginBottom: '8px', color: '#ffffff' }}>
+                        {currentSong.title}
+                      </p>
+                      <p className="sketch-font-hand" style={{ fontSize: '1.2rem', color: 'rgba(255, 255, 255, 0.75)' }}>
+                        {currentSong.artist}
+                      </p>
+                      <p className="sketch-font-mono" style={{ fontSize: '0.85rem', color: 'rgba(255, 255, 255, 0.5)', marginTop: '16px' }}>
+                        6 Harmonic Orbital Frequencies • Dynamic Album Palette
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           )}
         </div>

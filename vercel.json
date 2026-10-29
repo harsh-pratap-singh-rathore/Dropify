@@ -8,6 +8,10 @@
   },
   "rewrites": [
     {
+      "source": "/api/updates",
+      "destination": "/releases.json"
+    },
+    {
       "source": "/api/(.*)",
       "destination": "https://dropify-backend-wy9v.onrender.com/api/$1"
     },

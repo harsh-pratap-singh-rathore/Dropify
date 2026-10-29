@@ -95,6 +95,7 @@ export function PlayerProvider({ children }) {
   const playNextRef = useRef();
   const playPreviousRef = useRef();
   const seekToRef = useRef();
+  const togglePlayPauseRef = useRef();
 
   isPlayingRef.current = isPlaying;
   currentSongRef.current = currentSong;
@@ -355,6 +356,47 @@ export function PlayerProvider({ children }) {
     };
   }, [isPlaying]);
 
+  // Desktop Electron Native Controls & Tray/Discord Sync
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.electronAPI) return;
+
+    if (window.electronAPI.updatePlaybackState) {
+      window.electronAPI.updatePlaybackState({
+        isPlaying,
+        currentSong,
+        currentTime,
+        duration
+      });
+    }
+  }, [isPlaying, currentSong?.id]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.electronAPI?.onMediaAction) return;
+
+    const cleanup = window.electronAPI.onMediaAction((action) => {
+      switch (action) {
+        case 'play-pause':
+          if (togglePlayPauseRef.current) togglePlayPauseRef.current();
+          break;
+        case 'next':
+        case 'next-track':
+          if (playNextRef.current) playNextRef.current(true);
+          break;
+        case 'prev':
+        case 'prev-track':
+        case 'previous':
+          if (playPreviousRef.current) playPreviousRef.current();
+          break;
+        default:
+          break;
+      }
+    });
+
+    return () => {
+      if (typeof cleanup === 'function') cleanup();
+    };
+  }, []);
+
   const recordStats = (skipped = false) => {
     if (!currentSong) return;
     const listened = listenedDurationRef.current || 0;
@@ -489,6 +531,7 @@ export function PlayerProvider({ children }) {
   playNextRef.current = playNext;
   playPreviousRef.current = playPrevious;
   seekToRef.current = seekTo;
+  togglePlayPauseRef.current = togglePlayPause;
 
   const toggleLike = async (song = currentSong) => {
     if (!song) return;

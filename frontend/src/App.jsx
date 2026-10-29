@@ -11,9 +11,10 @@ import SearchScreen from './screens/SearchScreen';
 import LibraryScreen from './screens/LibraryScreen';
 import TasteMixScreen from './screens/TasteMixScreen';
 import MobileBottomNav from './components/MobileBottomNav';
+import LandingPage from './landing/LandingPage';
 import './App.css';
 
-function MainApp() {
+function MainApp({ onBackToLanding }) {
   const [activeTab, setActiveTab] = useState('home');
   const [searchQuery, setSearchQuery] = useState('');
   const {
@@ -47,6 +48,19 @@ function MainApp() {
     setActiveTab(tab);
   };
 
+  // Lock body scroll when full modals are open to prevent background scrolling & mobile rubber-banding (UI-04)
+  useEffect(() => {
+    const isAnyModalOpen = isFullscreenPlayerOpen || isEqOpen || isMusicFlowOpen || isShortcutsOpen;
+    if (isAnyModalOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isFullscreenPlayerOpen, isEqOpen, isMusicFlowOpen, isShortcutsOpen]);
+
   // Audiophile Keyboard Controls: Space (Play/Pause), Escape (Exit Fullscreen/Modals), Arrows (Seek/Vol)
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -71,16 +85,16 @@ function MainApp() {
           togglePlayPause();
           break;
 
-        case 'Escape': // Escape: Exit Fullscreen Player or Close Modals
+        case 'Escape': // Escape: Close topmost modal first, then fullscreen player (UI-02)
           e.preventDefault();
-          if (isFullscreenPlayerOpen) {
-            setIsFullscreenPlayerOpen(false);
+          if (isShortcutsOpen) {
+            setIsShortcutsOpen(false);
           } else if (isEqOpen) {
             setIsEqOpen(false);
           } else if (isMusicFlowOpen) {
             setIsMusicFlowOpen(false);
-          } else if (isShortcutsOpen) {
-            setIsShortcutsOpen(false);
+          } else if (isFullscreenPlayerOpen) {
+            setIsFullscreenPlayerOpen(false);
           }
           break;
 
@@ -199,6 +213,7 @@ function MainApp() {
         activeTab={activeTab}
         setActiveTab={handleTabSwitch}
         onSearch={handleSearchTrigger}
+        onBackToLanding={onBackToLanding}
       />
 
       {/* Main Screen Views */}
@@ -213,7 +228,11 @@ function MainApp() {
       <PlayerBar />
 
       {/* Mobile Web App Bottom Navigation Bar (Spotify / Apple Music PWA Experience) */}
-      <MobileBottomNav activeTab={activeTab} setActiveTab={handleTabSwitch} />
+      <MobileBottomNav
+        activeTab={activeTab}
+        setActiveTab={handleTabSwitch}
+        onOpenMusicFlow={() => setIsMusicFlowOpen(true)}
+      />
 
       {/* Fullscreen Player Experience */}
       <FullscreenPlayer />
@@ -278,10 +297,65 @@ class ErrorBoundary extends React.Component {
 }
 
 export default function App() {
+  const [viewMode, setViewMode] = useState(() => {
+    // 1. Electron environment always loads desktop player
+    if (typeof window !== 'undefined' && window.electronAPI) {
+      return 'player';
+    }
+    // 2. URL search parameters or explicit routes
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('player') === 'true' || window.location.pathname === '/app' || window.location.pathname === '/player') {
+        return 'player';
+      }
+    }
+    // 3. Official Product Landing Page by default
+    return 'landing';
+  });
+
+  // Keep browser history synced with back/forward buttons
+  useEffect(() => {
+    const handlePopState = () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('player') === 'true' || window.location.pathname === '/app' || window.location.pathname === '/player') {
+        setViewMode('player');
+      } else {
+        setViewMode('landing');
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  const launchWebPlayer = () => {
+    setViewMode('player');
+    try {
+      const newUrl = new URL(window.location.href);
+      newUrl.searchParams.set('player', 'true');
+      window.history.pushState({ view: 'player' }, '', newUrl.toString());
+      window.scrollTo(0, 0);
+    } catch (_) {}
+  };
+
+  const returnToLanding = () => {
+    setViewMode('landing');
+    try {
+      const newUrl = new URL(window.location.href);
+      newUrl.searchParams.delete('player');
+      const targetPath = newUrl.pathname === '/app' || newUrl.pathname === '/player' ? '/' : newUrl.pathname;
+      window.history.pushState({ view: 'landing' }, '', targetPath + (newUrl.searchParams.toString() ? '?' + newUrl.searchParams.toString() : ''));
+      window.scrollTo(0, 0);
+    } catch (_) {}
+  };
+
+  if (viewMode === 'landing') {
+    return <LandingPage onLaunchWebPlayer={launchWebPlayer} />;
+  }
+
   return (
     <ErrorBoundary>
       <PlayerProvider>
-        <MainApp />
+        <MainApp onBackToLanding={returnToLanding} />
       </PlayerProvider>
     </ErrorBoundary>
   );

@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Disc, Search, Compass, Radio, Heart, Sliders, Mic, Sparkles, X, ArrowRight, Command } from 'lucide-react';
+import { Disc, Search, Compass, Radio, Heart, Sliders, Mic, Sparkles, X, ArrowRight, Command, Download } from 'lucide-react';
 import { usePlayer } from '../context/PlayerContext';
 import { apiUrl } from '../config';
 
-export default function Navbar({ activeTab, setActiveTab, onSearch }) {
+export default function Navbar({ activeTab, setActiveTab, onSearch, onBackToLanding }) {
   const [query, setQuery] = useState('');
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -133,19 +133,56 @@ export default function Navbar({ activeTab, setActiveTab, onSearch }) {
     }
   };
 
+  const isElectron = typeof window !== 'undefined' && Boolean(window.electronAPI);
+
   return (
-    <nav className="navbar-container glass-panel">
+    <nav
+      className={`navbar-container glass-panel ${isElectron ? 'electron-navbar-drag' : ''}`}
+      style={isElectron ? { WebkitAppRegion: 'drag', paddingRight: '140px' } : undefined}
+    >
       {/* Brand */}
-      <div className="navbar-brand" onClick={() => setActiveTab('home')}>
+      <div
+        className="navbar-brand"
+        onClick={() => setActiveTab('home')}
+        style={{ WebkitAppRegion: 'no-drag' }}
+      >
         <div className="brand-icon">
           <Disc size={22} className="spin-slow" />
         </div>
         <span className="brand-name">DROPIFY</span>
         <span className="brand-tag">DSP</span>
+        {onBackToLanding && !isElectron && (
+          <button
+            type="button"
+            className="btn-text"
+            onClick={(e) => { e.stopPropagation(); onBackToLanding(); }}
+            title="Return to Dropify official product landing page"
+            style={{
+              marginLeft: '12px',
+              fontSize: '0.78rem',
+              fontWeight: 800,
+              padding: '4px 10px',
+              borderRadius: '9999px',
+              border: '1.5px solid #000',
+              background: '#FFE500',
+              color: '#000',
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '4px'
+            }}
+          >
+            ← Website
+          </button>
+        )}
       </div>
 
       {/* Search Input Bar with Live Autocomplete */}
-      <div className="navbar-search-wrapper" ref={searchContainerRef}>
+      <div
+        className="navbar-search-wrapper"
+        ref={searchContainerRef}
+        style={{ WebkitAppRegion: 'no-drag' }}
+      >
         <form onSubmit={handleSearchSubmit} className="search-bar">
           <Search size={18} className="search-icon" />
           <input
@@ -197,7 +234,7 @@ export default function Navbar({ activeTab, setActiveTab, onSearch }) {
       </div>
 
       {/* Navigation Links */}
-      <div className="nav-links">
+      <div className="nav-links" style={{ WebkitAppRegion: 'no-drag' }}>
         <button
           className={`nav-btn ${activeTab === 'home' ? 'active' : ''}`}
           onClick={() => setActiveTab('home')}
@@ -243,7 +280,7 @@ export default function Navbar({ activeTab, setActiveTab, onSearch }) {
       </div>
 
       {/* Actions: Echo Find & DSP */}
-      <div className="nav-actions">
+      <div className="nav-actions" style={{ WebkitAppRegion: 'no-drag' }}>
         <button
           className={`btn-icon ${isListening ? 'listening' : ''}`}
           onClick={handleEchoFind}
@@ -259,6 +296,20 @@ export default function Navbar({ activeTab, setActiveTab, onSearch }) {
         >
           <Command size={18} />
         </button>
+
+        {isElectron && (
+          <button
+            className="btn-icon"
+            onClick={async () => {
+              if (window.electronAPI?.checkForUpdates) {
+                await window.electronAPI.checkForUpdates(true);
+              }
+            }}
+            title="Check for Updates"
+          >
+            <Download size={18} />
+          </button>
+        )}
 
         <button
           className="btn-icon"

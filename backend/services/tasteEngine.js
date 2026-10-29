@@ -38,7 +38,7 @@ function calculateScore(stats, isLiked, timeOfDay) {
  * Records playback duration and completion
  */
 function recordPlayback(trackId, title, artist, listenedMs, skipped = false) {
-  const playStats = storage.getPlayStats();
+  const playStats = storage.getPlayStats() || {};
   const trackKey = `${title || ''}|${artist || ''}`.toLowerCase();
   
   if (!playStats[trackKey]) {
@@ -58,6 +58,16 @@ function recordPlayback(trackId, title, artist, listenedMs, skipped = false) {
   stat.lastPlayedAtMillis = Date.now();
   if (skipped && listenedMs < 15000) {
     stat.skipCount += 1;
+  }
+
+  // BE-12 & SEC-04: Cap playStats to 500 entries to prevent memory exhaustion & file bloat
+  const keys = Object.keys(playStats);
+  if (keys.length > 500) {
+    keys.sort((a, b) => (playStats[a].lastPlayedAtMillis || 0) - (playStats[b].lastPlayedAtMillis || 0));
+    const excess = keys.length - 500;
+    for (let i = 0; i < excess; i++) {
+      delete playStats[keys[i]];
+    }
   }
 
   storage.savePlayStats(playStats);
@@ -101,14 +111,15 @@ async function generateTasteMix(count = 20) {
   }
 
   if (seeds.length === 0) {
-    // Brand new user: return fresh discovery tracks
+    // Brand new user: return fresh discovery tracks from available randomized shelves (BE-05)
     const home = await innertube.getHomeFeed();
-    const trending = home['Trending Tracks'] || [];
+    const shelfKeys = Object.keys(home || {});
+    const trending = (home && home['Trending Tracks']) || (shelfKeys.length > 0 ? home[shelfKeys[0]] : []);
     return {
       title: 'Welcome Discovery Mix',
       description: 'Handpicked tracks to kickstart your listening profile',
       timeOfDay,
-      tracks: trending.slice(0, count)
+      tracks: (Array.isArray(trending) ? trending : []).slice(0, count)
     };
   }
 

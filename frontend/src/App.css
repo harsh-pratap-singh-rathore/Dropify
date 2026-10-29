@@ -1209,6 +1209,83 @@
   animation: modalFadeIn 0.25s ease-out;
 }
 
+/* 6 Harmonic Orbital Ambient Glow Theme */
+.fullscreen-overlay.ambient-glow-theme {
+  background: #050505 !important;
+  background-image: none !important;
+}
+
+.fullscreen-overlay.ambient-glow-theme .fullscreen-header {
+  background: rgba(18, 18, 22, 0.72) !important;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1.5px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35) !important;
+  color: #ffffff !important;
+}
+
+.fullscreen-overlay.ambient-glow-theme .fullscreen-header .btn-icon {
+  color: #ffffff !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+
+.fullscreen-overlay.ambient-glow-theme .fullscreen-tab-pills {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
+  box-shadow: none !important;
+}
+
+.fullscreen-overlay.ambient-glow-theme .glass-pill {
+  color: rgba(255, 255, 255, 0.7) !important;
+}
+
+.fullscreen-overlay.ambient-glow-theme .glass-pill.active {
+  background: rgba(255, 255, 255, 0.95) !important;
+  color: #18181b !important;
+  border-color: #ffffff !important;
+}
+
+.fullscreen-overlay.ambient-glow-theme .fullscreen-bottom-deck {
+  background: rgba(18, 18, 22, 0.78) !important;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-top: 1.5px solid rgba(255, 255, 255, 0.12) !important;
+  color: #ffffff !important;
+}
+
+.fullscreen-overlay.ambient-glow-theme .time-text {
+  color: rgba(255, 255, 255, 0.8) !important;
+}
+
+.fullscreen-overlay.ambient-glow-theme .btn-control {
+  color: #ffffff !important;
+  border-color: rgba(255, 255, 255, 0.25) !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+
+.fullscreen-overlay.ambient-glow-theme .sketch-card {
+  background: rgba(24, 24, 28, 0.62) !important;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1.5px solid rgba(255, 255, 255, 0.14) !important;
+  color: #ffffff !important;
+}
+
+.fullscreen-overlay.ambient-glow-theme .sketch-font-title {
+  color: #ffffff !important;
+}
+
+.fullscreen-overlay.ambient-glow-theme .sketch-font-hand {
+  color: rgba(255, 255, 255, 0.75) !important;
+}
+
+.fullscreen-overlay.ambient-glow-theme .gain-badge {
+  background: rgba(255, 255, 255, 0.12) !important;
+  color: #ffffff !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
 .fullscreen-header,
 .musicflow-header {
   height: calc(72px + env(safe-area-inset-top, 0px));
@@ -2442,4 +2519,25 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* Windows 11 Electron Frameless Drag Region & Window Controls Clearance */
+.electron-navbar-drag {
+  -webkit-app-region: drag;
+  padding-right: 140px !important;
+  user-select: none;
+}
+
+.electron-navbar-drag .no-drag,
+.electron-navbar-drag button,
+.electron-navbar-drag input,
+.electron-navbar-drag a,
+.electron-navbar-drag .navbar-brand,
+.electron-navbar-drag .navbar-search-wrapper,
+.electron-navbar-drag .nav-links,
+.electron-navbar-drag .nav-actions,
+.electron-navbar-drag .suggestions-dropdown,
+.electron-navbar-drag .navbar-clear-btn {
+  -webkit-app-region: no-drag !important;
+}
+
 

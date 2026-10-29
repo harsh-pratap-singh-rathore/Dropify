@@ -1,0 +1,81 @@
+{
+  "schemaVersion": "1.0.0",
+  "project": "Dropify",
+  "lastUpdated": "2026-10-29T06:00:00Z",
+  "channel": "stable",
+  "platforms": {
+    "android": {
+      "platform": "android",
+      "latestVersion": "1.0.1",
+      "version": "1.0.1",
+      "versionCode": 2,
+      "releaseDate": "2026-10-29",
+      "filename": "dropify-v1.0.1.apk",
+      "downloadUrl": "https://dropify.vercel.app/downloads/dropify-v1.0.1.apk",
+      "fallbackUrl": "https://github.com/harsh-pratap-singh-rathore/Dropify/releases/download/v1.0.1/app-release.apk",
+      "size": 19849449,
+      "fileSize": 19849449,
+      "sizeFormatted": "18.9 MB",
+      "sha256": "7898ca54ec6e8757a3603023b2b1764944521af4f716711dbe6ff46a0a80516f",
+      "minSupportedVersion": "1.0.0",
+      "minSdk": 26,
+      "minOs": "Android 8.0 (Oreo) or higher",
+      "arch": "Universal (arm64-v8a, armeabi-v7a, x86, x86_64)",
+      "mandatory": false,
+      "channel": "stable",
+      "releaseNotes": [
+        "In-App Updater integration with automatic discovery & cryptographic SHA-256 verification",
+        "Direct \"Check for Updates\" action in Settings & My Library header",
+        "Playback lifecycle fix: clean termination and notification dismissal when dismissed from Recent Apps",
+        "Safe background playback persistence across Home navigation and screen locks",
+        "Windows Desktop Electron updater integration with system tray and title bar controls"
+      ]
+    },
+    "windows": {
+      "platform": "windows",
+      "latestVersion": "1.0.0",
+      "version": "1.0.0",
+      "versionCode": 1,
+      "releaseDate": "2026-10-25",
+      "downloadUrl": "https://github.com/harsh-pratap-singh-rathore/Dropify/releases/download/v1.0.0/Dropify-Setup-1.0.0.exe",
+      "portableUrl": "https://github.com/harsh-pratap-singh-rathore/Dropify/releases/download/v1.0.0/Dropify-Portable-1.0.0.exe",
+      "installer": {
+        "format": "NSIS Setup (.exe)",
+        "filename": "Dropify-Setup-1.0.0.exe",
+        "downloadUrl": "https://github.com/harsh-pratap-singh-rathore/Dropify/releases/download/v1.0.0/Dropify-Setup-1.0.0.exe",
+        "mirrorUrl": "/downloads/Dropify-Setup-1.0.0.exe",
+        "size": 135163574,
+        "fileSize": 135163574,
+        "sizeFormatted": "128.9 MB",
+        "sha256": "05fd37b08b0c72b4a70958851118f257e37791d09b657b4ad8c271f7404b0e6b"
+      },
+      "portable": {
+        "format": "Standalone Portable (.exe)",
+        "filename": "Dropify-Portable-1.0.0.exe",
+        "downloadUrl": "https://github.com/harsh-pratap-singh-rathore/Dropify/releases/download/v1.0.0/Dropify-Portable-1.0.0.exe",
+        "mirrorUrl": "/downloads/Dropify-Portable-1.0.0.exe",
+        "size": 114367762,
+        "fileSize": 114367762,
+        "sizeFormatted": "109.1 MB",
+        "sha256": "e3211562f661ba719a93c64e0a58e0dcfed7f5a7bee591a16c3f06880d484ad0"
+      },
+      "size": 135163574,
+      "fileSize": 135163574,
+      "sizeFormatted": "128.9 MB",
+      "sha256": "05fd37b08b0c72b4a70958851118f257e37791d09b657b4ad8c271f7404b0e6b",
+      "minSupportedVersion": "1.0.0",
+      "minOs": "Windows 10 / Windows 11 (64-bit)",
+      "arch": "x64",
+      "mandatory": false,
+      "channel": "stable",
+      "releaseNotes": [
+        "Frameless desktop experience with Mica material",
+        "System Tray integration with quick controls",
+        "Windows Taskbar thumbnail toolbar (Thumbar buttons: Play/Pause, Next, Prev)",
+        "Global Media Key support (MediaPlayPause, Next, Prev)",
+        "Discord Rich Presence showing current song and live progress",
+        "10-band DSP Graphic Equalizer with AutoEq presets"
+      ]
+    }
+  }
+}

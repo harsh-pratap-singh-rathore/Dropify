@@ -24,7 +24,7 @@ class BoundedLRUCache {
     return item.value;
   }
 
-  set(key, value) {
+  set(key, value, customTtlMs = null) {
     if (this.cache.has(key)) {
       this.cache.delete(key);
     } else if (this.cache.size >= this.maxSize) {
@@ -34,9 +34,10 @@ class BoundedLRUCache {
         this.cache.delete(oldestKey);
       }
     }
+    const ttl = customTtlMs !== null ? customTtlMs : this.ttlMs;
     this.cache.set(key, {
       value,
-      expiry: Date.now() + this.ttlMs
+      expiry: Date.now() + ttl
     });
   }
 
@@ -608,7 +609,7 @@ async function getLyrics(trackName, artistName, durationSeconds = null, videoId 
   }
 
   // Not found
-  return {
+  const notFoundResult = {
     found: false,
     synced: false,
     lines: [],
@@ -616,6 +617,9 @@ async function getLyrics(trackName, artistName, durationSeconds = null, videoId 
     cleanTitle: rootTitle,
     primaryArtist: targetArtist
   };
+  // BE-07: Negative cache for 1 hour to prevent 47s latency cascades on repeated requests
+  lyricsCache.set(cacheKey, notFoundResult, 60 * 60 * 1000);
+  return notFoundResult;
 }
 
 module.exports = {

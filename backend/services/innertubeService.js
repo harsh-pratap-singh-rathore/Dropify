@@ -3,14 +3,14 @@ const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
 
-// Optimized Ytdl instance targeting embedded, TV, and visionos clients (zero player.js blocking, zero PO token requirement)
+// Optimized Ytdl instance with multi-client fallback cascade (visionos, web_embedded, tv, mweb, web_creator)
 let ytdlInstance = null;
 function getYtdl() {
   if (!ytdlInstance) {
     try {
-      const { Ytdl } = require('@distube/ytdl-core');
+      const { Ytdl, DEFAULT_CLIENTS } = require('@distube/ytdl-core');
       ytdlInstance = new Ytdl({
-        clients: ['visionos'],
+        clients: DEFAULT_CLIENTS || ['visionos', 'web_embedded', 'tv', 'mweb', 'web_creator'],
         lang: 'en',
         country: 'US'
       });
@@ -61,6 +61,10 @@ class BoundedLRUCache {
 
   delete(key) {
     return this.cache.delete(key);
+  }
+
+  clear() {
+    this.cache.clear();
   }
 }
 
@@ -379,7 +383,8 @@ const DEFAULT_HOME_FEED = {
 };
 
 // Home Feed Disk Cache Path
-const HOME_CACHE_FILE = path.join(__dirname, '..', 'data', 'home_feed_cache.json');
+const homeCacheDir = process.env.DROPIFY_DATA_DIR ? path.resolve(process.env.DROPIFY_DATA_DIR) : path.join(__dirname, '..', 'data');
+const HOME_CACHE_FILE = path.join(homeCacheDir, 'home_feed_cache.json');
 let inMemoryHomeFeed = DEFAULT_HOME_FEED;
 let lastHomeRefresh = 0;
 
@@ -460,6 +465,10 @@ function getCircadianPeriod(hour) {
   return 'night';
 }
 
+const VALID_MOODS = new Set(['morning', 'afternoon', 'evening', 'night']);
+let activeHomeRefreshPromise = null;
+let lastForcedRefreshTime = 0;
+
 /**
  * Echo Music Dynamic Home Feed Engine
  * Randomly juggles diverse categories with zero fixed shelves.
@@ -467,60 +476,82 @@ function getCircadianPeriod(hour) {
  */
 async function getHomeFeed(options = {}) {
   const { mood = null, forceRefresh = false, hour = new Date().getHours() } = options;
-  const period = mood && MOOD_SPECIFIC_POOLS[mood] ? mood : getCircadianPeriod(hour);
+  const sanitizedMood = (typeof mood === 'string' && VALID_MOODS.has(mood.toLowerCase())) ? mood.toLowerCase() : null;
+  const period = sanitizedMood ? sanitizedMood : getCircadianPeriod(hour);
 
-  // Return cached feed if not forced and within 5 minutes
-  if (!forceRefresh && inMemoryHomeFeed && Object.keys(inMemoryHomeFeed).length > 0 && (Date.now() - lastHomeRefresh < 300000)) {
+  // Return cached feed if within 5 minutes and not forced, or if forceRefresh is triggered too rapidly (30s cooldown)
+  const now = Date.now();
+  if (!forceRefresh && inMemoryHomeFeed && Object.keys(inMemoryHomeFeed).length > 0 && (now - lastHomeRefresh < 300000)) {
+    return inMemoryHomeFeed;
+  }
+  if (forceRefresh && (now - lastForcedRefreshTime < 30000) && inMemoryHomeFeed && Object.keys(inMemoryHomeFeed).length > 0) {
     return inMemoryHomeFeed;
   }
 
-  // JUGGLE RANDOMLY: Pick 5-6 diverse categories with zero fixed/pinned sections
-  let candidatePool = [];
-  if (mood && MOOD_SPECIFIC_POOLS[mood]) {
-    const moodItems = [...MOOD_SPECIFIC_POOLS[mood]].sort(() => 0.5 - Math.random()).slice(0, 3);
-    const extraItems = [...DYNAMIC_CATEGORY_POOL].sort(() => 0.5 - Math.random()).slice(0, 3);
-    candidatePool = [...moodItems, ...extraItems];
-  } else {
-    candidatePool = [...DYNAMIC_CATEGORY_POOL].sort(() => 0.5 - Math.random()).slice(0, 6);
+  // Single-flight promise lock to prevent cache stampedes / concurrent YouTube hammering
+  if (activeHomeRefreshPromise) {
+    return activeHomeRefreshPromise;
   }
 
-  // Shuffle the chosen categories thoroughly so no category is ever fixed at position 0
-  const chosenSections = candidatePool.sort(() => 0.5 - Math.random()).slice(0, 5);
+  activeHomeRefreshPromise = (async () => {
+    try {
+      if (forceRefresh) lastForcedRefreshTime = Date.now();
 
-  try {
-    const promises = chosenSections.map(async (sec) => {
-      try {
-        const rawTracks = await searchMusic(sec.query);
-        // Exclude non-songs, duration between 45s and 480s, shuffle rotation
-        const filtered = rawTracks.filter(t => (t.duration || 0) >= 45 && (t.duration || 0) <= 480);
-        const shuffled = filtered.sort(() => 0.5 - Math.random()).slice(0, 12);
-        return { title: sec.title, tracks: shuffled };
-      } catch (err) {
-        return { title: sec.title, tracks: [] };
+      // JUGGLE RANDOMLY: Pick 5-6 diverse categories with zero fixed/pinned sections
+      let candidatePool = [];
+      if (sanitizedMood && MOOD_SPECIFIC_POOLS[sanitizedMood]) {
+        const moodItems = [...MOOD_SPECIFIC_POOLS[sanitizedMood]].sort(() => 0.5 - Math.random()).slice(0, 3);
+        const extraItems = [...DYNAMIC_CATEGORY_POOL].sort(() => 0.5 - Math.random()).slice(0, 3);
+        candidatePool = [...moodItems, ...extraItems];
+      } else {
+        candidatePool = [...DYNAMIC_CATEGORY_POOL].sort(() => 0.5 - Math.random()).slice(0, 6);
       }
-    });
 
-    const sectionResults = await Promise.all(promises);
-    const results = {};
-    for (const res of sectionResults) {
-      if (res.tracks.length > 0) {
-        results[res.title] = res.tracks;
+      // Shuffle the chosen categories thoroughly so no category is ever fixed at position 0
+      const chosenSections = candidatePool.sort(() => 0.5 - Math.random()).slice(0, 5);
+
+      const promises = chosenSections.map(async (sec) => {
+        try {
+          const rawTracks = await searchMusic(sec.query);
+          // Exclude non-songs, duration between 45s and 480s, shuffle rotation
+          const filtered = rawTracks.filter(t => (t.duration || 0) >= 45 && (t.duration || 0) <= 480);
+          const shuffled = filtered.sort(() => 0.5 - Math.random()).slice(0, 12);
+          return { title: sec.title, tracks: shuffled };
+        } catch (err) {
+          return { title: sec.title, tracks: [] };
+        }
+      });
+
+      const sectionResults = await Promise.all(promises);
+      const results = {};
+      for (const res of sectionResults) {
+        if (res.tracks.length > 0) {
+          results[res.title] = res.tracks;
+        }
       }
-    }
 
-    if (Object.keys(results).length > 0) {
-      inMemoryHomeFeed = results;
-      lastHomeRefresh = Date.now();
-      try {
-        fs.writeFileSync(HOME_CACHE_FILE, JSON.stringify(results, null, 2), 'utf-8');
-      } catch (e) {}
-    }
+      if (Object.keys(results).length > 0) {
+        inMemoryHomeFeed = results;
+        lastHomeRefresh = Date.now();
+        try {
+          const cacheDir = path.dirname(HOME_CACHE_FILE);
+          if (!fs.existsSync(cacheDir)) fs.mkdirSync(cacheDir, { recursive: true });
+          const tmpFile = `${HOME_CACHE_FILE}.${Date.now()}.tmp`;
+          fs.writeFileSync(tmpFile, JSON.stringify(results, null, 2), 'utf-8');
+          fs.renameSync(tmpFile, HOME_CACHE_FILE);
+        } catch (e) {}
+      }
 
-    return inMemoryHomeFeed || results;
-  } catch (error) {
-    console.error('Home feed dynamic refresh error:', error.message);
-    return inMemoryHomeFeed || DEFAULT_HOME_FEED;
-  }
+      return inMemoryHomeFeed || results;
+    } catch (error) {
+      console.error('Home feed dynamic refresh error:', error.message);
+      return inMemoryHomeFeed || DEFAULT_HOME_FEED;
+    } finally {
+      activeHomeRefreshPromise = null;
+    }
+  })();
+
+  return activeHomeRefreshPromise;
 }
 
 /**
@@ -596,14 +627,16 @@ async function resolveAudioFormat(videoId, preferredFormat = null) {
   // Prioritize based on preferred format or default:
   // itag 251 (Opus WebM 160kbps) & itag 140 (AAC 128kbps M4A)
   const sorted = audioFormats.sort((a, b) => {
-    if (preferredFormat === 'mp4' || preferredFormat === 'aac') {
-      if (a.itag === 140) return -1;
-      if (b.itag === 140) return 1;
-    }
-    if (a.itag === 251) return -1;
-    if (b.itag === 251) return 1;
-    if (a.itag === 140) return -1;
-    if (b.itag === 140) return 1;
+    const getPriority = (f) => {
+      if (preferredFormat === 'mp4' || preferredFormat === 'aac') {
+        if (f.itag === 140) return 100;
+      }
+      if (f.itag === 251) return 90;
+      if (f.itag === 140) return 80;
+      return 10;
+    };
+    const diff = getPriority(b) - getPriority(a);
+    if (diff !== 0) return diff;
     return (b.bitrate || 0) - (a.bitrate || 0);
   });
 
@@ -624,19 +657,24 @@ async function resolveAudioFormat(videoId, preferredFormat = null) {
 async function streamAudio(videoId, req, res) {
   const abortController = new AbortController();
   let isCleanedUp = false;
+  let upstreamStream = null;
 
   const cleanup = () => {
     if (!isCleanedUp) {
       isCleanedUp = true;
-      try {
-        abortController.abort();
-      } catch (_) {}
+      try { abortController.abort(); } catch (_) {}
+      if (upstreamStream && !upstreamStream.destroyed) {
+        try { upstreamStream.destroy(); } catch (_) {}
+      }
     }
   };
 
   req.on('close', cleanup);
   res.on('close', cleanup);
   res.on('finish', cleanup);
+  res.on('error', () => {
+    cleanup();
+  });
 
   try {
     const userAgent = req.headers['user-agent'] || '';
@@ -648,20 +686,59 @@ async function streamAudio(videoId, req, res) {
       throw new Error('No streaming URL resolved');
     }
 
+    const MAX_UPSTREAM_REDIRECTS = 3;
+
     const fetchUpstream = async (targetUrl) => {
-      const upstreamHeaders = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36'
-      };
-      if (req.headers.range) {
-        upstreamHeaders['Range'] = req.headers.range;
+      let currentUrl = targetUrl;
+      let redirectsFollowed = 0;
+
+      while (true) {
+        // SEC-05: Enforce HTTPS and validate against Google/YouTube media domains
+        try {
+          const parsed = new URL(currentUrl);
+          if (parsed.protocol !== 'https:' || !/(?:googlevideo\.com|youtube\.com)$/i.test(parsed.hostname)) {
+            throw new Error(`Forbidden upstream audio host: ${parsed.hostname}`);
+          }
+        } catch (urlErr) {
+          throw new Error('Invalid upstream streaming URL: ' + urlErr.message);
+        }
+
+        const upstreamHeaders = {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36'
+        };
+        if (req.headers.range) {
+          upstreamHeaders['Range'] = req.headers.range;
+        }
+
+        const res = await axios.get(currentUrl, {
+          headers: upstreamHeaders,
+          responseType: 'stream',
+          signal: abortController.signal,
+          timeout: 10000,
+          maxRedirects: 0, // SEC-05: Prevent uncontrolled SSRF redirect chasing
+          validateStatus: (status) => (status >= 200 && status < 400) || status === 416
+        });
+
+        // BE-05: Handle HTTP 3xx redirects securely by following up to MAX_UPSTREAM_REDIRECTS
+        if (res.status >= 300 && res.status < 400) {
+          const location = res.headers['location'];
+          if (!location) {
+            throw new Error(`Upstream redirected with HTTP ${res.status} but no Location header`);
+          }
+          if (redirectsFollowed >= MAX_UPSTREAM_REDIRECTS) {
+            throw new Error(`Too many upstream redirects (limit ${MAX_UPSTREAM_REDIRECTS})`);
+          }
+          // Destroy unconsumed redirect stream body to prevent socket/memory leaks
+          if (res.data && typeof res.data.destroy === 'function') {
+            res.data.destroy();
+          }
+          currentUrl = new URL(location, currentUrl).href;
+          redirectsFollowed++;
+          continue;
+        }
+
+        return res;
       }
-      return axios.get(targetUrl, {
-        headers: upstreamHeaders,
-        responseType: 'stream',
-        signal: abortController.signal,
-        timeout: 10000,
-        validateStatus: (status) => status >= 200 && status < 400
-      });
     };
 
     let upstreamRes;
@@ -680,12 +757,22 @@ async function streamAudio(videoId, req, res) {
       }
     }
 
-    // Set CORS and streaming headers
+    // BE-03: Handle HTTP 416 Range Not Satisfiable cleanly
+    if (upstreamRes.status === 416) {
+      res.setHeader('Accept-Ranges', 'bytes');
+      if (upstreamRes.headers['content-range']) {
+        res.setHeader('Content-Range', upstreamRes.headers['content-range']);
+      }
+      return res.status(416).end();
+    }
+
+    // BE-04: Set CORS and range caching headers (no-cache private, Vary: Range)
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Headers', 'Range, Content-Type, Accept');
     res.setHeader('Access-Control-Expose-Headers', 'Content-Range, Content-Length, Accept-Ranges');
     res.setHeader('Accept-Ranges', 'bytes');
-    res.setHeader('Cache-Control', 'public, max-age=3600');
+    res.setHeader('Cache-Control', 'no-cache, private');
+    res.setHeader('Vary', 'Range');
 
     const contentType = upstreamRes.headers['content-type'] || format.mimeType || (preferredFormat === 'mp4' ? 'audio/mp4; codecs="mp4a.40.2"' : 'audio/webm; codecs="opus"');
     res.setHeader('Content-Type', contentType);
@@ -699,12 +786,14 @@ async function streamAudio(videoId, req, res) {
 
     res.status(upstreamRes.status);
 
+    upstreamStream = upstreamRes.data;
+
     upstreamRes.data.on('error', (streamErr) => {
       cleanup();
       if (!res.headersSent) {
-        res.status(500).end();
+        try { res.status(500).end(); } catch (_) {}
       } else {
-        res.end();
+        try { res.end(); } catch (_) {}
       }
     });
 
