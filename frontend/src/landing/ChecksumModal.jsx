@@ -91,10 +91,12 @@ export default function ChecksumModal({ isOpen, onClose }) {
                   justifyContent: 'space-between',
                   gap: 8,
                   fontSize: '0.75rem',
-                  fontFamily: 'var(--font-mono)'
+                  fontFamily: 'var(--font-mono)',
+                  minWidth: 0,
+                  width: '100%'
                 }}
               >
-                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0, flex: 1 }}>
                   {a.sha256}
                 </span>
                 <button

@@ -92,7 +92,7 @@ export default function PlatformShowcase() {
               </div>
 
               <div className="platform-visual-col">
-                <div className="experience-phone-chassis" style={{ width: 270, height: 560 }}>
+                <div className="experience-phone-chassis platform-phone-chassis">
                   <div className="smartphone-camera-pill">
                     <span className="camera-lens-dot"></span>
                   </div>

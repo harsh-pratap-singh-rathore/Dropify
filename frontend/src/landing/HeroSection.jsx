@@ -132,21 +132,24 @@ export default function HeroSection({ onLaunchWebPlayer }) {
                 onClick={() => setActiveScreen('turntable')}
               >
                 <Disc size={15} />
-                <span>Turntable Player</span>
+                <span className="tab-label-full">Turntable Player</span>
+                <span className="tab-label-short">Turntable</span>
               </button>
               <button
                 className={`screen-tab-btn ${activeScreen === 'home' ? 'active' : ''}`}
                 onClick={() => setActiveScreen('home')}
               >
                 <LayoutGrid size={15} />
-                <span>Home & Mixes</span>
+                <span className="tab-label-full">Home & Mixes</span>
+                <span className="tab-label-short">Home</span>
               </button>
               <button
                 className={`screen-tab-btn ${activeScreen === 'lyrics' ? 'active' : ''}`}
                 onClick={() => setActiveScreen('lyrics')}
               >
                 <FileText size={15} />
-                <span>Synced Lyrics</span>
+                <span className="tab-label-full">Synced Lyrics</span>
+                <span className="tab-label-short">Lyrics</span>
               </button>
             </div>
           </div>
