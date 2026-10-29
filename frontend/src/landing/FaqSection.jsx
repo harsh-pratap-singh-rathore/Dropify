@@ -19,7 +19,7 @@ export default function FaqSection() {
     },
     {
       q: "How do I install the Android APK?",
-      a: "Download the dropify-v1.0.1.apk file directly onto your Android device. When you tap to open it, Android may ask permission to 'Install unknown apps' from your browser or file manager. Enable this one-time permission, confirm the install prompt, and Dropify will be installed on your home screen."
+      a: "Download the dropify-v1.0.2.apk file directly onto your Android device. When you tap to open it, Android may ask permission to 'Install unknown apps' from your browser or file manager. Enable this one-time permission, confirm the install prompt, and Dropify will be installed on your home screen."
     },
     {
       q: "How do I install the Windows desktop application?",

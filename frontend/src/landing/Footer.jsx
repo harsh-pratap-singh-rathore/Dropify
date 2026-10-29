@@ -56,7 +56,7 @@ export default function Footer({ onOpenChecksumModal, onLaunchWebPlayer }) {
           <div>
             <h4 className="footer-links-title">Downloads</h4>
             <ul className="footer-links-list">
-              <li><a href="#downloads" className="footer-link">Android APK (v1.0.1)</a></li>
+              <li><a href="#downloads" className="footer-link">Android APK (v1.0.2)</a></li>
               <li><a href="#downloads" className="footer-link">Windows Installer (x64)</a></li>
               <li><a href="#downloads" className="footer-link">Windows Portable (.exe)</a></li>
               {onLaunchWebPlayer && (
