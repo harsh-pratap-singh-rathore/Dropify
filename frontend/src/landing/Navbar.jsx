@@ -55,14 +55,24 @@ export default function Navbar({ onLaunchWebPlayer, theme: propTheme, toggleThem
           </a>
         </div>
 
-        {/* Mobile Menu Toggle */}
-        <button
-          className="nav-mobile-toggle"
-          onClick={toggleMobileMenu}
-          aria-label="Toggle navigation menu"
-        >
-          {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
-        </button>
+        {/* Mobile Right Controls: Direct Theme Toggle + Hamburger Menu */}
+        <div className="nav-mobile-actions">
+          <button
+            className="theme-toggle-btn nav-mobile-theme-btn"
+            onClick={toggleTheme}
+            aria-label={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+            title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+          >
+            {theme === 'dark' ? <Sun size={17} color="#FFE500" /> : <Moon size={17} color="#00C2FF" />}
+          </button>
+          <button
+            className="nav-mobile-toggle"
+            onClick={toggleMobileMenu}
+            aria-label="Toggle navigation menu"
+          >
+            {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+          </button>
+        </div>
       </nav>
 
       {/* Mobile Drawer Menu */}
