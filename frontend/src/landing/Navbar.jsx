@@ -1,9 +1,14 @@
 import React, { useState } from 'react';
-import { Download, Play, Menu, X } from 'lucide-react';
+import { Download, Play, Menu, X, Sun, Moon } from 'lucide-react';
 import dropifyLogo from '../assets/brand/dropify_logo.png';
+import useTheme from './useTheme';
 
-export default function Navbar({ onLaunchWebPlayer }) {
+export default function Navbar({ onLaunchWebPlayer, theme: propTheme, toggleTheme: propToggleTheme }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const themeHook = useTheme();
+
+  const theme = propTheme || themeHook.theme;
+  const toggleTheme = propToggleTheme || themeHook.toggleTheme;
 
   const toggleMobileMenu = () => setMobileMenuOpen(!mobileMenuOpen);
   const closeMobileMenu = () => setMobileMenuOpen(false);
@@ -29,6 +34,14 @@ export default function Navbar({ onLaunchWebPlayer }) {
 
         {/* Desktop Action Buttons */}
         <div className="nav-actions-desktop">
+          <button
+            className="theme-toggle-btn"
+            onClick={toggleTheme}
+            aria-label={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+            title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+          >
+            {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+          </button>
           {onLaunchWebPlayer && (
             <button
               onClick={onLaunchWebPlayer}
@@ -58,8 +71,8 @@ export default function Navbar({ onLaunchWebPlayer }) {
       {/* Mobile Drawer Menu */}
       {mobileMenuOpen && (
         <div className="mobile-nav-menu">
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, paddingBottom: 10, borderBottom: '2px solid #000' }}>
-            <img src={dropifyLogo} alt="Dropify" style={{ width: 36, height: 36, borderRadius: 10, border: '2px solid #000' }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, paddingBottom: 10, borderBottom: 'var(--border-medium)' }}>
+            <img src={dropifyLogo} alt="Dropify" style={{ width: 36, height: 36, borderRadius: 10, border: 'var(--border-medium)' }} />
             <span style={{ fontWeight: 900, fontSize: '1.3rem' }}>Dropify</span>
             <span className="nav-badge-universe" style={{ marginLeft: 'auto' }}>SOUND UNIVERSE</span>
           </div>
@@ -68,7 +81,15 @@ export default function Navbar({ onLaunchWebPlayer }) {
           <a href="#platforms" className="mobile-nav-link" onClick={closeMobileMenu}>Platforms</a>
           <a href="#downloads" className="mobile-nav-link" onClick={closeMobileMenu}>Downloads</a>
           <a href="#faq" className="mobile-nav-link" onClick={closeMobileMenu}>FAQ</a>
-          <hr style={{ border: 'none', borderTop: '2px solid #000', margin: '4px 0' }} />
+          <button
+            className="mobile-nav-link theme-toggle-btn mobile-toggle theme-toggle-mobile"
+            onClick={toggleTheme}
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}
+          >
+            <span>Appearance: {theme === 'dark' ? 'AMOLED Dark' : 'Light Paper'}</span>
+            {theme === 'dark' ? <Sun size={18} color="#FFE500" /> : <Moon size={18} color="#00C2FF" />}
+          </button>
+          <hr style={{ border: 'none', borderTop: 'var(--border-medium)', margin: '4px 0' }} />
           {onLaunchWebPlayer && (
             <button
               onClick={() => { closeMobileMenu(); onLaunchWebPlayer(); }}

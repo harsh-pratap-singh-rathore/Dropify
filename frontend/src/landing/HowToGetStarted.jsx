@@ -25,7 +25,7 @@ export default function HowToGetStarted() {
   ];
 
   return (
-    <section className="landing-section" style={{ backgroundColor: 'var(--color-canvas-alt)', borderTop: 'var(--border-thick)', borderBottom: 'var(--border-thick)' }}>
+    <section className="landing-section section-canvas-alt">
       <div className="landing-container">
         <div className="section-header">
           <div className="section-tag pink">Fast Setup</div>

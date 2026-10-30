@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './LandingPage.css';
+import useTheme from './useTheme';
 
 import Navbar from './Navbar';
 import HeroSection from './HeroSection';
@@ -16,6 +17,7 @@ import ChecksumModal from './ChecksumModal';
 
 export default function LandingPage({ onLaunchWebPlayer }) {
   const [checksumModalOpen, setChecksumModalOpen] = useState(false);
+  const { theme, toggleTheme } = useTheme();
 
   // Smooth scroll support for anchor hash links
   useEffect(() => {
@@ -39,9 +41,9 @@ export default function LandingPage({ onLaunchWebPlayer }) {
   }, []);
 
   return (
-    <div className="dropify-landing">
+    <div className={`dropify-landing ${theme === 'dark' ? 'dark' : ''}`} data-theme={theme}>
       {/* Top Sticky Navigation */}
-      <Navbar onLaunchWebPlayer={onLaunchWebPlayer} />
+      <Navbar onLaunchWebPlayer={onLaunchWebPlayer} theme={theme} toggleTheme={toggleTheme} />
 
       {/* Section 2: Hero Section */}
       <HeroSection onLaunchWebPlayer={onLaunchWebPlayer} />

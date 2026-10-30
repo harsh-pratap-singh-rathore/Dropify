@@ -56,7 +56,7 @@ export default function PlatformShowcase() {
                   <span className="platform-meta-tag" style={{ background: 'var(--color-green-light)', color: '#065F46' }}>
                     ANDROID 8.0+ (API 26+)
                   </span>
-                  <span className="platform-meta-tag" style={{ background: '#FFF' }}>
+                  <span className="platform-meta-tag platform-meta-tag-neutral">
                     ARM64 & ARMv7
                   </span>
                 </div>
@@ -112,7 +112,7 @@ export default function PlatformShowcase() {
                   <span className="platform-meta-tag" style={{ background: 'var(--color-cyan-light)', color: '#0369A1' }}>
                     WINDOWS 10 & 11 (64-BIT)
                   </span>
-                  <span className="platform-meta-tag" style={{ background: '#FFF' }}>
+                  <span className="platform-meta-tag platform-meta-tag-neutral">
                     ELECTRON & NODE.JS
                   </span>
                 </div>

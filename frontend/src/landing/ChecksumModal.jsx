@@ -64,15 +64,7 @@ export default function ChecksumModal({ isOpen, onClose }) {
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           {artifacts.map((a, idx) => (
-            <div
-              key={idx}
-              style={{
-                background: 'var(--color-canvas)',
-                border: 'var(--border-thin)',
-                borderRadius: 12,
-                padding: 16
-              }}
-            >
+            <div key={idx} className="modal-artifact-box checksum-artifact-card">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
                 <span style={{ fontWeight: 800, fontSize: '0.95rem' }}>{a.platform}</span>
                 <span style={{ fontSize: '0.78rem', color: 'var(--color-text-secondary)', fontFamily: 'var(--font-mono)' }}>{a.size}</span>
@@ -80,22 +72,7 @@ export default function ChecksumModal({ isOpen, onClose }) {
               <div style={{ fontSize: '0.82rem', color: 'var(--color-text-muted)', marginBottom: 8, fontFamily: 'var(--font-mono)' }}>
                 {a.file}
               </div>
-              <div
-                style={{
-                  background: '#FFFFFF',
-                  border: '1px solid #000',
-                  borderRadius: 6,
-                  padding: '8px 10px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: 8,
-                  fontSize: '0.75rem',
-                  fontFamily: 'var(--font-mono)',
-                  minWidth: 0,
-                  width: '100%'
-                }}
-              >
+              <div className="modal-hash-container checksum-hash-box">
                 <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0, flex: 1 }}>
                   {a.sha256}
                 </span>

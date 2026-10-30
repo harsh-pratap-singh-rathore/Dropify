@@ -54,7 +54,7 @@ export default function FeatureGrid() {
   ];
 
   return (
-    <section id="features" className="landing-section" style={{ backgroundColor: 'var(--color-canvas-alt)', borderTop: 'var(--border-thick)', borderBottom: 'var(--border-thick)' }}>
+    <section id="features" className="landing-section section-canvas-alt">
       <div className="landing-container">
         <div className="section-header">
           <div className="section-tag cyan">Engineered Capabilities</div>
@@ -78,7 +78,7 @@ export default function FeatureGrid() {
               <p className="feature-desc">{f.desc}</p>
               <div className="feature-specs">
                 {f.specs.map((s, sIdx) => (
-                  <span key={sIdx} style={{ background: '#F0ECE4', padding: '2px 8px', borderRadius: 4, border: '1px solid #000' }}>
+                  <span key={sIdx} className="feature-spec-tag">
                     {s}
                   </span>
                 ))}
