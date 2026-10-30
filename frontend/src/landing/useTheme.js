@@ -29,12 +29,13 @@ export function getStoredTheme() {
 }
 
 /**
- * Get initial theme: check localStorage, otherwise check OS prefers-color-scheme
+ * Get initial theme: check localStorage for explicit user choice, otherwise default to 'light'
+ * (Default is always Light Paper mode; switching to AMOLED Dark is strictly user choice)
  */
 export function getInitialTheme() {
   const stored = getStoredTheme();
-  if (stored) return stored;
-  return getSystemTheme();
+  if (stored === 'dark' || stored === 'light') return stored;
+  return 'light';
 }
 
 /**
@@ -100,29 +101,6 @@ export default function useTheme() {
       }
       return nextTheme;
     });
-  }, []);
-
-  // Listen for OS system theme changes if user hasn't manually chosen a preference
-  useEffect(() => {
-    if (typeof window === 'undefined' || !window.matchMedia) return;
-
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-
-    const handleSystemChange = (e) => {
-      // Only adjust automatically if user hasn't explicitly set a preference
-      if (!hasManualChoice.current && !getStoredTheme()) {
-        const nextTheme = e.matches ? 'dark' : 'light';
-        setThemeState(nextTheme);
-      }
-    };
-
-    if (mediaQuery.addEventListener) {
-      mediaQuery.addEventListener('change', handleSystemChange);
-      return () => mediaQuery.removeEventListener('change', handleSystemChange);
-    } else if (mediaQuery.addListener) {
-      mediaQuery.addListener(handleSystemChange);
-      return () => mediaQuery.removeListener(handleSystemChange);
-    }
   }, []);
 
   return {

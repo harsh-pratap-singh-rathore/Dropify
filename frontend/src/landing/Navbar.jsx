@@ -16,23 +16,20 @@ export default function Navbar({ onLaunchWebPlayer, theme: propTheme, toggleThem
   return (
     <header className="landing-nav-wrapper">
       <nav className="landing-nav">
-        {/* Brand Logo & Wordmark Matching App Header */}
+        {/* Brand Logo & Wordmark */}
         <a href="#hero" className="nav-brand" onClick={closeMobileMenu}>
           <img src={dropifyLogo} alt="Dropify Logo" className="nav-logo-icon" />
           <span className="nav-brand-text">Dropify</span>
-          <span className="nav-badge-universe">SOUND UNIVERSE</span>
         </a>
 
-        {/* Desktop Navigation Links */}
+        {/* Desktop Navigation Links — Concise & Spaced */}
         <div className="nav-links-desktop">
-          <a href="#experience" className="nav-link">Experience</a>
           <a href="#features" className="nav-link">Features</a>
-          <a href="#platforms" className="nav-link">Platforms</a>
-          <a href="#downloads" className="nav-link">Downloads</a>
+          <a href="#experience" className="nav-link">Experience</a>
           <a href="#faq" className="nav-link">FAQ</a>
         </div>
 
-        {/* Desktop Action Buttons */}
+        {/* Desktop Action Buttons — Minimal & High Contrast */}
         <div className="nav-actions-desktop">
           <button
             className="theme-toggle-btn"
@@ -40,21 +37,21 @@ export default function Navbar({ onLaunchWebPlayer, theme: propTheme, toggleThem
             aria-label={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
             title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
           >
-            {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+            {theme === 'dark' ? <Sun size={17} /> : <Moon size={17} />}
           </button>
           {onLaunchWebPlayer && (
             <button
               onClick={onLaunchWebPlayer}
               className="neo-btn neo-btn-sm neo-btn-secondary"
-              title="Launch Web Player inside your browser"
+              title="Launch Web Player"
             >
-              <Play size={14} fill="currentColor" />
-              <span>Web Player</span>
+              <Play size={13} fill="currentColor" />
+              <span>Player</span>
             </button>
           )}
           <a href="#downloads" className="neo-btn neo-btn-sm neo-btn-primary">
             <Download size={14} />
-            <span>Download Dropify</span>
+            <span>Download</span>
           </a>
         </div>
 
@@ -74,11 +71,9 @@ export default function Navbar({ onLaunchWebPlayer, theme: propTheme, toggleThem
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, paddingBottom: 10, borderBottom: 'var(--border-medium)' }}>
             <img src={dropifyLogo} alt="Dropify" style={{ width: 36, height: 36, borderRadius: 10, border: 'var(--border-medium)' }} />
             <span style={{ fontWeight: 900, fontSize: '1.3rem' }}>Dropify</span>
-            <span className="nav-badge-universe" style={{ marginLeft: 'auto' }}>SOUND UNIVERSE</span>
           </div>
-          <a href="#experience" className="mobile-nav-link" onClick={closeMobileMenu}>Experience</a>
           <a href="#features" className="mobile-nav-link" onClick={closeMobileMenu}>Features</a>
-          <a href="#platforms" className="mobile-nav-link" onClick={closeMobileMenu}>Platforms</a>
+          <a href="#experience" className="mobile-nav-link" onClick={closeMobileMenu}>Experience</a>
           <a href="#downloads" className="mobile-nav-link" onClick={closeMobileMenu}>Downloads</a>
           <a href="#faq" className="mobile-nav-link" onClick={closeMobileMenu}>FAQ</a>
           <button
@@ -86,7 +81,7 @@ export default function Navbar({ onLaunchWebPlayer, theme: propTheme, toggleThem
             onClick={toggleTheme}
             style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}
           >
-            <span>Appearance: {theme === 'dark' ? 'AMOLED Dark' : 'Light Paper'}</span>
+            <span>{theme === 'dark' ? 'AMOLED Dark Mode' : 'Light Mode'}</span>
             {theme === 'dark' ? <Sun size={18} color="#FFE500" /> : <Moon size={18} color="#00C2FF" />}
           </button>
           <hr style={{ border: 'none', borderTop: 'var(--border-medium)', margin: '4px 0' }} />
