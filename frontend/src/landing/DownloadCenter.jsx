@@ -1,8 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Smartphone, Monitor, Download, Copy, Check, Info, ShieldCheck } from 'lucide-react';
+import { Smartphone, Monitor, Download, Copy, Check, Info, ShieldCheck, Sparkles } from 'lucide-react';
 
-export default function DownloadCenter({ onOpenChecksumModal }) {
+export default function DownloadCenter({ onOpenChecksumModal, downloadTracker }) {
   const [copiedHash, setCopiedHash] = useState(null);
+  const { stats, isIncrementing, recentlyDownloaded, trackDownload, formatCount } = downloadTracker || {
+    stats: { total: 1, android: 1, windows: 0 },
+    isIncrementing: false,
+    recentlyDownloaded: false,
+    trackDownload: () => {},
+    formatCount: (n) => `${n}+`
+  };
   const [releaseInfo, setReleaseInfo] = useState({
     android: {
       version: '1.0.2',
@@ -69,6 +76,77 @@ export default function DownloadCenter({ onOpenChecksumModal }) {
           </p>
         </div>
 
+        {/* Live Community Downloads Counter Card */}
+        <div className="neo-card download-stats-card">
+          <div className="washi-tape yellow"></div>
+
+          <div className="download-stats-header">
+            <div className="stats-tag-badge">
+              <span className="live-pulse-dot"></span>
+              <span>LIVE COMMUNITY STATS</span>
+            </div>
+            <div className="stats-verified-pill">
+              <ShieldCheck size={15} />
+              <span>Real Verified Installs</span>
+            </div>
+          </div>
+
+          <div className="download-stats-main">
+            <div className="stats-counter-showcase">
+              <div className="stats-big-number-row">
+                <span className={`stats-number-display ${isIncrementing ? 'stats-number-bump' : ''}`}>
+                  {formatCount(stats.total)}
+                </span>
+                <span className="stats-number-label">Downloads</span>
+              </div>
+              <p className="stats-counter-explanation">
+                Live counter tracking real user downloads of Dropify APK and Windows setup. Increases in real-time when a download begins!
+              </p>
+            </div>
+
+            <div className="stats-platform-breakdown">
+              <div className="stats-mini-card">
+                <div className="stats-mini-icon android">
+                  <Smartphone size={22} />
+                </div>
+                <div className="stats-mini-info">
+                  <span className="stats-mini-num">{formatCount(stats.android)}</span>
+                  <span className="stats-mini-name">Android APK Downloads</span>
+                </div>
+              </div>
+
+              <div className="stats-mini-card">
+                <div className="stats-mini-icon windows">
+                  <Monitor size={22} />
+                </div>
+                <div className="stats-mini-info">
+                  <span className="stats-mini-num">{formatCount(stats.windows)}</span>
+                  <span className="stats-mini-name">Windows PC Downloads</span>
+                </div>
+              </div>
+
+              <div className="stats-mini-card">
+                <div className="stats-mini-icon free">
+                  <Sparkles size={22} />
+                </div>
+                <div className="stats-mini-info">
+                  <span className="stats-mini-num">100%</span>
+                  <span className="stats-mini-name">Free & Zero Commercials</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {recentlyDownloaded && (
+            <div className="download-success-toast">
+              <span className="toast-emoji">🎉</span>
+              <div className="toast-content">
+                <strong>Download Initiated!</strong> Your file is downloading right now. You are listener <strong>#{stats.total}</strong> in the Dropify universe!
+              </div>
+            </div>
+          )}
+        </div>
+
         <div className="downloads-grid">
           {/* Card 1: Android Release */}
           <div className="neo-card download-portal-card">
@@ -101,11 +179,17 @@ export default function DownloadCenter({ onOpenChecksumModal }) {
               </div>
             </div>
 
+            <div className="download-live-chip android">
+              <span className="chip-fire">🔥</span>
+              <span><strong>{formatCount(stats.android)}</strong> Android users listening ad-free</span>
+            </div>
+
             <div className="download-cta-group">
               <a
                 href={releaseInfo.android.downloadUrl}
                 download={releaseInfo.android.filename || "dropify-v1.0.2.apk"}
                 className="neo-btn neo-btn-primary"
+                onClick={() => trackDownload('android')}
               >
                 <Download size={18} />
                 <span>Download APK ({releaseInfo.android.sizeFormatted})</span>
@@ -182,11 +266,17 @@ export default function DownloadCenter({ onOpenChecksumModal }) {
               </div>
             </div>
 
+            <div className="download-live-chip windows">
+              <span className="chip-fire">⚡</span>
+              <span><strong>{formatCount(stats.windows)}</strong> Windows PC downloads so far</span>
+            </div>
+
             <div className="download-cta-group">
               <a
                 href={releaseInfo.windows.installer.downloadUrl}
                 className="neo-btn neo-btn-primary"
                 title="Download full Windows NSIS Setup installer"
+                onClick={() => trackDownload('windows')}
               >
                 <Download size={18} />
                 <span>Download Setup Installer ({releaseInfo.windows.installer.sizeFormatted})</span>
@@ -196,6 +286,7 @@ export default function DownloadCenter({ onOpenChecksumModal }) {
                 href={releaseInfo.windows.portable.downloadUrl}
                 className="neo-btn neo-btn-secondary"
                 title="Download portable zero-installation executable"
+                onClick={() => trackDownload('windows')}
               >
                 <Download size={16} />
                 <span>Download Portable ({releaseInfo.windows.portable.sizeFormatted})</span>

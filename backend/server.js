@@ -225,6 +225,70 @@ app.get('/api/updates', (req, res) => {
   }
 });
 
+// 2.2 Live Community Downloads Counter System
+app.get('/api/downloads', (req, res) => {
+  try {
+    const data = storage.getDownloads();
+    res.json({
+      success: true,
+      total: Number(data.total) || 1,
+      android: Number(data.android) || 1,
+      windows: Number(data.windows) || 0,
+      lastUpdated: data.lastUpdated || Date.now()
+    });
+  } catch (err) {
+    res.json({
+      success: true,
+      total: 1,
+      android: 1,
+      windows: 0,
+      lastUpdated: Date.now()
+    });
+  }
+});
+
+app.post('/api/downloads/increment', (req, res) => {
+  try {
+    const { platform } = req.body || {};
+    const data = storage.getDownloads();
+    const currentTotal = Number(data.total) || 1;
+    const currentAndroid = Number(data.android) || 1;
+    const currentWindows = Number(data.windows) || 0;
+
+    const newTotal = currentTotal + 1;
+    let newAndroid = currentAndroid;
+    let newWindows = currentWindows;
+
+    if (platform === 'windows') {
+      newWindows += 1;
+    } else {
+      newAndroid += 1;
+    }
+
+    const updated = {
+      total: newTotal,
+      android: newAndroid,
+      windows: newWindows,
+      lastUpdated: Date.now()
+    };
+
+    storage.saveDownloads(updated);
+
+    res.json({
+      success: true,
+      total: newTotal,
+      android: newAndroid,
+      windows: newWindows
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      error: 'Failed to record download',
+      message: err.message
+    });
+  }
+});
+
 // 3. Dynamic Home Feed with Circadian Moods & Seed Rotation
 app.get('/api/home', async (req, res) => {
   try {

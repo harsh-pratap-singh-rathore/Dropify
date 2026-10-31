@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './LandingPage.css';
 import useTheme from './useTheme';
+import useDownloads from './useDownloads';
 
 import Navbar from './Navbar';
 import HeroSection from './HeroSection';
@@ -18,6 +19,7 @@ import ChecksumModal from './ChecksumModal';
 export default function LandingPage({ onLaunchWebPlayer }) {
   const [checksumModalOpen, setChecksumModalOpen] = useState(false);
   const { theme, toggleTheme } = useTheme();
+  const downloadTracker = useDownloads();
 
   // Smooth scroll support for anchor hash links
   useEffect(() => {
@@ -46,7 +48,7 @@ export default function LandingPage({ onLaunchWebPlayer }) {
       <Navbar onLaunchWebPlayer={onLaunchWebPlayer} theme={theme} toggleTheme={toggleTheme} />
 
       {/* Section 2: Hero Section */}
-      <HeroSection onLaunchWebPlayer={onLaunchWebPlayer} />
+      <HeroSection onLaunchWebPlayer={onLaunchWebPlayer} downloadTracker={downloadTracker} />
 
       {/* Section 3: Brand Promise (100% Free, 100% Ad-Free, Made for Music) */}
       <BrandPromise />
@@ -61,7 +63,10 @@ export default function LandingPage({ onLaunchWebPlayer }) {
       <PlatformShowcase />
 
       {/* Section 7: Download Centre */}
-      <DownloadCenter onOpenChecksumModal={() => setChecksumModalOpen(true)} />
+      <DownloadCenter
+        onOpenChecksumModal={() => setChecksumModalOpen(true)}
+        downloadTracker={downloadTracker}
+      />
 
       {/* Section 8: How to Get Started */}
       <HowToGetStarted />

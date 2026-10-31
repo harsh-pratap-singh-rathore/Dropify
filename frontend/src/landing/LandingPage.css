@@ -1833,6 +1833,313 @@ html, body {
   max-width: 1100px;
 }
 
+/* ==========================================================================
+   LIVE DOWNLOAD COUNTER & STATS CARD
+   ========================================================================== */
+.download-stats-card {
+  padding: 32px 36px;
+  background: var(--color-card);
+  border: var(--border-thick);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-lg);
+  position: relative;
+  margin-bottom: 36px;
+}
+
+.download-stats-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.stats-tag-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 14px;
+  border-radius: 9999px;
+  background: var(--color-card-muted);
+  border: var(--border-thin);
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: var(--color-text-main);
+}
+
+.live-pulse-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--color-green);
+  display: inline-block;
+  box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  animation: liveSonarPulse 1.8s infinite ease-out;
+}
+
+@keyframes liveSonarPulse {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 8px rgba(16, 185, 129, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+  }
+}
+
+.stats-verified-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: var(--color-green);
+}
+
+.download-stats-main {
+  display: grid;
+  grid-template-columns: 1fr 1.35fr;
+  gap: 36px;
+  align-items: center;
+}
+
+.stats-counter-showcase {
+  display: flex;
+  flex-direction: column;
+}
+
+.stats-big-number-row {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.stats-number-display {
+  font-size: clamp(3.2rem, 7vw, 4.6rem);
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  color: var(--color-text-main);
+  font-family: var(--font-main);
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), color 0.2s;
+  display: inline-block;
+}
+
+.stats-number-bump {
+  animation: counterPop 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes counterPop {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.22);
+    color: var(--color-pink);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.stats-number-label {
+  font-size: clamp(1.25rem, 2.5vw, 1.6rem);
+  font-weight: 800;
+  color: var(--color-pink);
+  text-transform: uppercase;
+  letter-spacing: -0.01em;
+}
+
+.stats-counter-explanation {
+  font-size: 0.88rem;
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+  margin: 0;
+  max-width: 440px;
+}
+
+.stats-platform-breakdown {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+@media (min-width: 600px) {
+  .stats-platform-breakdown {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.stats-mini-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  border: var(--border-medium);
+  background: var(--color-card-muted);
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.stats-mini-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.stats-mini-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  border: var(--border-thin);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.stats-mini-icon.android {
+  background: var(--color-pink-light);
+  color: var(--color-pink);
+}
+
+.stats-mini-icon.windows {
+  background: var(--color-cyan-light);
+  color: #0284C7;
+}
+
+.stats-mini-icon.free {
+  background: var(--color-yellow-light);
+  color: #B45309;
+}
+
+.stats-mini-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.stats-mini-num {
+  font-size: 1.12rem;
+  font-weight: 800;
+  color: var(--color-text-main);
+  line-height: 1.2;
+}
+
+.stats-mini-name {
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.download-success-toast {
+  margin-top: 24px;
+  padding: 14px 20px;
+  border-radius: var(--radius-md);
+  border: var(--border-medium);
+  background: var(--color-green-light);
+  color: #065F46;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.92rem;
+  box-shadow: var(--shadow-sm);
+  animation: toastSlideDown 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes toastSlideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.toast-emoji {
+  font-size: 1.3rem;
+  flex-shrink: 0;
+}
+
+/* Card CTA Live Chips */
+.download-live-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 14px;
+  border-radius: 9999px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  border: var(--border-thin);
+  background: var(--color-pink-light);
+  color: var(--color-pink);
+  margin-bottom: 16px;
+  box-shadow: 1.5px 1.5px 0px var(--color-black);
+}
+
+.download-live-chip.windows {
+  background: var(--color-cyan-light);
+  color: #0284C7;
+}
+
+.chip-fire {
+  font-size: 0.95rem;
+}
+
+/* Hero Live Downloads Badge */
+.hero-downloads-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 9999px;
+  border: var(--border-thin);
+  background: var(--color-card);
+  box-shadow: var(--shadow-sm);
+  margin-top: 14px;
+  font-size: 0.84rem;
+  width: fit-content;
+}
+
+.hero-downloads-count {
+  font-weight: 800;
+  color: var(--color-pink);
+}
+
+.hero-downloads-sub {
+  color: var(--color-text-secondary);
+  font-size: 0.8rem;
+}
+
+@media (max-width: 899px) {
+  .download-stats-card {
+    padding: 24px 18px;
+  }
+  .download-stats-main {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  .hero-downloads-badge {
+    margin-top: 12px;
+    font-size: 0.78rem;
+    padding: 5px 12px;
+  }
+}
+
 .downloads-grid {
   display: grid;
   grid-template-columns: 1fr;
@@ -3065,6 +3372,82 @@ html, body {
 }
 
 /* 7. Download Center */
+[data-theme="dark"] .download-stats-card,
+.dark .download-stats-card {
+  background: #0D0D12;
+  border-color: #2B2B38;
+  box-shadow: 5px 5px 0px #000000;
+}
+
+[data-theme="dark"] .stats-tag-badge,
+.dark .stats-tag-badge {
+  background: #181824;
+  border-color: #2B2B38;
+  color: #E4E4E7;
+}
+
+[data-theme="dark"] .stats-number-display,
+.dark .stats-number-display {
+  color: #FFFFFF;
+}
+
+[data-theme="dark"] .stats-counter-explanation,
+.dark .stats-counter-explanation {
+  color: #A1A1AA;
+}
+
+[data-theme="dark"] .stats-mini-card,
+.dark .stats-mini-card {
+  background: #14141C;
+  border-color: #2B2B38;
+  box-shadow: 2px 2px 0px #000000;
+}
+
+[data-theme="dark"] .stats-mini-num,
+.dark .stats-mini-num {
+  color: #F4F4F6;
+}
+
+[data-theme="dark"] .stats-mini-name,
+.dark .stats-mini-name {
+  color: #A1A1AA;
+}
+
+[data-theme="dark"] .download-success-toast,
+.dark .download-success-toast {
+  background: rgba(16, 185, 129, 0.16);
+  border-color: #10B981;
+  color: #6EE7B7;
+}
+
+[data-theme="dark"] .download-live-chip.android,
+.dark .download-live-chip.android {
+  background: rgba(255, 45, 85, 0.15);
+  border-color: #FF2D55;
+  color: #FF6685;
+  box-shadow: 1.5px 1.5px 0px #000;
+}
+
+[data-theme="dark"] .download-live-chip.windows,
+.dark .download-live-chip.windows {
+  background: rgba(0, 194, 255, 0.15);
+  border-color: #00C2FF;
+  color: #38BDF8;
+  box-shadow: 1.5px 1.5px 0px #000;
+}
+
+[data-theme="dark"] .hero-downloads-badge,
+.dark .hero-downloads-badge {
+  background: #14141C;
+  border-color: #2B2B38;
+  box-shadow: 2px 2px 0px #000;
+}
+
+[data-theme="dark"] .hero-downloads-sub,
+.dark .hero-downloads-sub {
+  color: #A1A1AA;
+}
+
 [data-theme="dark"] .download-portal-card,
 .dark .download-portal-card {
   background: #0D0D12;

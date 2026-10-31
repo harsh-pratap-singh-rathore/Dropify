@@ -5,6 +5,7 @@ const DEFAULT_TEMPLATES = {
   'library.json': { likedSongs: [], playlists: [], history: [] },
   'play_stats.json': {},
   'exclusions.json': [],
+  'downloads.json': { total: 1, android: 1, windows: 0, lastUpdated: Date.now() },
   'preferences.json': {
     audioQuality: 'HIGH',
     crossfadeDuration: 4,
@@ -48,7 +49,7 @@ function initStorage(targetDir) {
     }
 
     // Seed default library.json, play_stats.json, preferences.json, and exclusions.json if they do not exist
-    const filesToSeed = ['library.json', 'play_stats.json', 'preferences.json', 'exclusions.json'];
+    const filesToSeed = ['library.json', 'play_stats.json', 'preferences.json', 'exclusions.json', 'downloads.json'];
     for (const fileName of filesToSeed) {
       const targetFilePath = path.join(DATA_DIR, fileName);
       if (!fs.existsSync(targetFilePath)) {
@@ -142,6 +143,10 @@ module.exports = {
   // User preferences (audio quality, crossfade, EQ settings)
   getPreferences: () => readJson('preferences.json', DEFAULT_TEMPLATES['preferences.json']),
   savePreferences: (data) => writeJson('preferences.json', data),
+
+  // Downloads counter (total, android, windows)
+  getDownloads: () => readJson('downloads.json', DEFAULT_TEMPLATES['downloads.json']),
+  saveDownloads: (data) => writeJson('downloads.json', data),
 
   // Desktop storage path utilities
   getDataDir: () => DATA_DIR,

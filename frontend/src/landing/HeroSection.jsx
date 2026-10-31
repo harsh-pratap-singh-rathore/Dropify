@@ -4,8 +4,12 @@ import screenshotTurntable from '../assets/brand/screenshot_turntable.jpg';
 import screenshotHome from '../assets/brand/screenshot_home.jpg';
 import screenshotLyrics from '../assets/brand/screenshot_lyrics.jpg';
 
-export default function HeroSection({ onLaunchWebPlayer }) {
+export default function HeroSection({ onLaunchWebPlayer, downloadTracker }) {
   const [activeScreen, setActiveScreen] = useState('turntable'); // 'turntable' | 'home' | 'lyrics'
+  const { stats, formatCount } = downloadTracker || {
+    stats: { total: 1 },
+    formatCount: (n) => `${n}+`
+  };
 
   const screens = {
     turntable: {
@@ -75,6 +79,13 @@ export default function HeroSection({ onLaunchWebPlayer }) {
                   <ArrowRight size={18} />
                 </button>
               )}
+            </div>
+
+            {/* Live Community Downloads Counter Badge */}
+            <div className="hero-downloads-badge">
+              <span className="live-pulse-dot"></span>
+              <span className="hero-downloads-count">{formatCount(stats.total)} Downloads</span>
+              <span className="hero-downloads-sub">• Android & Windows users listening ad-free</span>
             </div>
 
             {/* Trust Markers */}
