@@ -12,11 +12,11 @@ export default function DownloadCenter({ onOpenChecksumModal, downloadTracker })
   };
   const [releaseInfo, setReleaseInfo] = useState({
     android: {
-      version: '1.0.2',
-      filename: 'dropify-v1.0.2.apk',
-      sizeFormatted: '18.9 MB',
-      sha256: 'CC447F3C33EC5E4C253D52CA3E306C75428C7DAA43E0485E83A86CC780335449',
-      downloadUrl: '/downloads/dropify-v1.0.2.apk',
+      version: '1.1.0',
+      filename: 'dropify-v1.1.0.apk',
+      sizeFormatted: '19.0 MB',
+      sha256: '196ADFD25AFC7DC740801385C4F671D98F21C2436287F820E1A561DF8DCE02DA',
+      downloadUrl: '/downloads/dropify-v1.1.0.apk',
       minOs: 'Android 8.0 (Oreo) or higher'
     },
     windows: {
@@ -187,7 +187,7 @@ export default function DownloadCenter({ onOpenChecksumModal, downloadTracker })
             <div className="download-cta-group">
               <a
                 href={releaseInfo.android.downloadUrl}
-                download={releaseInfo.android.filename || "dropify-v1.0.2.apk"}
+                download={releaseInfo.android.filename || "dropify-v1.1.0.apk"}
                 className="neo-btn neo-btn-primary"
                 onClick={() => trackDownload('android')}
               >
