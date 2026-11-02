@@ -87,7 +87,7 @@ export default function PlatformShowcase() {
 
                 <a href="#downloads" className="neo-btn neo-btn-primary">
                   <Download size={18} />
-                  <span>Download Android APK (v1.1.0)</span>
+                  <span>Download Android APK (v2.0)</span>
                 </a>
               </div>
 

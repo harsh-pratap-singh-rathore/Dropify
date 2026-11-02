@@ -1,22 +1,22 @@
 {
   "schemaVersion": "1.0.0",
   "project": "Dropify",
-  "lastUpdated": "2026-11-01T12:20:00.000Z",
+  "lastUpdated": "2026-11-02T17:31:15.801Z",
   "channel": "stable",
   "platforms": {
     "android": {
       "platform": "android",
-      "latestVersion": "1.1.0",
-      "version": "1.1.0",
-      "versionCode": 4,
-      "releaseDate": "2026-11-01",
-      "filename": "dropify-v1.1.0.apk",
-      "downloadUrl": "https://dropify.vercel.app/downloads/dropify-v1.1.0.apk",
-      "fallbackUrl": "https://github.com/harsh-pratap-singh-rathore/Dropify/releases/download/v1.1.0/dropify-v1.1.0.apk",
-      "size": 19882213,
-      "fileSize": 19882213,
-      "sizeFormatted": "19.0 MB",
-      "sha256": "196adfd25afc7dc740801385c4f671d98f21c2436287f820e1a561df8dce02da",
+      "latestVersion": "2.0.0",
+      "version": "2.0.0",
+      "versionCode": 5,
+      "releaseDate": "2026-11-02",
+      "filename": "dropify-v2.0.0.apk",
+      "downloadUrl": "https://dropify.vercel.app/downloads/dropify-v2.0.0.apk",
+      "fallbackUrl": "https://github.com/harsh-pratap-singh-rathore/Dropify/releases/download/v2.0.0/app-release.apk",
+      "size": 20395810,
+      "fileSize": 20395810,
+      "sizeFormatted": "19.5 MB",
+      "sha256": "a35f9523b3ec63217110bc0c300bebf27d7cbc93726f7b6e0676e43f7abbafb6",
       "minSupportedVersion": "1.0.0",
       "minSdk": 26,
       "minOs": "Android 8.0 (Oreo) or higher",
@@ -24,12 +24,12 @@
       "mandatory": false,
       "channel": "stable",
       "releaseNotes": [
-        "Major Release v1.1.0 with Critical Bug Fixes & Enhanced Player",
-        "Lyrics Engine: Repaired matching, real-time synchronized line tracking with highlighter yellow, and touch-scroll lock",
-        "Track Continuity: Clicking the currently playing song preserves playback position; paused tracks resume without restarting",
-        "Strict Touch Isolation: Tapping album artwork, metadata, or blank background spaces never triggers accidental playback actions",
-        "WindowInsets Compliance: Status bar and notification shade pull-downs never overlap or clip player controls",
-        "Enhanced 2D Neobrutalist Player Deck: Gap-free layout with Hi-Fi status ribbon, animated live equalizer, and Polaroid artwork frame"
+        "Dropify 2.0 Major Release — The smoothest, most powerful update yet",
+        "AMOLED Matte Dark Mode: Pitch black #000000 true black for OLED battery efficiency and velvety cards",
+        "Silky Smooth Transitions: 60/120fps fluid tab navigation and spring-physics interactions",
+        "Instant Playlists: 1-tap Create Playlist and Add to Playlist from any track card or player",
+        "Status Bar Update Alerts: Get notified directly in your Android notification shade when updates drop",
+        "What's New in v2.0 showcase screen with visual feature guides"
       ]
     },
     "windows": {
