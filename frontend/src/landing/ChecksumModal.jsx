@@ -10,8 +10,8 @@ export default function ChecksumModal({ isOpen, onClose }) {
     {
       platform: "Android APK v2.0.0 (Latest Major Release)",
       file: "dropify-v2.0.0.apk / app-release.apk",
-      size: "20,395,810 bytes (~19.5 MB)",
-      sha256: "A35F9523B3EC63217110BC0C300BEBF27D7CBC93726F7B6E0676E43F7ABBAFB6"
+      size: "21,047,221 bytes (~20.1 MB)",
+      sha256: "ACC2955D15718F088B52378C1199953C5B21A7E9A43CB4F06C6B89D14F26E81C"
     },
     {
       platform: "Android APK v1.1.0 (Previous)",
