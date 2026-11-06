@@ -12,11 +12,11 @@ export default function DownloadCenter({ onOpenChecksumModal, downloadTracker })
   };
   const [releaseInfo, setReleaseInfo] = useState({
     android: {
-      version: '2.0.2',
-      filename: 'dropify-v2.0.2.apk',
+      version: '2.0.1',
+      filename: 'dropify-v2.0.1.apk',
       sizeFormatted: '20.1 MB',
-      sha256: '64C48B22891E804B230A9ED3E38902F9703BDD5B9917F256DD46553E55EC098F',
-      downloadUrl: '/downloads/dropify-v2.0.2.apk',
+      sha256: '7012883B6F2D309797327053A5ED4BE141A32175B8BB6C3496114A64E8EDA3FA',
+      downloadUrl: '/downloads/dropify-v2.0.1.apk',
       minOs: 'Android 8.0 (Oreo) or higher'
     },
     windows: {

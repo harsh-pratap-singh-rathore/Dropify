@@ -1,22 +1,22 @@
 {
   "schemaVersion": "1.0.0",
   "project": "Dropify",
-  "lastUpdated": "2026-11-06T06:30:00.000Z",
+  "lastUpdated": "2026-11-05T17:00:00.000Z",
   "channel": "stable",
   "platforms": {
     "android": {
       "platform": "android",
-      "latestVersion": "2.0.2",
-      "version": "2.0.2",
-      "versionCode": 7,
-      "releaseDate": "2026-11-06",
-      "filename": "dropify-v2.0.2.apk",
-      "downloadUrl": "https://dropify.vercel.app/downloads/dropify-v2.0.2.apk",
-      "fallbackUrl": "https://github.com/harsh-pratap-singh-rathore/Dropify/releases/download/v2.0.2/app-release.apk",
-      "size": 21047225,
-      "fileSize": 21047225,
+      "latestVersion": "2.0.1",
+      "version": "2.0.1",
+      "versionCode": 6,
+      "releaseDate": "2026-11-05",
+      "filename": "dropify-v2.0.1.apk",
+      "downloadUrl": "https://dropify.vercel.app/downloads/dropify-v2.0.1.apk",
+      "fallbackUrl": "https://github.com/harsh-pratap-singh-rathore/Dropify/releases/download/v2.0.1/app-release.apk",
+      "size": 21030841,
+      "fileSize": 21030841,
       "sizeFormatted": "20.1 MB",
-      "sha256": "64c48b22891e804b230a9ed3e38902f9703bdd5b9917f256dd46553e55ec098f",
+      "sha256": "7012883b6f2d309797327053a5ed4be141a32175b8bb6c3496114a64e8eda3fa",
       "minSupportedVersion": "1.0.0",
       "minSdk": 26,
       "minOs": "Android 8.0 (Oreo) or higher",
@@ -24,12 +24,13 @@
       "mandatory": false,
       "channel": "stable",
       "releaseNotes": [
-        "Dropify 2.0.2 — Intelligent Same-Vibe Recommendations & Radio Engine",
-        "Smart Search Click-to-Radio: Tapping any search result (e.g. Alfaaz) now automatically triggers a 50-track same-vibe radio stream of related songs and artists, instead of looping duplicate channel re-uploads.",
-        "Anti-Reupload Filter: Reverse-engineered InnerTube Automix algorithm with aggressive title normalization that eliminates duplicate cover and lyric video re-uploads.",
-        "Seamless Auto-Replenishment: Continuously fetches fresh matching vibe tracks when approaching the end of your queue for an endless listening experience.",
-        "Play Queue Badge: Sleek 2D [📻 SAME VIBE] indicator in the play queue sheet.",
-        "Pure 2D Neobrutalist UI & 1:1 In-Card Video: Crisp high-contrast paper cards, bold borders, unblurred offset drop shadows, and seamless in-card video/music toggle with dynamic ambient lighting glow."
+        "Dropify 2.0.1 — Pure 2D Neobrutalist Theme, In-Card 1:1 Video/Music Toggle & Ambient Lighting Glow",
+        "Pure 2D Neobrutalist UI: Crisp high-contrast paper cards, bold borders, unblurred offset drop shadows, and buttery 120fps scrolling",
+        "1:1 In-Card Video & Music Switching: Seamlessly toggle between album art polaroid and square video stream directly inside the song card via sleek [🎵 Music] and [🎥 Video] pills",
+        "Atmospheric Ambient Lighting: Real-time dynamic color extraction radiating subtle breathing glow behind the media card and illuminating karaoke lyrics",
+        "SimpMusic Synchronized Lyrics: Word-by-word karaoke sweep, multi-script romanization (Devanagari, Gurmukhi, Kana, Hangul, Cyrillic), and Bluetooth latency offset calibration",
+        "AMOLED Matte Dark Mode: Pitch black #000000 true black background for OLED battery efficiency and velvety paper cards",
+        "Ultra-Fast Offline Downloads: High-speed chunked worker engine with live notification progress and zero-loss Spotify playlist persistence across updates"
       ]
     },
     "windows": {
