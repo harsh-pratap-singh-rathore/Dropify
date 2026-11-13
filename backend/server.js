@@ -7,6 +7,7 @@ const innertube = require('./services/innertubeService');
 const lyricsService = require('./services/lyricsService');
 const tasteEngine = require('./services/tasteEngine');
 const storage = require('./services/storageService');
+const dnaService = require('./services/dnaService');
 const axios = require('axios');
 
 const app = express();
@@ -55,7 +56,9 @@ app.use((req, res, next) => {
   res.setHeader(
     'Content-Security-Policy',
     "default-src 'self'; " +
-    "script-src 'self' 'unsafe-inline' https://www.youtube.com https://s.ytimg.com; " +
+    "script-src 'self' 'unsafe-inline' blob: https://www.youtube.com https://s.ytimg.com; " +
+    "worker-src 'self' blob:; " +
+    "child-src 'self' blob:; " +
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
     "font-src 'self' https://fonts.gstatic.com data:; " +
     "img-src 'self' data: blob: https://dropify.vercel.app https://i.ytimg.com https://*.ytimg.com https://*.googlevideo.com https://images.unsplash.com; " +
@@ -574,6 +577,29 @@ app.post('/api/recognize', async (req, res) => {
   } catch (err) {
     const isProd = process.env.NODE_ENV === 'production';
     res.status(500).json({ error: 'Recognition failed', message: isProd ? 'Recognition search failed' : err.message });
+  }
+});
+
+// 11.1 Music DNA & Backstory Endpoint (Genius + Wikipedia Backstory & Artist Bio)
+app.get('/api/dna/:id', async (req, res) => {
+  const title = String(req.query.title || '').slice(0, 200);
+  const artist = String(req.query.artist || '').slice(0, 200);
+  const album = String(req.query.album || '').slice(0, 200);
+
+  try {
+    const dna = await dnaService.getSongDna(title, artist, album);
+    res.json({ success: true, dna });
+  } catch (err) {
+    res.json({
+      success: true,
+      dna: {
+        title: title || 'Unknown Title',
+        artist: artist || 'Unknown Artist',
+        album: album || 'Single / Unknown Album',
+        meaning: `"${title}" is a musical composition by ${artist}.`,
+        bio: `${artist} is an active contemporary music creator.`
+      }
+    });
   }
 });
 

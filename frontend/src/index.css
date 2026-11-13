@@ -274,3 +274,87 @@ body {
   }
 }
 
+/* ==========================================================================
+   DROPIFY 4-MODE THEME ENGINE (PORTED FROM DROPIFY ANDROID)
+   - Dark Mode: Matte Charcoal (#141414)
+   - AMOLED Matte: Pitch Black (#000000)
+   - Light Mode: Warm Paper (#FAF7F2)
+   - System Default: Follows OS Appearance
+   ========================================================================== */
+
+/* 1. Dark Mode (Matte Charcoal #141414) */
+[data-theme="dark"] {
+  --paper-bg: #141414;
+  --paper-card: #1F1F24;
+  --paper-card-subtle: #28282E;
+  --paper-card-warm: #2E2E36;
+  --paper-border: #3E3E46;
+  --paper-border-light: rgba(113, 113, 122, 0.35);
+  --paper-border-dashed: rgba(113, 113, 122, 0.5);
+
+  --graphite-main: #FAF9F7;
+  --graphite-secondary: #D4D4D8;
+  --graphite-muted: #A1A1AA;
+  --graphite-faint: #71717A;
+  --graphite-wash: rgba(255, 255, 255, 0.08);
+
+  --washi-tape: rgba(46, 46, 54, 0.85);
+
+  --sketch-shadow-sm: 0 3px 0 #000000, 0 4px 8px rgba(0, 0, 0, 0.45);
+  --sketch-shadow: 0 5px 0 #000000, 0 10px 20px rgba(0, 0, 0, 0.6);
+  --sketch-shadow-hover: 0 8px 0 #000000, 0 16px 28px rgba(0, 0, 0, 0.7);
+  --sketch-shadow-active: 0 1.5px 0 #000000, 0 2px 4px rgba(0, 0, 0, 0.4);
+  --shadow-3d-lg: 0 10px 0 #000000, 0 22px 36px rgba(0, 0, 0, 0.8);
+}
+
+/* 2. AMOLED Matte Dark (True Pitch Black #000000) */
+[data-theme="amoled"] {
+  --paper-bg: #000000;
+  --paper-card: #101012;
+  --paper-card-subtle: #18181B;
+  --paper-card-warm: #222226;
+  --paper-border: #2D2D33;
+  --paper-border-light: rgba(255, 255, 255, 0.14);
+  --paper-border-dashed: rgba(255, 255, 255, 0.25);
+
+  --graphite-main: #FFFFFF;
+  --graphite-secondary: #D4D4D8;
+  --graphite-muted: #8E8E93;
+  --graphite-faint: #636366;
+  --graphite-wash: rgba(255, 255, 255, 0.06);
+
+  --washi-tape: rgba(34, 34, 38, 0.9);
+
+  --sketch-shadow-sm: 0 3px 0 #000000, 0 4px 8px rgba(0, 0, 0, 0.65);
+  --sketch-shadow: 0 5px 0 #000000, 0 10px 20px rgba(0, 0, 0, 0.8);
+  --sketch-shadow-hover: 0 8px 0 #000000, 0 16px 28px rgba(0, 0, 0, 0.95);
+  --sketch-shadow-active: 0 1.5px 0 #000000, 0 2px 4px rgba(0, 0, 0, 0.6);
+  --shadow-3d-lg: 0 10px 0 #000000, 0 22px 36px rgba(0, 0, 0, 0.95);
+}
+
+/* 3. Paper Light (#FAF7F2) */
+[data-theme="light"] {
+  --paper-bg: #FAF7F2;
+  --paper-card: #FFFFFF;
+  --paper-card-subtle: #F6F2E9;
+  --paper-card-warm: #FFFDF9;
+  --paper-border: #18181B;
+  --paper-border-light: rgba(24, 24, 27, 0.22);
+  --paper-border-dashed: rgba(24, 24, 27, 0.35);
+
+  --graphite-main: #18181B;
+  --graphite-secondary: #3F3F46;
+  --graphite-muted: #71717A;
+  --graphite-faint: #A1A1AA;
+  --graphite-wash: rgba(24, 24, 27, 0.05);
+
+  --washi-tape: rgba(230, 220, 200, 0.88);
+
+  --sketch-shadow-sm: 0 3px 0 #18181B, 0 4px 8px rgba(24, 24, 27, 0.08);
+  --sketch-shadow: 0 5px 0 #18181B, 0 10px 20px rgba(24, 24, 27, 0.12);
+  --sketch-shadow-hover: 0 8px 0 #18181B, 0 16px 28px rgba(24, 24, 27, 0.16);
+  --sketch-shadow-active: 0 1.5px 0 #18181B, 0 2px 4px rgba(24, 24, 27, 0.1);
+  --shadow-3d-lg: 0 10px 0 #18181B, 0 22px 36px rgba(24, 24, 27, 0.2);
+}
+
+

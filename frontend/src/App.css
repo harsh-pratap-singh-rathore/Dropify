@@ -2523,7 +2523,7 @@
 /* Windows 11 Electron Frameless Drag Region & Window Controls Clearance */
 .electron-navbar-drag {
   -webkit-app-region: drag;
-  padding-right: 140px !important;
+  padding-right: 175px !important;
   user-select: none;
 }
 
@@ -2536,8 +2536,30 @@
 .electron-navbar-drag .nav-links,
 .electron-navbar-drag .nav-actions,
 .electron-navbar-drag .suggestions-dropdown,
-.electron-navbar-drag .navbar-clear-btn {
+.electron-navbar-drag .navbar-clear-btn,
+.electron-navbar-drag .window-controls-group {
   -webkit-app-region: no-drag !important;
+}
+
+/* Custom 2D Sketchmorphic Window Controls */
+.window-ctrl-btn {
+  background: var(--paper-card);
+  border: 2px solid var(--paper-border);
+  box-shadow: 1.5px 1.5px 0px var(--paper-border);
+  color: var(--graphite-main);
+  transition: all 0.15s ease;
+}
+
+.window-ctrl-btn:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 2.5px 2.5px 0px var(--paper-border);
+  background: var(--highlighter-yellow);
+}
+
+.window-ctrl-btn.close-btn:hover {
+  background: #ef4444;
+  color: #ffffff;
+  border-color: #18181B;
 }
 
 

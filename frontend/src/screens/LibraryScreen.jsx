@@ -1,15 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { Heart, ListMusic, Plus, Play, Clock } from 'lucide-react';
+import { Heart, ListMusic, Plus, Play, Clock, Download, Trash2, WifiOff } from 'lucide-react';
 import TrackCard from '../components/TrackCard';
 import { usePlayer } from '../context/PlayerContext';
 import { apiUrl } from '../config';
 
 export default function LibraryScreen() {
   const [library, setLibrary] = useState({ likedSongs: [], playlists: [] });
-  const [activeTab, setActiveTab] = useState('liked'); // 'liked', 'recent', or 'playlists'
+  const [activeTab, setActiveTab] = useState('liked'); // 'liked', 'recent', 'playlists', or 'downloads'
   const [newPlaylistName, setNewPlaylistName] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const { playSong, recentlyPlayed } = usePlayer();
+  const {
+    playSong,
+    recentlyPlayed,
+    downloadedSongs,
+    removeDownloadedSong,
+    isOfflineMode,
+    setIsOfflineMode
+  } = usePlayer();
 
   const fetchLibrary = () => {
     fetch(apiUrl('/api/library'))
@@ -66,6 +73,14 @@ export default function LibraryScreen() {
           >
             <ListMusic size={16} />
             <span>Sketchbooks ({library.playlists?.length || 0})</span>
+          </button>
+
+          <button
+            className={`sketch-btn ${activeTab === 'downloads' ? 'sketch-btn-primary' : ''}`}
+            onClick={() => setActiveTab('downloads')}
+          >
+            <Download size={16} />
+            <span>Downloads ({downloadedSongs?.length || 0})</span>
           </button>
         </div>
 
@@ -153,6 +168,99 @@ export default function LibraryScreen() {
             <p className="sketch-font-hand">Organize your favorite audio doodles into custom sketchbooks.</p>
           </div>
         )
+      )}
+
+      {activeTab === 'downloads' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          {/* Offline Mode banner and storage stats */}
+          <div className="sketch-card" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', flexWrap: 'wrap', gap: '16px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+              <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: isOfflineMode ? '#ef4444' : 'rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
+                {isOfflineMode ? <WifiOff size={22} /> : <Download size={22} />}
+              </div>
+              <div>
+                <h4 className="sketch-font-title" style={{ margin: 0, fontSize: '1.1rem' }}>
+                  Offline Playback Mode
+                </h4>
+                <p className="sketch-font-hand" style={{ margin: 0, fontSize: '0.92rem', color: 'var(--graphite-muted)' }}>
+                  {isOfflineMode
+                    ? 'Only downloaded tracks will play. Internet streaming disabled.'
+                    : 'Stream normally, or play downloaded tracks offline without internet.'}
+                </p>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+              <div style={{ textAlign: 'right' }}>
+                <span className="sketch-font-mono" style={{ fontSize: '0.85rem', color: 'var(--graphite-muted)' }}>
+                  Total Offline Storage
+                </span>
+                <div style={{ fontWeight: 800, fontSize: '1.05rem', color: 'var(--pop-cyan)' }}>
+                  {(downloadedSongs.reduce((acc, s) => acc + (s.size || 0), 0) / (1024 * 1024)).toFixed(1)} MB
+                </div>
+              </div>
+
+              <button
+                type="button"
+                className={`sketch-btn ${isOfflineMode ? 'sketch-btn-primary' : ''}`}
+                onClick={() => setIsOfflineMode(!isOfflineMode)}
+                style={isOfflineMode ? { background: '#ef4444', borderColor: '#ef4444', color: '#fff' } : undefined}
+              >
+                {isOfflineMode ? 'Mode: Active' : 'Enable Offline Mode'}
+              </button>
+            </div>
+          </div>
+
+          {downloadedSongs?.length > 0 ? (
+            <div className="shelf-grid">
+              {downloadedSongs.map((track) => (
+                <div key={track.id} style={{ position: 'relative' }}>
+                  <TrackCard
+                    song={track}
+                    onPlay={(t) => playSong(t, downloadedSongs)}
+                    queueContext={downloadedSongs}
+                  />
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (confirm(`Remove "${track.title}" from offline downloads?`)) {
+                        removeDownloadedSong(track.id);
+                      }
+                    }}
+                    title="Delete downloaded song"
+                    style={{
+                      position: 'absolute',
+                      top: '10px',
+                      right: '10px',
+                      width: '28px',
+                      height: '28px',
+                      borderRadius: '50%',
+                      background: 'rgba(0, 0, 0, 0.75)',
+                      border: '1px solid rgba(255, 255, 255, 0.2)',
+                      color: '#ef4444',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer',
+                      zIndex: 5
+                    }}
+                  >
+                    <Trash2 size={13} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="library-empty-state sketch-card">
+              <Download size={44} style={{ color: 'var(--pop-yellow)' }} />
+              <h3 className="sketch-font-title">No Offline Downloads Yet</h3>
+              <p className="sketch-font-hand">
+                Click the download icon on any song or in the player bar to save tracks for offline listening anywhere, anytime.
+              </p>
+            </div>
+          )}
+        </div>
       )}
 
       {showCreateModal && (

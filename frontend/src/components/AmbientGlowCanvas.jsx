@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { usePlayer } from '../context/PlayerContext';
 
 /**
  * 6 Harmonic Orbital Ambient Glow Canvas
@@ -215,6 +216,7 @@ export default function AmbientGlowCanvas({
   className = '',
   style = {}
 }) {
+  const { ambientGlowEnabled } = usePlayer();
   const canvasRef = useRef(null);
   const containerRef = useRef(null);
 
@@ -384,6 +386,8 @@ export default function AmbientGlowCanvas({
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  if (!ambientGlowEnabled) return null;
 
   return (
     <div

@@ -1,12 +1,16 @@
 import React from 'react';
-import { Home, Search, Heart, Sparkles, Disc } from 'lucide-react';
+import { Home, Search, Heart, Sparkles, Settings } from 'lucide-react';
+import { usePlayer } from '../context/PlayerContext';
 
 export default function MobileBottomNav({ activeTab, setActiveTab }) {
+  const { setIsSettingsOpen } = usePlayer();
+
   const navItems = [
     { id: 'home', label: 'Home', icon: Home },
     { id: 'search', label: 'Search', icon: Search },
+    { id: 'taste', label: 'Taste', icon: Sparkles },
     { id: 'library', label: 'Library', icon: Heart },
-    { id: 'taste', label: 'Taste Mix', icon: Sparkles }
+    { id: 'settings', label: 'Settings', icon: Settings, isAction: true }
   ];
 
   return (
@@ -18,7 +22,13 @@ export default function MobileBottomNav({ activeTab, setActiveTab }) {
           <button
             key={item.id}
             className={`mobile-nav-item ${isActive ? 'active' : ''}`}
-            onClick={() => setActiveTab(item.id)}
+            onClick={() => {
+              if (item.isAction) {
+                setIsSettingsOpen(true);
+              } else {
+                setActiveTab(item.id);
+              }
+            }}
             aria-label={item.label}
             aria-current={isActive ? 'page' : undefined}
           >

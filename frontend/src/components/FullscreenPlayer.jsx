@@ -11,7 +11,17 @@ import {
   Sparkles,
   Search,
   Plus,
-  Minus
+  Minus,
+  Dna,
+  Gauge,
+  Moon,
+  Share2,
+  Download,
+  Check,
+  ListMusic,
+  Copy,
+  Languages,
+  Loader2
 } from 'lucide-react';
 import { usePlayer } from '../context/PlayerContext';
 import { apiUrl } from '../config';
@@ -45,14 +55,44 @@ export default function FullscreenPlayer() {
     isFullscreenPlayerOpen,
     setIsFullscreenPlayerOpen,
     setIsEqOpen,
+    fetchDna,
+    setIsSpeedModalOpen,
+    sleepTimer,
+    setIsSleepTimerModalOpen,
+    openShareModal,
+    downloadSong,
+    downloadedSongs,
+    isDownloadingMap,
+    queue,
+    setIsQueueOpen,
     audioManager
   } = usePlayer();
 
   const [activeTab, setActiveTab] = useState('lyrics'); // 'lyrics' or 'visualizer'
   const [manualQuery, setManualQuery] = useState('');
   const [showManualSearch, setShowManualSearch] = useState(false);
+  const [copiedLyrics, setCopiedLyrics] = useState(false);
+  const [isRomanized, setIsRomanized] = useState(false);
   const canvasRef = useRef(null);
   const lyricsContainerRef = useRef(null);
+
+  // Copy lyrics handler with feedback
+  const handleCopyLyrics = () => {
+    if (!lyricsData) return;
+    let text = '';
+    if (lyricsData.lines && lyricsData.lines.length > 0) {
+      text = lyricsData.lines.map((l) => l.text).join('\n');
+    } else if (lyricsData.plain) {
+      text = lyricsData.plain;
+    }
+    if (text) {
+      const copyPayload = `${currentSong?.title || 'Unknown'} - ${currentSong?.artist || 'Unknown'}\n\n${text}\n\nSynced by Dropify Audio Engine`;
+      navigator.clipboard.writeText(copyPayload).then(() => {
+        setCopiedLyrics(true);
+        setTimeout(() => setCopiedLyrics(false), 2200);
+      }).catch(() => {});
+    }
+  };
 
   // Automatically reset manual search query whenever track changes
   useEffect(() => {
@@ -265,9 +305,70 @@ export default function FullscreenPlayer() {
           </button>
         </div>
 
-        <button className="btn-icon" onClick={() => setIsEqOpen(true)} title="Pencil DSP Equalizer">
-          <Sliders size={20} />
-        </button>
+        <div className="fullscreen-header-actions" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <button
+            className="btn-icon"
+            onClick={() => fetchDna(currentSong)}
+            title="Song DNA (Meaning, Genius & Wikipedia Backstory)"
+          >
+            <Dna size={18} />
+          </button>
+          <button
+            className="btn-icon"
+            onClick={() => setIsSpeedModalOpen(true)}
+            title="Playback Speed & Analog Varispeed"
+          >
+            <Gauge size={18} />
+          </button>
+          <button
+            className={`btn-icon ${sleepTimer?.active ? 'active-timer-btn' : ''}`}
+            onClick={() => setIsSleepTimerModalOpen(true)}
+            title={sleepTimer?.active ? `Sleep Timer: ${Math.ceil((sleepTimer.remainingSeconds || 0) / 60)}m left` : "Sleep Timer (Fade out & pause)"}
+            style={sleepTimer?.active ? { color: '#ef4444', borderColor: '#ef4444' } : undefined}
+          >
+            <Moon size={18} />
+          </button>
+          <button
+            className="btn-icon"
+            onClick={() => openShareModal(currentSong)}
+            title="Universal Song.link / Odesli Share"
+          >
+            <Share2 size={18} />
+          </button>
+          <button
+            className="btn-icon"
+            onClick={() => downloadSong(currentSong)}
+            title={
+              downloadedSongs.some((s) => s.id === currentSong?.id)
+                ? 'Downloaded for Offline Playback'
+                : isDownloadingMap[currentSong?.id]
+                ? 'Downloading Audio Stream...'
+                : 'Download for Offline Playback'
+            }
+          >
+            {isDownloadingMap[currentSong?.id] ? (
+              <Loader2 size={18} className="spin-slow" />
+            ) : downloadedSongs.some((s) => s.id === currentSong?.id) ? (
+              <Check size={18} color="#22c55e" />
+            ) : (
+              <Download size={18} />
+            )}
+          </button>
+          <button
+            className="btn-icon"
+            onClick={() => setIsQueueOpen(true)}
+            title="Up Next Queue"
+            style={{ position: 'relative' }}
+          >
+            <ListMusic size={18} />
+            {queue?.length > 0 && (
+              <span className="queue-badge-counter">{queue.length}</span>
+            )}
+          </button>
+          <button className="btn-icon" onClick={() => setIsEqOpen(true)} title="10-Band Parametric Equalizer">
+            <Sliders size={18} />
+          </button>
+        </div>
       </div>
 
       {/* Main Content Area */}
@@ -387,6 +488,28 @@ export default function FullscreenPlayer() {
                 )}
 
                 <button
+                  className="sketch-btn"
+                  style={{ gap: '5px', padding: '4px 10px', fontSize: '0.8rem' }}
+                  onClick={handleCopyLyrics}
+                  title="Copy lyrics to clipboard"
+                  type="button"
+                >
+                  {copiedLyrics ? <Check size={13} color="#22c55e" /> : <Copy size={13} />}
+                  <span>{copiedLyrics ? 'Copied' : 'Copy'}</span>
+                </button>
+
+                <button
+                  className={`sketch-btn ${isRomanized ? 'sketch-btn-primary' : ''}`}
+                  style={{ gap: '5px', padding: '4px 10px', fontSize: '0.8rem' }}
+                  onClick={() => setIsRomanized(!isRomanized)}
+                  title="Romanize Lyrics (Echo Music Transliteration)"
+                  type="button"
+                >
+                  <Languages size={13} />
+                  <span>{isRomanized ? 'Latin' : 'Romanize'}</span>
+                </button>
+
+                <button
                   className="sketch-btn lyrics-search-trigger-btn"
                   onClick={() => setShowManualSearch(!showManualSearch)}
                   aria-label="Search Lyrics"
@@ -429,7 +552,7 @@ export default function FullscreenPlayer() {
                         onClick={() => line.time !== undefined && duration > 0 && seekTo((Math.max(0, line.time - lyricsOffset) / duration) * 100)}
                         title="Click to jump to this line"
                       >
-                        {line.text}
+                        {isRomanized && line.romanized ? line.romanized : line.text}
                       </div>
                     );
                   })}
@@ -492,7 +615,7 @@ export default function FullscreenPlayer() {
                           onClick={() => line.time !== undefined && duration > 0 && seekTo((Math.max(0, line.time - lyricsOffset) / duration) * 100)}
                           title="Click to jump to this line"
                         >
-                          {line.text}
+                          {isRomanized && line.romanized ? line.romanized : line.text}
                         </div>
                       );
                     })

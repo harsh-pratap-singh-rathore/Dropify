@@ -8,7 +8,19 @@ export default function ChecksumModal({ isOpen, onClose }) {
 
   const artifacts = [
     {
-      platform: "Android APK v2.0.1 (Latest Stable Release)",
+      platform: "Android APK v2.0.3 (Latest Stable Release)",
+      file: "dropify-v2.0.3.apk / app-release.apk",
+      size: "21,145,529 bytes (~20.2 MB)",
+      sha256: "AF0DE1480838865985C67748C5D9A6097483B7DB85EEABA95A6B136C441C0DC5"
+    },
+    {
+      platform: "Android APK v2.0.2 (Previous)",
+      file: "dropify-v2.0.2.apk / app-release.apk",
+      size: "21,096,377 bytes (~20.1 MB)",
+      sha256: "D754E587F695E4C6DB10BF5CF0D8730C2433FBFED71B193D13DEDE3C662FF789"
+    },
+    {
+      platform: "Android APK v2.0.1 (Previous)",
       file: "dropify-v2.0.1.apk / app-release.apk",
       size: "21,030,841 bytes (~20.1 MB)",
       sha256: "7012883B6F2D309797327053A5ED4BE141A32175B8BB6C3496114A64E8EDA3FA"
@@ -45,13 +57,13 @@ export default function ChecksumModal({ isOpen, onClose }) {
     },
     {
       platform: "Windows Setup (NSIS Installer)",
-      file: "Dropify Setup 1.0.0.exe",
+      file: "Dropify Setup 2.0.2.exe",
       size: "135,163,574 bytes (~128.9 MB)",
       sha256: "05FD37B08B0C72B4A70958851118F257E37791D09B657B4AD8C271F7404B0E6B"
     },
     {
       platform: "Windows Portable (Standalone)",
-      file: "Dropify-Portable-1.0.0.exe",
+      file: "Dropify-Portable-2.0.2.exe",
       size: "114,367,762 bytes (~109.1 MB)",
       sha256: "E3211562F661BA719A93C64E0A58E0DCFED7F5A7BEE591A16C3F06880D484AD0"
     }

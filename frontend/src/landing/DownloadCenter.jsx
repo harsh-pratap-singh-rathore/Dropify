@@ -12,26 +12,26 @@ export default function DownloadCenter({ onOpenChecksumModal, downloadTracker })
   };
   const [releaseInfo, setReleaseInfo] = useState({
     android: {
-      version: '2.0.1',
-      filename: 'dropify-v2.0.1.apk',
-      sizeFormatted: '20.1 MB',
-      sha256: '7012883B6F2D309797327053A5ED4BE141A32175B8BB6C3496114A64E8EDA3FA',
-      downloadUrl: '/downloads/dropify-v2.0.1.apk',
+      version: '2.0.3',
+      filename: 'dropify-v2.0.3.apk',
+      sizeFormatted: '20.2 MB',
+      sha256: 'AF0DE1480838865985C67748C5D9A6097483B7DB85EEABA95A6B136C441C0DC5',
+      downloadUrl: '/downloads/dropify-v2.0.3.apk',
       minOs: 'Android 8.0 (Oreo) or higher'
     },
     windows: {
-      version: '1.0.0',
+      version: '2.0.2',
       installer: {
-        filename: 'Dropify-Setup-1.0.0.exe',
+        filename: 'Dropify Setup 2.0.2.exe',
         sizeFormatted: '128.9 MB',
         sha256: '05FD37B08B0C72B4A70958851118F257E37791D09B657B4AD8C271F7404B0E6B',
-        downloadUrl: 'https://github.com/harsh-pratap-singh-rathore/Dropify/releases/download/v1.0.0/Dropify-Setup-1.0.0.exe'
+        downloadUrl: 'https://github.com/harsh-pratap-singh-rathore/Dropify/releases/download/v2.0.2/Dropify%20Setup%202.0.2.exe'
       },
       portable: {
-        filename: 'Dropify-Portable-1.0.0.exe',
+        filename: 'Dropify-Portable-2.0.2.exe',
         sizeFormatted: '109.1 MB',
         sha256: 'E3211562F661BA719A93C64E0A58E0DCFED7F5A7BEE591A16C3F06880D484AD0',
-        downloadUrl: 'https://github.com/harsh-pratap-singh-rathore/Dropify/releases/download/v1.0.0/Dropify-Portable-1.0.0.exe'
+        downloadUrl: 'https://github.com/harsh-pratap-singh-rathore/Dropify/releases/download/v2.0.2/Dropify-Portable-2.0.2.exe'
       },
       minOs: 'Windows 10 / 11 (64-bit)'
     }
@@ -187,7 +187,7 @@ export default function DownloadCenter({ onOpenChecksumModal, downloadTracker })
             <div className="download-cta-group">
               <a
                 href={releaseInfo.android.downloadUrl}
-                download={releaseInfo.android.filename || "dropify-v2.0.1.apk"}
+                download={releaseInfo.android.filename || "dropify-v2.0.3.apk"}
                 className="neo-btn neo-btn-primary"
                 onClick={() => trackDownload('android')}
               >

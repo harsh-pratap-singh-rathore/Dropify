@@ -15,6 +15,14 @@ const { setupTray, updateTrayPlaybackState, setIsQuitting } = require('./tray.cj
 const { initDiscord, setActivity, clearActivity } = require('./discord.cjs');
 const desktopUpdater = require('./updater.cjs');
 
+// Crash resilience & unhandled logging
+process.on('uncaughtException', (err) => {
+  console.error('[Dropify Main UncaughtException]:', err);
+});
+process.on('unhandledRejection', (reason) => {
+  console.error('[Dropify Main UnhandledRejection]:', reason);
+});
+
 // Chromium switches before app is ready for uninterrupted audiophile background playback
 app.commandLine.appendSwitch('disable-renderer-backgrounding');
 app.commandLine.appendSwitch('disable-background-timer-throttling');
@@ -34,12 +42,47 @@ let currentPlaybackState = { isPlaying: false, currentSong: null, currentTime: 0
 const BACKEND_PORT = 5001;
 const SERVER_URL = `http://127.0.0.1:${BACKEND_PORT}`;
 
-// Helper: Check if an HTTP server is reachable
-function isPortReachable(port, host = '127.0.0.1', timeoutMs = 800) {
+// Helper: Terminate any stale process clinging to the backend port
+function cleanupStalePort(port) {
+  if (process.platform !== 'win32') return;
+  try {
+    const { execSync } = require('child_process');
+    const out = execSync(`netstat -ano -p tcp | findstr :${port} | findstr LISTENING`, {
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore']
+    });
+    const lines = out.trim().split('\n');
+    for (const line of lines) {
+      const parts = line.trim().split(/\s+/);
+      const pid = parts[parts.length - 1];
+      if (pid && pid !== String(process.pid) && pid !== '0') {
+        console.log(`[Dropify Electron] Terminating stale process PID ${pid} holding port ${port}`);
+        execSync(`taskkill /F /PID ${pid}`, { stdio: 'ignore' });
+      }
+    }
+  } catch (_) {}
+}
+
+// Helper: Check if server is reachable and serving valid HTML
+function isServerReady(port, host = '127.0.0.1', timeoutMs = 1200) {
   return new Promise((resolve) => {
-    const req = http.get({ host, port, path: '/api/preferences', timeout: timeoutMs }, (res) => {
-      resolve(true);
-      res.resume();
+    const req = http.get({ host, port, path: '/', timeout: timeoutMs }, (res) => {
+      if (res.statusCode === 200) {
+        let body = '';
+        res.setEncoding('utf8');
+        res.on('data', (chunk) => { body += chunk; });
+        res.on('end', () => {
+          // Verify it returned HTML and NOT Express 404 "Cannot GET /"
+          if (body.includes('<div id="root">') || body.includes('<!doctype html>')) {
+            resolve(true);
+          } else {
+            resolve(false);
+          }
+        });
+      } else {
+        res.resume();
+        resolve(false);
+      }
     });
     req.on('error', () => resolve(false));
     req.on('timeout', () => {
@@ -49,13 +92,13 @@ function isPortReachable(port, host = '127.0.0.1', timeoutMs = 800) {
   });
 }
 
-// Helper: Wait for server to become healthy
+// Helper: Wait for server to become healthy and serving the frontend
 async function waitForServer(port, maxWaitMs = 15000) {
   const start = Date.now();
   while (Date.now() - start < maxWaitMs) {
-    const alive = await isPortReachable(port);
-    if (alive) return true;
-    await new Promise((r) => setTimeout(r, 250));
+    const ready = await isServerReady(port);
+    if (ready) return true;
+    await new Promise((r) => setTimeout(r, 200));
   }
   return false;
 }
@@ -158,14 +201,17 @@ function registerGlobalMediaShortcuts() {
 // Spawn backend via utilityProcess.fork()
 async function startBackendProcess() {
   const isDev = !app.isPackaged;
-  let backendPath = path.join(__dirname, '../backend/server.js');
+  let backendPath;
 
-  // Handle asar unpacked paths if packaged
-  if (!fs.existsSync(backendPath)) {
-    const unpacked = backendPath.replace('app.asar', 'app.asar.unpacked');
+  if (!isDev) {
+    const unpacked = path.join(process.resourcesPath, 'app.asar.unpacked', 'backend', 'server.js');
     if (fs.existsSync(unpacked)) {
       backendPath = unpacked;
+    } else {
+      backendPath = path.join(__dirname, '../backend/server.js').replace('app.asar', 'app.asar.unpacked');
     }
+  } else {
+    backendPath = path.join(__dirname, '../backend/server.js');
   }
 
   // Determine user data directory for persistent data
@@ -192,14 +238,8 @@ async function startBackendProcess() {
     frontendDistDir = path.join(__dirname, '../frontend/dist');
   }
 
-  // In development, check if backend is already running on port 5001
-  if (isDev) {
-    const isAlreadyRunning = await isPortReachable(BACKEND_PORT);
-    if (isAlreadyRunning) {
-      console.log(`[Dropify Electron] Dev backend already running on port ${BACKEND_PORT}`);
-      return;
-    }
-  }
+  // Clean up any stale process holding the port so our backend binds cleanly
+  cleanupStalePort(BACKEND_PORT);
 
   if (!fs.existsSync(backendPath)) {
     console.warn(`[Dropify Electron] Backend entry not found at: ${backendPath}`);
@@ -219,6 +259,10 @@ async function startBackendProcess() {
     stdio: 'inherit'
   });
 
+  backendProcess.on('error', (err) => {
+    console.error(`[Dropify Backend] Failed to start utility process:`, err);
+  });
+
   backendProcess.on('exit', (code) => {
     console.log(`[Dropify Backend] Exited with code: ${code}`);
   });
@@ -232,16 +276,13 @@ function createMainWindow() {
     height: 820,
     minWidth: 900,
     minHeight: 600,
+    show: false,
     frame: false,
     backgroundMaterial: 'mica',
     transparent: false,
     backgroundColor: '#00000000',
     titleBarStyle: 'hidden',
-    titleBarOverlay: {
-      color: '#00000000',
-      symbolColor: '#ffffff',
-      height: 38
-    },
+    titleBarOverlay: false,
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
       backgroundThrottling: false,
@@ -266,11 +307,20 @@ function createMainWindow() {
   // Setup System Tray
   setupTray(mainWindow);
 
-  // Initialize taskbar thumbar
+  // Initialize taskbar thumbar and show window cleanly
   mainWindow.once('ready-to-show', () => {
     updateThumbarButtons(false);
     mainWindow.show();
+    mainWindow.focus();
   });
+
+  // Fallback to guarantee window visibility even if ready-to-show is delayed
+  setTimeout(() => {
+    if (mainWindow && !mainWindow.isDestroyed() && !mainWindow.isVisible()) {
+      mainWindow.show();
+      mainWindow.focus();
+    }
+  }, 2500);
 
   return mainWindow;
 }
@@ -369,8 +419,18 @@ app.whenReady().then(async () => {
 
   if (isDev) {
     // Check if Vite dev server is running on localhost:3000
-    devViteActive = await isPortReachable(3000, 'localhost', 500);
+    devViteActive = await isServerReady(3000, 'localhost', 500);
   }
+
+  // Handle potential brief load glitches with automatic graceful retry
+  mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription) => {
+    console.warn('[Dropify Electron] Page load failed:', errorCode, errorDescription);
+    setTimeout(() => {
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.loadURL(devViteActive ? 'http://localhost:3000' : SERVER_URL);
+      }
+    }, 1200);
+  });
 
   if (devViteActive) {
     console.log('[Dropify Electron] Connecting to Vite Dev Server at http://localhost:3000');

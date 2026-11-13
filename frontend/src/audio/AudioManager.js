@@ -90,6 +90,9 @@ class AudioManager {
     this.stereoWidth = 1.25;
     this.isWidenerEnabled = true;
 
+    this.playbackSpeed = 1.0;
+    this.preservesPitch = true;
+
     this.activePlayer = 'primary'; // 'primary' or 'secondary'
     this.crossfadeDuration = 3.5; // seconds
     this.isCrossfading = false;
@@ -789,6 +792,13 @@ class AudioManager {
     current.load();
 
     try {
+      current.playbackRate = this.playbackSpeed;
+      current.preservesPitch = this.preservesPitch;
+      if ('mozPreservesPitch' in current) current.mozPreservesPitch = this.preservesPitch;
+      if ('webkitPreservesPitch' in current) current.webkitPreservesPitch = this.preservesPitch;
+    } catch (_) {}
+
+    try {
       await current.play();
       if (this.playRequestId !== requestId) {
         current.pause();
@@ -821,6 +831,12 @@ class AudioManager {
 
     incomingAudio.src = newStreamUrl;
     incomingAudio.load();
+    try {
+      incomingAudio.playbackRate = this.playbackSpeed;
+      incomingAudio.preservesPitch = this.preservesPitch;
+      if ('mozPreservesPitch' in incomingAudio) incomingAudio.mozPreservesPitch = this.preservesPitch;
+      if ('webkitPreservesPitch' in incomingAudio) incomingAudio.webkitPreservesPitch = this.preservesPitch;
+    } catch (_) {}
     try {
       await incomingAudio.play();
     } catch (err) {
@@ -961,8 +977,10 @@ class AudioManager {
 
   setEqualizerBand(index, gainDb) {
     this.ensureAudioContext();
-    if (this.eqBands[index] && this.isEqualizerEnabled && this.audioCtx) {
-      this.eqBands[index].gain.setValueAtTime(gainDb, this.audioCtx.currentTime);
+    const val = typeof gainDb === 'object' && gainDb !== null ? gainDb.gain : gainDb;
+    const num = Number(val);
+    if (this.eqBands[index] && this.isEqualizerEnabled && this.audioCtx && Number.isFinite(num)) {
+      this.eqBands[index].gain.setValueAtTime(num, this.audioCtx.currentTime);
     }
   }
 
@@ -994,6 +1012,33 @@ class AudioManager {
     if (this.sideGain && this.audioCtx) {
       this.sideGain.gain.setValueAtTime(this.stereoWidth * 0.5, this.audioCtx.currentTime);
     }
+  }
+
+  setPlaybackSpeed(speed = 1.0, preservesPitch = true) {
+    this.playbackSpeed = Math.max(0.25, Math.min(2.5, Number(speed) || 1.0));
+    this.preservesPitch = Boolean(preservesPitch);
+
+    try {
+      if (this.primaryAudio) {
+        this.primaryAudio.playbackRate = this.playbackSpeed;
+        this.primaryAudio.preservesPitch = this.preservesPitch;
+        if ('mozPreservesPitch' in this.primaryAudio) this.primaryAudio.mozPreservesPitch = this.preservesPitch;
+        if ('webkitPreservesPitch' in this.primaryAudio) this.primaryAudio.webkitPreservesPitch = this.preservesPitch;
+      }
+      if (this.secondaryAudio) {
+        this.secondaryAudio.playbackRate = this.playbackSpeed;
+        this.secondaryAudio.preservesPitch = this.preservesPitch;
+        if ('mozPreservesPitch' in this.secondaryAudio) this.secondaryAudio.mozPreservesPitch = this.preservesPitch;
+        if ('webkitPreservesPitch' in this.secondaryAudio) this.secondaryAudio.webkitPreservesPitch = this.preservesPitch;
+      }
+      if (this.ytPlayer && typeof this.ytPlayer.setPlaybackRate === 'function') {
+        this.ytPlayer.setPlaybackRate(this.playbackSpeed);
+      }
+    } catch (_) {}
+  }
+
+  getPlaybackSpeed() {
+    return this.playbackSpeed || 1.0;
   }
 
   getFrequencyData(array) {

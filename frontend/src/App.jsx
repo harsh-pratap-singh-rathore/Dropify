@@ -6,6 +6,12 @@ import FullscreenPlayer from './components/FullscreenPlayer';
 import EqualizerModal from './components/EqualizerModal';
 import MusicFlowModal from './components/MusicFlowModal';
 import ShortcutsModal from './components/ShortcutsModal';
+import SongDnaModal from './components/SongDnaModal';
+import QueueDrawer from './components/QueueDrawer';
+import SleepTimerModal from './components/SleepTimerModal';
+import SpeedPitchModal from './components/SpeedPitchModal';
+import ShareModal from './components/ShareModal';
+import SettingsModal from './components/SettingsModal';
 import HomeScreen from './screens/HomeScreen';
 import SearchScreen from './screens/SearchScreen';
 import LibraryScreen from './screens/LibraryScreen';
@@ -34,6 +40,18 @@ function MainApp({ onBackToLanding }) {
     setIsMusicFlowOpen,
     isShortcutsOpen,
     setIsShortcutsOpen,
+    isDnaOpen,
+    setIsDnaOpen,
+    isQueueOpen,
+    setIsQueueOpen,
+    isSleepTimerModalOpen,
+    setIsSleepTimerModalOpen,
+    isSpeedModalOpen,
+    setIsSpeedModalOpen,
+    isShareOpen,
+    setIsShareOpen,
+    isSettingsOpen,
+    setIsSettingsOpen,
     audioManager
   } = usePlayer();
 
@@ -50,7 +68,17 @@ function MainApp({ onBackToLanding }) {
 
   // Lock body scroll when full modals are open to prevent background scrolling & mobile rubber-banding (UI-04)
   useEffect(() => {
-    const isAnyModalOpen = isFullscreenPlayerOpen || isEqOpen || isMusicFlowOpen || isShortcutsOpen;
+    const isAnyModalOpen =
+      isFullscreenPlayerOpen ||
+      isEqOpen ||
+      isMusicFlowOpen ||
+      isShortcutsOpen ||
+      isDnaOpen ||
+      isQueueOpen ||
+      isSleepTimerModalOpen ||
+      isSpeedModalOpen ||
+      isShareOpen ||
+      isSettingsOpen;
     if (isAnyModalOpen) {
       document.body.style.overflow = 'hidden';
     } else {
@@ -59,7 +87,18 @@ function MainApp({ onBackToLanding }) {
     return () => {
       document.body.style.overflow = '';
     };
-  }, [isFullscreenPlayerOpen, isEqOpen, isMusicFlowOpen, isShortcutsOpen]);
+  }, [
+    isFullscreenPlayerOpen,
+    isEqOpen,
+    isMusicFlowOpen,
+    isShortcutsOpen,
+    isDnaOpen,
+    isQueueOpen,
+    isSleepTimerModalOpen,
+    isSpeedModalOpen,
+    isShareOpen,
+    isSettingsOpen
+  ]);
 
   // Audiophile Keyboard Controls: Space (Play/Pause), Escape (Exit Fullscreen/Modals), Arrows (Seek/Vol)
   useEffect(() => {
@@ -89,6 +128,18 @@ function MainApp({ onBackToLanding }) {
           e.preventDefault();
           if (isShortcutsOpen) {
             setIsShortcutsOpen(false);
+          } else if (isSettingsOpen) {
+            setIsSettingsOpen(false);
+          } else if (isShareOpen) {
+            setIsShareOpen(false);
+          } else if (isSpeedModalOpen) {
+            setIsSpeedModalOpen(false);
+          } else if (isSleepTimerModalOpen) {
+            setIsSleepTimerModalOpen(false);
+          } else if (isDnaOpen) {
+            setIsDnaOpen(false);
+          } else if (isQueueOpen) {
+            setIsQueueOpen(false);
           } else if (isEqOpen) {
             setIsEqOpen(false);
           } else if (isMusicFlowOpen) {
@@ -245,6 +296,24 @@ function MainApp({ onBackToLanding }) {
 
       {/* Audiophile Keyboard Shortcuts Modal */}
       <ShortcutsModal />
+
+      {/* Song DNA Modal (Genius Stories & Wikipedia Insights) */}
+      <SongDnaModal />
+
+      {/* Up Next Queue Drawer */}
+      <QueueDrawer />
+
+      {/* Sleep Timer Modal */}
+      <SleepTimerModal />
+
+      {/* Speed & Varispeed Pitch Modal */}
+      <SpeedPitchModal />
+
+      {/* Universal Share Modal (Odesli / Song.link) */}
+      <ShareModal />
+
+      {/* Dropify Engine Settings Modal */}
+      <SettingsModal onOpenEq={() => setIsEqOpen(true)} />
     </div>
   );
 }

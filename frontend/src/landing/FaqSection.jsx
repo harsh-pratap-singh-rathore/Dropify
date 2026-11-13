@@ -19,11 +19,11 @@ export default function FaqSection() {
     },
     {
       q: "How do I install the Android APK?",
-      a: "Download the dropify-v2.0.1.apk file directly onto your Android device. When you tap to open it, Android may ask permission to 'Install unknown apps' from your browser or file manager. Enable this one-time permission, confirm the install prompt, and Dropify will be installed on your home screen."
+      a: "Download the dropify-v2.0.3.apk file directly onto your Android device. When you tap to open it, Android may ask permission to 'Install unknown apps' from your browser or file manager. Enable this one-time permission, confirm the install prompt, and Dropify will be installed on your home screen."
     },
     {
       q: "How do I install the Windows desktop application?",
-      a: "Download Dropify-Setup-1.0.0.exe and run the installer. You can also choose Dropify-Portable-1.0.0.exe if you prefer a standalone executable that runs immediately without installation. If Windows SmartScreen displays an alert, simply click 'More info' and 'Run anyway'."
+      a: "Download Dropify Setup 2.0.2.exe and run the installer. You can also choose Dropify-Portable-2.0.2.exe if you prefer a standalone executable that runs immediately without installation. If Windows SmartScreen displays an alert, simply click 'More info' and 'Run anyway'."
     },
     {
       q: "Can I still listen to music directly in my web browser?",
@@ -31,7 +31,7 @@ export default function FaqSection() {
     },
     {
       q: "Does Dropify work without an internet connection?",
-      a: "Dropify requires an internet connection to stream audio, fetch real-time synchronized lyrics, and resolve soundscapes. Your playlists ('Notebooks') and liked songs are saved persistently on your device so they load instantly when connected."
+      a: "Yes! Dropify v2.0.2 includes Offline Downloads and full Offline Mode reverse-engineered from Echo Music. You can download your favorite tracks directly to local storage to listen anytime without internet access."
     },
     {
       q: "How do future updates work?",

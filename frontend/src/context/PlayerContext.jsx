@@ -1,6 +1,13 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import audioManager from '../audio/AudioManager';
 import { apiUrl } from '../config';
+import {
+  saveDownloadedSong,
+  getDownloadedSongs,
+  getDownloadedSongAudioUrl,
+  deleteDownloadedSong,
+  isSongDownloaded
+} from '../utils/offlineStorage';
 
 const PlayerContext = createContext();
 
@@ -49,12 +56,21 @@ export function PlayerProvider({ children }) {
 
   const [queue, setQueue] = useState([]);
   const [queueIndex, setQueueIndex] = useState(0);
+  const [isQueueOpen, setIsQueueOpen] = useState(false);
+  const [autoplayEnabled, setAutoplayEnabledState] = useState(() => {
+    try {
+      const s = localStorage.getItem('dropify_autoplay');
+      return s === null ? true : s === 'true';
+    } catch (_) {
+      return true;
+    }
+  });
 
   // Synced Lyrics State
   const [lyricsData, setLyricsData] = useState({ lines: [], synced: false, plain: '' });
   const [activeLyricIndex, setActiveLyricIndex] = useState(-1);
   const [isLoadingLyrics, setIsLoadingLyrics] = useState(false);
-  const [lyricsOffset, setLyricsOffset] = useState(-2.5); // Calibrated -2.5s offset to align Spotify/LRCLIB timestamps with YouTube music video playback
+  const [lyricsOffset, setLyricsOffset] = useState(-2.5);
 
   // DSP & Equalizer State
   const [isEqOpen, setIsEqOpen] = useState(false);
@@ -63,12 +79,168 @@ export function PlayerProvider({ children }) {
   const [stereoWidth, setStereoWidth] = useState(1.25);
   const [isWidenerEnabled, setIsWidenerEnabled] = useState(true);
   const [crossfadeDuration, setCrossfadeDuration] = useState(3.5);
-  const [audioQuality, setAudioQuality] = useState('HIGH');
+  const [audioQuality, setAudioQualityState] = useState(() => {
+    try {
+      return localStorage.getItem('dropify_quality') || 'HIGH';
+    } catch (_) {
+      return 'HIGH';
+    }
+  });
+
+  // Speed & Pitch State (Varispeed / Tempo)
+  const [playbackSpeed, setPlaybackSpeedState] = useState(() => {
+    try {
+      const s = localStorage.getItem('dropify_speed');
+      return s ? parseFloat(s) : 1.0;
+    } catch (_) {
+      return 1.0;
+    }
+  });
+  const [varispeed, setVarispeedState] = useState(() => {
+    try {
+      return localStorage.getItem('dropify_varispeed') === 'true';
+    } catch (_) {
+      return false;
+    }
+  });
+  const [isSpeedModalOpen, setIsSpeedModalOpen] = useState(false);
+
+  // Sleep Timer State
+  const [sleepTimer, setSleepTimer] = useState({
+    active: false,
+    remainingSeconds: 0,
+    targetTime: null,
+    pauseAtSongEnd: false,
+    initialMinutes: 0
+  });
+  const [isSleepTimerModalOpen, setIsSleepTimerModalOpen] = useState(false);
+
+  // Song DNA State (Genius & Wikipedia Backstory)
+  const [isDnaOpen, setIsDnaOpen] = useState(false);
+  const [dnaData, setDnaData] = useState(null);
+  const [isLoadingDna, setIsLoadingDna] = useState(false);
+
+  // Universal Share State (Song.link / Odesli)
+  const [isShareOpen, setIsShareOpen] = useState(false);
+  const [shareSong, setShareSong] = useState(null);
+
+  // Player Theme State (Nothing OS Liquid Glass, Apple Ambient Glow, Turntable, Minimal)
+  const [playerTheme, setPlayerThemeState] = useState(() => {
+    try {
+      return localStorage.getItem('dropify_player_theme') || 'liquid-glass';
+    } catch (_) {
+      return 'liquid-glass';
+    }
+  });
+
+  // 4-Mode Theme State (Dark, AMOLED Matte, Light Paper, System Default from Dropify Android)
+  const [themeMode, setThemeModeState] = useState(() => {
+    try {
+      return localStorage.getItem('dropify_theme_mode') || 'dark';
+    } catch (_) {
+      return 'dark';
+    }
+  });
+
+  const setThemeMode = (mode) => {
+    setThemeModeState(mode);
+    try {
+      localStorage.setItem('dropify_theme_mode', mode);
+    } catch (_) {}
+  };
+
+  useEffect(() => {
+    const applyTheme = () => {
+      let resolved = themeMode;
+      if (themeMode === 'system') {
+        resolved = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      }
+      document.documentElement.setAttribute('data-theme', resolved);
+    };
+    applyTheme();
+    if (themeMode === 'system' && window.matchMedia) {
+      const mql = window.matchMedia('(prefers-color-scheme: dark)');
+      mql.addEventListener('change', applyTheme);
+      return () => mql.removeEventListener('change', applyTheme);
+    }
+  }, [themeMode]);
+
+  // Dropify Android Specific Feature States
+  const [sameVibeRadioEnabled, setSameVibeRadioEnabledState] = useState(() => {
+    try {
+      const val = localStorage.getItem('dropify_same_vibe_radio');
+      return val !== null ? val === 'true' : true;
+    } catch (_) {
+      return true;
+    }
+  });
+  const setSameVibeRadioEnabled = (val) => {
+    setSameVibeRadioEnabledState(val);
+    try { localStorage.setItem('dropify_same_vibe_radio', String(val)); } catch (_) {}
+  };
+
+  const [ambientGlowEnabled, setAmbientGlowEnabledState] = useState(() => {
+    try {
+      const val = localStorage.getItem('dropify_ambient_glow');
+      return val !== null ? val === 'true' : true;
+    } catch (_) {
+      return true;
+    }
+  });
+  const setAmbientGlowEnabled = (val) => {
+    setAmbientGlowEnabledState(val);
+    try { localStorage.setItem('dropify_ambient_glow', String(val)); } catch (_) {}
+  };
+
+  const [bluetoothDelayMs, setBluetoothDelayMsState] = useState(() => {
+    try {
+      const val = localStorage.getItem('dropify_bluetooth_delay');
+      return val ? parseInt(val, 10) : 0;
+    } catch (_) {
+      return 0;
+    }
+  });
+  const setBluetoothDelayMs = (val) => {
+    setBluetoothDelayMsState(val);
+    try { localStorage.setItem('dropify_bluetooth_delay', String(val)); } catch (_) {}
+  };
+
+  const clearStreamCache = async () => {
+    try {
+      if ('caches' in window) {
+        const cacheKeys = await caches.keys();
+        await Promise.all(
+          cacheKeys.map((key) => {
+            if (key.includes('stream') || key.includes('audio-cache') || key.includes('dropify-runtime')) {
+              return caches.delete(key);
+            }
+            return Promise.resolve();
+          })
+        );
+      }
+      return true;
+    } catch (e) {
+      console.warn('Error clearing stream cache:', e);
+      return false;
+    }
+  };
+
+  // Offline Mode & Downloads State
+  const [downloadedSongs, setDownloadedSongs] = useState([]);
+  const [isDownloadingMap, setIsDownloadingMap] = useState({});
+  const [isOfflineMode, setIsOfflineModeState] = useState(() => {
+    try {
+      return localStorage.getItem('dropify_offline_mode') === 'true';
+    } catch (_) {
+      return false;
+    }
+  });
 
   // UI Modals
   const [isFullscreenPlayerOpen, setIsFullscreenPlayerOpen] = useState(false);
   const [isMusicFlowOpen, setIsMusicFlowOpen] = useState(false);
   const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   // Liked tracks cache
   const [likedSongIds, setLikedSongIds] = useState(new Set());
@@ -96,6 +268,7 @@ export function PlayerProvider({ children }) {
   const playPreviousRef = useRef();
   const seekToRef = useRef();
   const togglePlayPauseRef = useRef();
+  const sleepTimerRef = useRef(sleepTimer);
 
   isPlayingRef.current = isPlaying;
   currentSongRef.current = currentSong;
@@ -103,39 +276,66 @@ export function PlayerProvider({ children }) {
   currentTimeRef.current = currentTime;
   queueRef.current = queue;
   queueIndexRef.current = queueIndex;
+  sleepTimerRef.current = sleepTimer;
+
+  // Initialize offline downloads list
+  useEffect(() => {
+    getDownloadedSongs().then((list) => setDownloadedSongs(list)).catch(() => {});
+  }, []);
 
   // Fetch initial library and preferences
   useEffect(() => {
     fetch(apiUrl('/api/library'))
-      .then(res => res.json())
-      .then(data => {
-        if (data.likedSongs) {
-          setLikedSongIds(new Set(data.likedSongs.map(s => s.id)));
+      .then((res) => res.json())
+      .then((lib) => {
+        if (lib && Array.isArray(lib.likedSongs)) {
+          setLikedSongIds(new Set(lib.likedSongs.map((s) => s.id)));
         }
       })
-      .catch(() => {});
+      .catch((err) => console.warn('Could not load library cache:', err));
 
     fetch(apiUrl('/api/preferences'))
-      .then(res => res.json())
-      .then(pref => {
-        if (pref.eqBands) setEqGains(pref.eqBands.map(b => b.gain));
-        if (pref.stereoWidth) setStereoWidth(pref.stereoWidth);
-        if (pref.crossfadeDuration !== undefined) setCrossfadeDuration(pref.crossfadeDuration);
+      .then((res) => res.json())
+      .then((prefs) => {
+        if (prefs) {
+          if (Array.isArray(prefs.eqBands)) {
+            const numericBands = prefs.eqBands.map((band) => {
+              const val = typeof band === 'object' && band !== null ? band.gain : band;
+              const num = Number(val);
+              return Number.isFinite(num) ? num : 0;
+            });
+            setEqGains(numericBands);
+            numericBands.forEach((gain, i) => audioManager.setEqualizerBand(i, gain));
+          }
+          if (typeof prefs.stereoWidth === 'number' && Number.isFinite(prefs.stereoWidth)) {
+            setStereoWidth(prefs.stereoWidth);
+            audioManager.setStereoWidth(prefs.stereoWidth);
+          }
+          if (typeof prefs.crossfadeDuration === 'number' && Number.isFinite(prefs.crossfadeDuration)) {
+            setCrossfadeDuration(prefs.crossfadeDuration);
+            audioManager.setCrossfadeDuration(prefs.crossfadeDuration);
+          }
+          if (prefs.audioQuality) {
+            setAudioQualityState(prefs.audioQuality);
+          }
+        }
       })
-      .catch(() => {});
+      .catch((err) => console.warn('Could not load preferences cache:', err));
   }, []);
 
-  // Sync Audio Manager Listeners
+  // Sync Audio Listeners
   useEffect(() => {
-    audioManager.onTimeUpdateCallback = ({ currentTime, duration, progress }) => {
-      setCurrentTime(currentTime);
-      setDuration(duration);
-      setProgress(progress);
-      listenedDurationRef.current = currentTime * 1000;
+    audioManager.onTimeUpdateCallback = (time, dur) => {
+      setCurrentTime(time);
+      if (dur > 0) {
+        setDuration(dur);
+        setProgress((time / dur) * 100);
+      }
+      listenedDurationRef.current = time;
 
-      // Update active synced lyric line with calibrated timing offset
+      // Update active synced lyric line
       if (lyricsData.lines && lyricsData.lines.length > 0) {
-        const adjustedTime = Math.max(0, currentTime + lyricsOffset);
+        const adjustedTime = Math.max(0, time + lyricsOffset);
         let index = -1;
         for (let i = 0; i < lyricsData.lines.length; i++) {
           if (adjustedTime >= lyricsData.lines[i].time) {
@@ -153,208 +353,176 @@ export function PlayerProvider({ children }) {
     };
 
     audioManager.onNearingEndCallback = () => {
-      // Automix pre-arm next song recommendations when nearing queue end
+      if (!autoplayEnabled) return;
       const q = queueRef.current || [];
       const qIdx = queueIndexRef.current || 0;
       const cur = currentSongRef.current;
       if (qIdx + 1 >= q.length && cur && cur.id && !isPreArmingRef.current) {
         isPreArmingRef.current = true;
         fetch(apiUrl(`/api/song/${cur.id}`))
-          .then(res => res.json())
-          .then(details => {
+          .then((res) => res.json())
+          .then((details) => {
             if (details.related && details.related.length > 0) {
-              setQueue(prev => {
-                const existingIds = new Set(prev.map(s => s.id));
-                const newTracks = details.related.filter(r => !existingIds.has(r.id));
-                return newTracks.length > 0 ? [...prev, ...newTracks] : prev;
+              setQueue((prev) => {
+                const existingIds = new Set(prev.map((s) => s.id));
+                const newTracks = details.related.filter((r) => !existingIds.has(r.id));
+                return [...prev, ...newTracks];
               });
             }
           })
           .catch(() => {})
           .finally(() => {
-            setTimeout(() => { isPreArmingRef.current = false; }, 6000);
+            isPreArmingRef.current = false;
           });
       }
     };
-  }, [lyricsData, queue, queueIndex, lyricsOffset]);
+  }, [lyricsData, queue, queueIndex, lyricsOffset, autoplayEnabled]);
 
-  // High-precision 60fps real-time live lyric synchronization ticker with calibrated timing offset
+  // High-precision 60fps lyric synchronization ticker
   useEffect(() => {
-    if (!isPlaying || (!isFullscreenPlayerOpen && !isMusicFlowOpen)) return;
     let animId;
-    const syncTicker = () => {
-      if (audioManager.getIsPlaying() && lyricsData?.lines?.length > 0) {
-        const t = audioManager.getCurrentTime();
-        const adjustedTime = Math.max(0, t + lyricsOffset);
-        let index = -1;
-        for (let i = 0; i < lyricsData.lines.length; i++) {
-          if (adjustedTime >= lyricsData.lines[i].time) {
-            index = i;
-          } else {
-            break;
+    if ((isFullscreenPlayerOpen || isMusicFlowOpen) && lyricsData?.lines?.length > 0) {
+      const syncTicker = () => {
+        if (audioManager.getIsPlaying() && lyricsData?.lines?.length > 0) {
+          const t = audioManager.getCurrentTime();
+          const adjustedTime = Math.max(0, t + lyricsOffset);
+          let index = -1;
+          for (let i = 0; i < lyricsData.lines.length; i++) {
+            if (adjustedTime >= lyricsData.lines[i].time) {
+              index = i;
+            } else {
+              break;
+            }
           }
+          setActiveLyricIndex((prev) => (prev !== index ? index : prev));
         }
-        setActiveLyricIndex(index);
-      }
+        animId = requestAnimationFrame(syncTicker);
+      };
       animId = requestAnimationFrame(syncTicker);
-    };
-
-    animId = requestAnimationFrame(syncTicker);
+    }
     return () => cancelAnimationFrame(animId);
-  }, [isPlaying, isFullscreenPlayerOpen, isMusicFlowOpen, lyricsData, audioManager, lyricsOffset]);
+  }, [isPlaying, isFullscreenPlayerOpen, isMusicFlowOpen, lyricsData, lyricsOffset]);
 
   // Load lyrics when song changes
   useEffect(() => {
     if (!currentSong) return;
-
     const requestedSongId = currentSong.id;
     setIsLoadingLyrics(true);
     setLyricsData({ lines: [], synced: false, plain: '' });
     setActiveLyricIndex(-1);
 
     const { title: cleanTitle, artist: cleanArtist } = cleanSongMeta(currentSong.title, currentSong.artist);
-
     const queryParams = new URLSearchParams({
-      title: cleanTitle || currentSong.title,
-      artist: cleanArtist || currentSong.artist || '',
+      title: cleanTitle,
+      artist: cleanArtist,
       duration: currentSong.duration || ''
-    });
+    }).toString();
 
     fetch(apiUrl(`/api/lyrics/${currentSong.id}?${queryParams}`))
-      .then(res => res.json())
-      .then(data => {
+      .then((res) => res.json())
+      .then((data) => {
         if (currentSongRef.current?.id === requestedSongId) {
           setLyricsData(data);
           setIsLoadingLyrics(false);
         }
       })
-      .catch(() => {
+      .catch((err) => {
+        console.error('Lyrics fetch error:', err);
         if (currentSongRef.current?.id === requestedSongId) {
           setIsLoadingLyrics(false);
         }
       });
   }, [currentSong?.id]);
 
-  // HTML5 Media Session API Integration for Native Mobile Lockscreen Controls & Background Playback
+  // Sleep Timer Countdown Ticker
   useEffect(() => {
-    if (typeof window === 'undefined' || !('mediaSession' in navigator) || !currentSong) return;
+    if (!sleepTimer.active || sleepTimer.pauseAtSongEnd || !sleepTimer.targetTime) return;
 
-    const highThumb = currentSong.thumbnailHigh || currentSong.thumbnail || (currentSong.id ? `https://i.ytimg.com/vi/${currentSong.id}/hqdefault.jpg` : '');
-    const midThumb = currentSong.thumbnail || (currentSong.id ? `https://i.ytimg.com/vi/${currentSong.id}/mqdefault.jpg` : '');
+    const interval = setInterval(() => {
+      const diff = Math.max(0, Math.round((sleepTimer.targetTime - Date.now()) / 1000));
+      if (diff <= 0) {
+        clearInterval(interval);
+        // Fade out volume smoothly over 2.5s and pause
+        const currentVol = audioManager.currentVolume || 0.85;
+        const steps = 15;
+        let step = 0;
+        const fadeInterval = setInterval(() => {
+          step++;
+          audioManager.setVolume(Math.max(0, currentVol * (1 - step / steps)));
+          if (step >= steps) {
+            clearInterval(fadeInterval);
+            audioManager.pause();
+            setIsPlaying(false);
+            audioManager.setVolume(currentVol);
+            clearSleepTimer();
+          }
+        }, 150);
+      } else {
+        setSleepTimer((prev) => ({ ...prev, remainingSeconds: diff }));
+      }
+    }, 1000);
 
-    try {
-      navigator.mediaSession.metadata = new window.MediaMetadata({
-        title: currentSong.title,
-        artist: currentSong.artist || 'Dropify Artist',
-        album: 'Dropify Music',
-        artwork: [
-          { src: midThumb, sizes: '96x96', type: 'image/jpeg' },
-          { src: midThumb, sizes: '128x128', type: 'image/jpeg' },
-          { src: highThumb, sizes: '256x256', type: 'image/jpeg' },
-          { src: highThumb, sizes: '512x512', type: 'image/jpeg' }
-        ]
-      });
-    } catch (e) {
-      console.warn('MediaSession metadata notice:', e);
+    return () => clearInterval(interval);
+  }, [sleepTimer.active, sleepTimer.targetTime, sleepTimer.pauseAtSongEnd]);
+
+  // MediaSession API Integration
+  useEffect(() => {
+    if (typeof navigator === 'undefined' || !('mediaSession' in navigator)) return;
+    if (!currentSong) return;
+
+    const artworkList = [];
+    if (currentSong.thumbnail) {
+      artworkList.push({ src: currentSong.thumbnail, sizes: '300x300', type: 'image/jpeg' });
     }
-  }, [currentSong]);
-
-  // Register MediaSession action handlers ONCE with mutable refs to eliminate IPC registration flooding
-  useEffect(() => {
-    if (typeof window === 'undefined' || !('mediaSession' in navigator)) return;
-
-    try {
-      navigator.mediaSession.setActionHandler('play', async () => {
-        await audioManager.resume();
-        setIsPlaying(true);
-      });
-      navigator.mediaSession.setActionHandler('pause', () => {
-        audioManager.pause();
-        setIsPlaying(false);
-      });
-      navigator.mediaSession.setActionHandler('stop', () => {
-        audioManager.pause();
-        setIsPlaying(false);
-      });
-      navigator.mediaSession.setActionHandler('previoustrack', () => {
-        if (playPreviousRef.current) playPreviousRef.current();
-      });
-      navigator.mediaSession.setActionHandler('nexttrack', () => {
-        if (playNextRef.current) playNextRef.current(true);
-      });
-      navigator.mediaSession.setActionHandler('seekto', (details) => {
-        const d = durationRef.current;
-        if (details.seekTime !== undefined && d > 0 && seekToRef.current) {
-          seekToRef.current((details.seekTime / d) * 100);
-        }
-      });
-      navigator.mediaSession.setActionHandler('seekbackward', (details) => {
-        const offset = details.seekOffset || 10;
-        const d = durationRef.current;
-        const cur = currentTimeRef.current;
-        if (d > 0 && seekToRef.current) {
-          seekToRef.current(Math.max(0, ((cur - offset) / d) * 100));
-        }
-      });
-      navigator.mediaSession.setActionHandler('seekforward', (details) => {
-        const offset = details.seekOffset || 10;
-        const d = durationRef.current;
-        const cur = currentTimeRef.current;
-        if (d > 0 && seekToRef.current) {
-          seekToRef.current(Math.min(100, ((cur + offset) / d) * 100));
-        }
-      });
-    } catch (e) {
-      console.warn('MediaSession action handler notice:', e);
+    if (currentSong.thumbnailHigh) {
+      artworkList.push({ src: currentSong.thumbnailHigh, sizes: '600x600', type: 'image/jpeg' });
     }
-  }, []);
 
-  // Sync MediaSession playbackState with single dependency to prevent IPC flooding
-  useEffect(() => {
-    if (typeof window === 'undefined' || !('mediaSession' in navigator)) return;
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: currentSong.title,
+      artist: currentSong.artist || 'Dropify',
+      album: currentSong.album || 'Dropify Music',
+      artwork: artworkList
+    });
+
     try {
       navigator.mediaSession.playbackState = isPlaying ? 'playing' : 'paused';
     } catch (_) {}
-  }, [isPlaying]);
 
-  // Sync MediaSession position state for the lockscreen seekbar
-  useEffect(() => {
-    if (
-      typeof window === 'undefined' ||
-      !('mediaSession' in navigator) ||
-      !('setPositionState' in navigator.mediaSession) ||
-      duration <= 0
-    ) return;
-
-    try {
-      navigator.mediaSession.setPositionState({
-        duration: Math.max(0, duration),
-        playbackRate: 1,
-        position: Math.min(Math.max(0, currentTime), duration)
-      });
-    } catch (_) {}
-  }, [currentTime, duration]);
-
-  // Mobile WakeLock to keep audio playback thread active
-  useEffect(() => {
-    let wakeLock = null;
-    let isCancelled = false;
-    if (typeof window !== 'undefined' && 'wakeLock' in navigator && isPlaying) {
-      navigator.wakeLock.request('screen').then(wl => {
-        if (isCancelled) {
-          wl.release().catch(() => {});
-        } else {
-          wakeLock = wl;
-        }
-      }).catch(() => {});
-    }
-    return () => {
-      isCancelled = true;
-      if (wakeLock) {
-        wakeLock.release().catch(() => {});
+    navigator.mediaSession.setActionHandler('play', () => {
+      if (togglePlayPauseRef.current) togglePlayPauseRef.current();
+    });
+    navigator.mediaSession.setActionHandler('pause', () => {
+      if (togglePlayPauseRef.current) togglePlayPauseRef.current();
+    });
+    navigator.mediaSession.setActionHandler('nexttrack', () => {
+      if (playNextRef.current) playNextRef.current(true);
+    });
+    navigator.mediaSession.setActionHandler('previoustrack', () => {
+      if (playPreviousRef.current) playPreviousRef.current();
+    });
+    navigator.mediaSession.setActionHandler('seekto', (details) => {
+      if (details.seekTime !== undefined && durationRef.current > 0 && seekToRef.current) {
+        seekToRef.current((details.seekTime / durationRef.current) * 100);
       }
-    };
-  }, [isPlaying]);
+    });
+    navigator.mediaSession.setActionHandler('seekbackward', (details) => {
+      const offset = details.seekOffset || 10;
+      const d = durationRef.current;
+      const cur = currentTimeRef.current;
+      if (d > 0 && seekToRef.current) {
+        seekToRef.current(Math.max(0, ((cur - offset) / d) * 100));
+      }
+    });
+    navigator.mediaSession.setActionHandler('seekforward', (details) => {
+      const offset = details.seekOffset || 10;
+      const d = durationRef.current;
+      const cur = currentTimeRef.current;
+      if (d > 0 && seekToRef.current) {
+        seekToRef.current(Math.min(100, ((cur + offset) / d) * 100));
+      }
+    });
+  }, [currentSong?.id, isPlaying]);
 
   // Desktop Electron Native Controls & Tray/Discord Sync
   useEffect(() => {
@@ -368,7 +536,7 @@ export function PlayerProvider({ children }) {
         duration
       });
     }
-  }, [isPlaying, currentSong?.id]);
+  }, [isPlaying, currentSong?.id, currentTime, duration]);
 
   useEffect(() => {
     if (typeof window === 'undefined' || !window.electronAPI?.onMediaAction) return;
@@ -408,6 +576,7 @@ export function PlayerProvider({ children }) {
         title: currentSong.title,
         artist: currentSong.artist,
         listenedMs: listened,
+        durationMs: (duration || 0) * 1000,
         skipped
       })
     }).catch(() => {});
@@ -420,30 +589,47 @@ export function PlayerProvider({ children }) {
 
     if (newQueue && Array.isArray(newQueue)) {
       setQueue(newQueue);
-      const songIdx = newQueue.findIndex(s => s.id === song.id);
+      const songIdx = newQueue.findIndex((s) => s.id === song.id);
       setQueueIndex(songIdx >= 0 ? songIdx : (index !== null ? index : 0));
     } else if (index !== null) {
       setQueueIndex(index);
     }
 
-    setCurrentSong(song);
     audioManager.setCurrentSongMetadata(song);
     songStartTimeRef.current = Date.now();
     listenedDurationRef.current = 0;
     setCurrentTime(0);
     setProgress(0);
+    setCurrentSong(song);
 
-    // Track Recently Played
+    // Save to Recently Played
     setRecentlyPlayed((prev) => {
-      const filtered = (prev || []).filter((s) => s.id !== song.id);
-      const updated = [song, ...filtered].slice(0, 25);
+      const filtered = prev.filter((s) => s.id !== song.id);
+      const updated = [song, ...filtered].slice(0, 30);
       try {
         localStorage.setItem('dropify_recently_played', JSON.stringify(updated));
       } catch (_) {}
       return updated;
     });
 
-    const streamUrl = apiUrl(`/api/stream/${song.id}`);
+    // Check if song is downloaded for offline playback
+    const offlineData = await getDownloadedSongAudioUrl(song.id);
+    if (offlineData && offlineData.url) {
+      await audioManager.playTrack(offlineData.url, false, song.id);
+      if (offlineData.lyrics) {
+        setLyricsData(offlineData.lyrics);
+      }
+      setIsPlaying(true);
+      return;
+    }
+
+    if (isOfflineMode) {
+      alert(`"${song.title}" is not downloaded for offline playback. Turn off Offline Mode or download it first.`);
+      return;
+    }
+
+    const qualityParam = audioQuality ? `?quality=${audioQuality.toLowerCase()}` : '';
+    const streamUrl = apiUrl(`/api/stream/${song.id}${qualityParam}`);
     await audioManager.playTrack(streamUrl, false, song.id);
     setIsPlaying(true);
   };
@@ -461,10 +647,19 @@ export function PlayerProvider({ children }) {
 
   const handleSongEnded = () => {
     recordStats(false);
-    playNext(true); // with equal-power crossfade
+
+    // Sleep Timer "Pause when current song ends"
+    if (sleepTimerRef.current?.active && sleepTimerRef.current?.pauseAtSongEnd) {
+      audioManager.pause();
+      setIsPlaying(false);
+      clearSleepTimer();
+      return;
+    }
+
+    playNext(true);
   };
 
-  const playNext = (withCrossfade = false) => {
+  const playNext = async (withCrossfade = false) => {
     const q = queueRef.current || [];
     const qIdx = queueIndexRef.current || 0;
     if (qIdx + 1 < q.length) {
@@ -475,24 +670,34 @@ export function PlayerProvider({ children }) {
       audioManager.setCurrentSongMetadata(nextSong);
       setCurrentTime(0);
       setProgress(0);
-      const streamUrl = apiUrl(`/api/stream/${nextSong.id}`);
-      audioManager.playTrack(streamUrl, withCrossfade, nextSong.id);
+
+      // Check offline audio
+      const offlineData = await getDownloadedSongAudioUrl(nextSong.id);
+      if (offlineData && offlineData.url) {
+        audioManager.playTrack(offlineData.url, withCrossfade, nextSong.id);
+        if (offlineData.lyrics) setLyricsData(offlineData.lyrics);
+      } else {
+        const qualityParam = audioQuality ? `?quality=${audioQuality.toLowerCase()}` : '';
+        const streamUrl = apiUrl(`/api/stream/${nextSong.id}${qualityParam}`);
+        audioManager.playTrack(streamUrl, withCrossfade, nextSong.id);
+      }
       setIsPlaying(true);
-    } else if (currentSong) {
-      // Auto-Radio generation: fetch related recommendations
+    } else if (currentSong && autoplayEnabled && !isOfflineMode) {
+      // Auto-Radio: fetch related recommendations
       fetch(apiUrl(`/api/song/${currentSong.id}`))
-        .then(res => res.json())
-        .then(details => {
+        .then((res) => res.json())
+        .then((details) => {
           if (details && details.related && details.related.length > 0) {
             const nextTrack = details.related[0];
             const remainingTracks = details.related.slice(1);
-            setQueue(prev => [...prev, nextTrack, ...remainingTracks]);
-            setQueueIndex(prev => prev + 1);
+            setQueue((prev) => [...prev, nextTrack, ...remainingTracks]);
+            setQueueIndex((prev) => prev + 1);
             setCurrentSong(nextTrack);
             audioManager.setCurrentSongMetadata(nextTrack);
             setCurrentTime(0);
             setProgress(0);
-            const streamUrl = apiUrl(`/api/stream/${nextTrack.id}`);
+            const qualityParam = audioQuality ? `?quality=${audioQuality.toLowerCase()}` : '';
+            const streamUrl = apiUrl(`/api/stream/${nextTrack.id}${qualityParam}`);
             audioManager.playTrack(streamUrl, withCrossfade, nextTrack.id);
             setIsPlaying(true);
           }
@@ -501,7 +706,7 @@ export function PlayerProvider({ children }) {
     }
   };
 
-  const playPrevious = () => {
+  const playPrevious = async () => {
     if (currentTime > 4) {
       audioManager.seek(0);
       setCurrentTime(0);
@@ -514,7 +719,16 @@ export function PlayerProvider({ children }) {
       audioManager.setCurrentSongMetadata(prevSong);
       setCurrentTime(0);
       setProgress(0);
-      audioManager.playTrack(apiUrl(`/api/stream/${prevSong.id}`), false, prevSong.id);
+
+      const offlineData = await getDownloadedSongAudioUrl(prevSong.id);
+      if (offlineData && offlineData.url) {
+        audioManager.playTrack(offlineData.url, false, prevSong.id);
+        if (offlineData.lyrics) setLyricsData(offlineData.lyrics);
+      } else {
+        const qualityParam = audioQuality ? `?quality=${audioQuality.toLowerCase()}` : '';
+        const streamUrl = apiUrl(`/api/stream/${prevSong.id}${qualityParam}`);
+        audioManager.playTrack(streamUrl, false, prevSong.id);
+      }
       setIsPlaying(true);
     }
   };
@@ -528,25 +742,273 @@ export function PlayerProvider({ children }) {
     }
   };
 
-  playNextRef.current = playNext;
-  playPreviousRef.current = playPrevious;
-  seekToRef.current = seekTo;
-  togglePlayPauseRef.current = togglePlayPause;
-
-  const toggleLike = async (song = currentSong) => {
-    if (!song) return;
+  // Speed and Pitch control
+  const setPlaybackSpeed = (speed) => {
+    const s = Math.max(0.25, Math.min(2.5, Number(speed) || 1.0));
+    setPlaybackSpeedState(s);
     try {
-      const res = await fetch(apiUrl('/api/library/like'), {
+      localStorage.setItem('dropify_speed', String(s));
+    } catch (_) {}
+    audioManager.setPlaybackSpeed(s, !varispeed);
+  };
+
+  const setVarispeed = (val) => {
+    const v = Boolean(val);
+    setVarispeedState(v);
+    try {
+      localStorage.setItem('dropify_varispeed', String(v));
+    } catch (_) {}
+    audioManager.setPlaybackSpeed(playbackSpeed, !v);
+  };
+
+  // Sleep Timer control
+  const startSleepTimer = (minutes) => {
+    if (minutes === -1) {
+      setSleepTimer({
+        active: true,
+        remainingSeconds: 0,
+        targetTime: null,
+        pauseAtSongEnd: true,
+        initialMinutes: -1
+      });
+    } else {
+      const seconds = minutes * 60;
+      setSleepTimer({
+        active: true,
+        remainingSeconds: seconds,
+        targetTime: Date.now() + seconds * 1000,
+        pauseAtSongEnd: false,
+        initialMinutes: minutes
+      });
+    }
+  };
+
+  const clearSleepTimer = () => {
+    setSleepTimer({
+      active: false,
+      remainingSeconds: 0,
+      targetTime: null,
+      pauseAtSongEnd: false,
+      initialMinutes: 0
+    });
+  };
+
+  // Queue Management actions
+  const addToQueue = (song) => {
+    if (!song) return;
+    setQueue((prev) => {
+      if (prev.some((s) => s.id === song.id)) return prev;
+      return [...prev, song];
+    });
+  };
+
+  const playNextInQueue = (song) => {
+    if (!song) return;
+    setQueue((prev) => {
+      const nextQueue = prev.filter((s) => s.id !== song.id);
+      const insertAt = Math.min(nextQueue.length, queueIndex + 1);
+      nextQueue.splice(insertAt, 0, song);
+      return nextQueue;
+    });
+  };
+
+  const removeFromQueue = (indexToRemove) => {
+    setQueue((prev) => {
+      const nextQueue = prev.filter((_, idx) => idx !== indexToRemove);
+      if (indexToRemove < queueIndex) {
+        setQueueIndex((q) => Math.max(0, q - 1));
+      } else if (indexToRemove === queueIndex) {
+        if (nextQueue.length > 0) {
+          const nextIdx = Math.min(queueIndex, nextQueue.length - 1);
+          playSong(nextQueue[nextIdx], nextQueue, nextIdx);
+        } else {
+          audioManager.pause();
+          setIsPlaying(false);
+          setCurrentSong(null);
+        }
+      }
+      return nextQueue;
+    });
+  };
+
+  const reorderQueue = (fromIdx, toIdx) => {
+    setQueue((prev) => {
+      const nextQueue = [...prev];
+      const [moved] = nextQueue.splice(fromIdx, 1);
+      nextQueue.splice(toIdx, 0, moved);
+      if (queueIndex === fromIdx) {
+        setQueueIndex(toIdx);
+      } else if (fromIdx < queueIndex && toIdx >= queueIndex) {
+        setQueueIndex((q) => q - 1);
+      } else if (fromIdx > queueIndex && toIdx <= queueIndex) {
+        setQueueIndex((q) => q + 1);
+      }
+      return nextQueue;
+    });
+  };
+
+  const clearQueue = () => {
+    if (currentSong) {
+      setQueue([currentSong]);
+      setQueueIndex(0);
+    } else {
+      setQueue([]);
+      setQueueIndex(0);
+    }
+  };
+
+  const setAutoplayEnabled = (val) => {
+    setAutoplayEnabledState(val);
+    try {
+      localStorage.setItem('dropify_autoplay', String(val));
+    } catch (_) {}
+  };
+
+  const saveQueueAsPlaylist = async (name) => {
+    if (!name || queue.length === 0) return false;
+    try {
+      const res = await fetch(apiUrl('/api/library/playlist'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ song })
+        body: JSON.stringify({ name })
       });
       const data = await res.json();
-      setLikedSongIds(prev => {
-        const next = new Set(prev);
-        if (data.isLiked) next.add(song.id);
-        else next.delete(song.id);
-        return next;
+      const playlist = data.playlists?.find((p) => p.name === name);
+      if (playlist && playlist.id) {
+        for (const track of queue) {
+          await fetch(apiUrl(`/api/library/playlist/${playlist.id}/add`), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ song: track })
+          });
+        }
+      }
+      return true;
+    } catch (_) {
+      return false;
+    }
+  };
+
+  // Song DNA Action
+  const fetchDna = async (song = currentSong) => {
+    if (!song) return;
+    setIsLoadingDna(true);
+    setIsDnaOpen(true);
+    try {
+      const params = new URLSearchParams({
+        title: song.title || '',
+        artist: song.artist || '',
+        album: song.album || ''
+      });
+      const res = await fetch(apiUrl(`/api/dna/${song.id}?${params.toString()}`));
+      const data = await res.json();
+      if (data.success && data.dna) {
+        setDnaData(data.dna);
+      } else {
+        setDnaData({
+          title: song.title,
+          artist: song.artist,
+          album: song.album || 'Single',
+          meaning: `"${song.title}" is an acoustic recording by ${song.artist}.`,
+          bio: `${song.artist} is an active contemporary artist.`
+        });
+      }
+    } catch (_) {
+      setDnaData({
+        title: song.title,
+        artist: song.artist,
+        album: song.album || 'Single',
+        meaning: `"${song.title}" is an acoustic recording by ${song.artist}.`,
+        bio: `${song.artist} is an active contemporary artist.`
+      });
+    } finally {
+      setIsLoadingDna(false);
+    }
+  };
+
+  // Universal Share Action
+  const openShareModal = (song = currentSong) => {
+    if (!song) return;
+    setShareSong(song);
+    setIsShareOpen(true);
+  };
+
+  // Player Theme Action
+  const setPlayerTheme = (theme) => {
+    setPlayerThemeState(theme);
+    try {
+      localStorage.setItem('dropify_player_theme', theme);
+    } catch (_) {}
+  };
+
+  // Audio Quality Action
+  const setAudioQuality = (quality) => {
+    setAudioQualityState(quality);
+    try {
+      localStorage.setItem('dropify_quality', quality);
+    } catch (_) {}
+    fetch(apiUrl('/api/preferences'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ audioQuality: quality })
+    }).catch(() => {});
+  };
+
+  // Offline Download Actions
+  const downloadSong = async (song = currentSong) => {
+    if (!song || !song.id) return;
+    setIsDownloadingMap((prev) => ({ ...prev, [song.id]: true }));
+    try {
+      const audioRes = await fetch(apiUrl(`/api/stream/${song.id}`));
+      const audioBlob = await audioRes.blob();
+
+      let lyrics = null;
+      try {
+        const lyricsRes = await fetch(
+          apiUrl(`/api/lyrics/${song.id}?title=${encodeURIComponent(song.title)}&artist=${encodeURIComponent(song.artist)}`)
+        );
+        lyrics = await lyricsRes.json();
+      } catch (_) {}
+
+      await saveDownloadedSong(song, audioBlob, lyrics);
+      const updatedList = await getDownloadedSongs();
+      setDownloadedSongs(updatedList);
+    } catch (err) {
+      console.error('Download failed:', err);
+    } finally {
+      setIsDownloadingMap((prev) => ({ ...prev, [song.id]: false }));
+    }
+  };
+
+  const removeDownloadedSong = async (songId) => {
+    await deleteDownloadedSong(songId);
+    const updatedList = await getDownloadedSongs();
+    setDownloadedSongs(updatedList);
+  };
+
+  const setIsOfflineMode = (val) => {
+    setIsOfflineModeState(val);
+    try {
+      localStorage.setItem('dropify_offline_mode', String(val));
+    } catch (_) {}
+  };
+
+  // Likes and Library sync
+  const toggleLike = async (song) => {
+    const isLiked = likedSongIds.has(song.id);
+    const newLiked = new Set(likedSongIds);
+    if (isLiked) {
+      newLiked.delete(song.id);
+    } else {
+      newLiked.add(song.id);
+    }
+    setLikedSongIds(newLiked);
+
+    try {
+      await fetch(apiUrl('/api/library/like'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ song, isLiked: !isLiked })
       });
     } catch (err) {}
   };
@@ -568,6 +1030,12 @@ export function PlayerProvider({ children }) {
     audioManager.setStereoWidth(val);
   };
 
+  // Wire refs
+  playNextRef.current = playNext;
+  playPreviousRef.current = playPrevious;
+  seekToRef.current = seekTo;
+  togglePlayPauseRef.current = togglePlayPause;
+
   return (
     <PlayerContext.Provider
       value={{
@@ -579,6 +1047,16 @@ export function PlayerProvider({ children }) {
         volume,
         queue,
         queueIndex,
+        isQueueOpen,
+        setIsQueueOpen,
+        addToQueue,
+        playNextInQueue,
+        removeFromQueue,
+        reorderQueue,
+        clearQueue,
+        saveQueueAsPlaylist,
+        autoplayEnabled,
+        setAutoplayEnabled,
         lyricsData,
         setLyricsData,
         activeLyricIndex,
@@ -601,12 +1079,51 @@ export function PlayerProvider({ children }) {
         setCrossfadeDuration,
         audioQuality,
         setAudioQuality,
+        playbackSpeed,
+        setPlaybackSpeed,
+        varispeed,
+        setVarispeed,
+        isSpeedModalOpen,
+        setIsSpeedModalOpen,
+        sleepTimer,
+        startSleepTimer,
+        clearSleepTimer,
+        isSleepTimerModalOpen,
+        setIsSleepTimerModalOpen,
+        isDnaOpen,
+        setIsDnaOpen,
+        dnaData,
+        isLoadingDna,
+        fetchDna,
+        isShareOpen,
+        setIsShareOpen,
+        shareSong,
+        openShareModal,
+        playerTheme,
+        setPlayerTheme,
+        themeMode,
+        setThemeMode,
+        sameVibeRadioEnabled,
+        setSameVibeRadioEnabled,
+        ambientGlowEnabled,
+        setAmbientGlowEnabled,
+        bluetoothDelayMs,
+        setBluetoothDelayMs,
+        clearStreamCache,
+        downloadedSongs,
+        isDownloadingMap,
+        downloadSong,
+        removeDownloadedSong,
+        isOfflineMode,
+        setIsOfflineMode,
         isFullscreenPlayerOpen,
         setIsFullscreenPlayerOpen,
         isMusicFlowOpen,
         setIsMusicFlowOpen,
         isShortcutsOpen,
         setIsShortcutsOpen,
+        isSettingsOpen,
+        setIsSettingsOpen,
         likedSongIds,
         recentlyPlayed,
         setRecentlyPlayed,

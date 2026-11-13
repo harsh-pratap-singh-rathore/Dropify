@@ -87,7 +87,7 @@ export default function PlatformShowcase() {
 
                 <a href="#downloads" className="neo-btn neo-btn-primary">
                   <Download size={18} />
-                  <span>Download Android APK (v2.0.1)</span>
+                  <span>Download Android APK (v2.0.3)</span>
                 </a>
               </div>
 
@@ -143,7 +143,7 @@ export default function PlatformShowcase() {
 
                 <a href="#downloads" className="neo-btn neo-btn-primary">
                   <Download size={18} />
-                  <span>Download for Windows PC (v1.0.0)</span>
+                  <span>Download for Windows PC (v2.0.2)</span>
                 </a>
               </div>
 

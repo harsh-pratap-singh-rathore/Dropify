@@ -107,34 +107,39 @@ function updateContextMenu(mainWindow) {
 }
 
 function setupTray(mainWindow) {
-  const icon = getTrayIcon();
-  tray = new Tray(icon);
-  tray.setToolTip('Dropify - Audiophile Music Player');
+  try {
+    const icon = getTrayIcon();
+    tray = new Tray(icon);
+    tray.setToolTip('Dropify - Audiophile Music Player');
 
-  updateContextMenu(mainWindow);
+    updateContextMenu(mainWindow);
 
-  // Single click: toggle show/restore window
-  tray.on('click', () => {
-    if (!mainWindow || mainWindow.isDestroyed()) return;
-    if (mainWindow.isVisible()) {
-      mainWindow.hide();
-    } else {
+    // Single click: toggle show/restore window
+    tray.on('click', () => {
+      if (!mainWindow || mainWindow.isDestroyed()) return;
+      if (mainWindow.isVisible()) {
+        mainWindow.hide();
+      } else {
+        if (mainWindow.isMinimized()) mainWindow.restore();
+        mainWindow.show();
+        mainWindow.focus();
+      }
+    });
+
+    tray.on('double-click', () => {
+      if (!mainWindow || mainWindow.isDestroyed()) return;
       if (mainWindow.isMinimized()) mainWindow.restore();
       mainWindow.show();
       mainWindow.focus();
-    }
-  });
+    });
+  } catch (err) {
+    console.warn('[Dropify Tray] Tray creation notice:', err.message);
+    tray = null;
+  }
 
-  tray.on('double-click', () => {
-    if (!mainWindow || mainWindow.isDestroyed()) return;
-    if (mainWindow.isMinimized()) mainWindow.restore();
-    mainWindow.show();
-    mainWindow.focus();
-  });
-
-  // Listen to window close event: intercept with event.preventDefault() to hide to tray unless isQuitting === true
+  // Listen to window close event: intercept with event.preventDefault() to hide to tray only if tray is active
   mainWindow.on('close', (event) => {
-    if (!isQuitting) {
+    if (!isQuitting && tray) {
       event.preventDefault();
       mainWindow.hide();
       return false;

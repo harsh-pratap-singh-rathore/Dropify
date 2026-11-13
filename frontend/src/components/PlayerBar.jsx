@@ -10,7 +10,14 @@ import {
   Sliders,
   AlignLeft,
   Heart,
-  Shuffle
+  Dna,
+  Gauge,
+  Moon,
+  ListMusic,
+  Share2,
+  Download,
+  Settings,
+  Check
 } from 'lucide-react';
 import { usePlayer } from '../context/PlayerContext';
 
@@ -37,12 +44,27 @@ export default function PlayerBar() {
     setIsFullscreenPlayerOpen,
     setIsEqOpen,
     toggleLike,
-    likedSongIds
+    likedSongIds,
+    queue,
+    setIsQueueOpen,
+    playbackSpeed,
+    setIsSpeedModalOpen,
+    sleepTimer,
+    setIsSleepTimerModalOpen,
+    fetchDna,
+    openShareModal,
+    audioQuality,
+    setIsSettingsOpen,
+    downloadSong,
+    downloadedSongs,
+    isDownloadingMap
   } = usePlayer();
 
   if (!currentSong) return null;
 
   const isLiked = likedSongIds.has(currentSong.id);
+  const isDownloaded = downloadedSongs.some((s) => s.id === currentSong.id);
+  const isDownloading = isDownloadingMap[currentSong.id];
 
   const handleSeekChange = (e) => {
     seekTo(parseFloat(e.target.value));
@@ -94,7 +116,7 @@ export default function PlayerBar() {
       {/* Desktop Player Dock (Active on Tablets and PCs) */}
       <div className="player-bar liquid-island desktop-player-bar">
         {/* Track Thumbnail, Metadata & Mini Animated Equalizer */}
-        <div className="player-left" onClick={() => setIsFullscreenPlayerOpen(true)} title="Click to open Songwriter Journal">
+        <div className="player-left" onClick={() => setIsFullscreenPlayerOpen(true)} title="Click to open Fullscreen Player (F)">
           <div className="player-thumb-wrapper">
             <img
               src={currentSong.thumbnail || `https://i.ytimg.com/vi/${currentSong.id}/hqdefault.jpg`}
@@ -121,7 +143,17 @@ export default function PlayerBar() {
               <span className="player-artist sketch-font-hand" title={currentSong.artist}>
                 {currentSong.artist}
               </span>
-              <span className="gain-badge" style={{ fontSize: '0.7rem' }}>320k Opus</span>
+              <button
+                className="gain-badge"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsSettingsOpen(true);
+                }}
+                style={{ cursor: 'pointer', fontSize: '0.68rem', border: 'none', background: 'rgba(255, 255, 255, 0.08)' }}
+                title="Audio Quality - Click to Change"
+              >
+                {audioQuality || '320k'}
+              </button>
             </div>
           </div>
 
@@ -173,16 +205,98 @@ export default function PlayerBar() {
           </div>
         </div>
 
-        {/* Right Controls: Lyrics, DSP EQ, Volume, Expand */}
-        <div className="player-right">
+        {/* Right Controls: DNA, Speed, Timer, Queue, Lyrics, EQ, Volume, Settings, Expand */}
+        <div className="player-right" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          {/* Song DNA */}
+          <button
+            className="btn-icon-subtle stretchy-btn"
+            onClick={() => fetchDna(currentSong)}
+            title="Song DNA & Meaning (Genius + Wikipedia)"
+          >
+            <Dna size={18} color="#ef4444" />
+          </button>
+
+          {/* Speed & Pitch */}
+          <button
+            className="btn-icon-subtle stretchy-btn"
+            onClick={() => setIsSpeedModalOpen(true)}
+            title={`Speed & Varispeed (${playbackSpeed}x)`}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '2px' }}
+          >
+            <Gauge size={16} />
+            <span className="sketch-font-mono" style={{ fontSize: '0.68rem', fontWeight: 600 }}>
+              {playbackSpeed}x
+            </span>
+          </button>
+
+          {/* Sleep Timer */}
+          <button
+            className="btn-icon-subtle stretchy-btn"
+            onClick={() => setIsSleepTimerModalOpen(true)}
+            title={sleepTimer.active ? `Timer Active: ${Math.ceil(sleepTimer.remainingSeconds / 60)}m` : 'Sleep Timer'}
+            style={{ color: sleepTimer.active ? '#8b5cf6' : 'inherit' }}
+          >
+            <Moon size={17} />
+          </button>
+
+          {/* Queue Drawer */}
+          <button
+            className="btn-icon-subtle stretchy-btn"
+            onClick={() => setIsQueueOpen(true)}
+            title={`Playback Queue (${queue.length})`}
+            style={{ position: 'relative' }}
+          >
+            <ListMusic size={18} />
+            {queue.length > 0 && (
+              <span
+                style={{
+                  position: 'absolute',
+                  top: '-4px',
+                  right: '-4px',
+                  background: '#ef4444',
+                  color: '#fff',
+                  borderRadius: '10px',
+                  fontSize: '0.6rem',
+                  padding: '1px 4px',
+                  fontWeight: 'bold',
+                  fontFamily: 'var(--font-mono)'
+                }}
+              >
+                {queue.length}
+              </span>
+            )}
+          </button>
+
+          {/* Download for Offline */}
+          <button
+            className="btn-icon-subtle stretchy-btn"
+            onClick={() => downloadSong(currentSong)}
+            title={isDownloaded ? 'Downloaded (Offline Ready)' : isDownloading ? 'Downloading...' : 'Download Track'}
+            disabled={isDownloading}
+            style={{ color: isDownloaded ? '#10b981' : isDownloading ? '#f59e0b' : 'inherit' }}
+          >
+            {isDownloaded ? <Check size={17} /> : <Download size={17} className={isDownloading ? 'animate-bounce' : ''} />}
+          </button>
+
+          {/* Universal Share */}
+          <button
+            className="btn-icon-subtle stretchy-btn"
+            onClick={() => openShareModal(currentSong)}
+            title="Universal Music Share (Song.link)"
+          >
+            <Share2 size={17} />
+          </button>
+
+          {/* Lyrics / Fullscreen */}
           <button
             className="btn-icon-subtle stretchy-btn"
             onClick={() => setIsFullscreenPlayerOpen(true)}
-            title="Synchronized Lyrics & Fullscreen (F)"
+            title="Synchronized Lyrics & Visualizer (F)"
           >
             <AlignLeft size={18} />
           </button>
 
+          {/* 10-Band EQ */}
           <button
             className="btn-icon-subtle stretchy-btn"
             onClick={() => setIsEqOpen(true)}
@@ -191,6 +305,7 @@ export default function PlayerBar() {
             <Sliders size={18} />
           </button>
 
+          {/* Volume Slider */}
           <div className="volume-control">
             <button
               className="btn-icon-subtle stretchy-btn"
@@ -214,6 +329,16 @@ export default function PlayerBar() {
             </div>
           </div>
 
+          {/* Settings */}
+          <button
+            className="btn-icon-subtle stretchy-btn"
+            onClick={() => setIsSettingsOpen(true)}
+            title="Settings & Audio Engine (v2.0.2)"
+          >
+            <Settings size={18} />
+          </button>
+
+          {/* Expand Fullscreen */}
           <button
             className="btn-icon-subtle stretchy-btn expand-btn"
             onClick={() => setIsFullscreenPlayerOpen(true)}

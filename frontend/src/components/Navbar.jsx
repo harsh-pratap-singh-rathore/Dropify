@@ -1,5 +1,24 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Disc, Search, Compass, Radio, Heart, Sliders, Mic, Sparkles, X, ArrowRight, Command, Download } from 'lucide-react';
+import {
+  Disc,
+  Search,
+  Compass,
+  Radio,
+  Heart,
+  Sliders,
+  Mic,
+  Sparkles,
+  X,
+  ArrowRight,
+  Command,
+  Download,
+  Settings,
+  ListMusic,
+  WifiOff,
+  Minus,
+  Square,
+  Copy
+} from 'lucide-react';
 import { usePlayer } from '../context/PlayerContext';
 import { apiUrl } from '../config';
 
@@ -11,7 +30,17 @@ export default function Navbar({ activeTab, setActiveTab, onSearch, onBackToLand
   const debounceTimerRef = useRef(null);
   const searchContainerRef = useRef(null);
   const recognitionRef = useRef(null);
-  const { setIsEqOpen, setIsMusicFlowOpen, playSong, setIsFullscreenPlayerOpen, setIsShortcutsOpen } = usePlayer();
+  const {
+    setIsEqOpen,
+    setIsMusicFlowOpen,
+    playSong,
+    setIsFullscreenPlayerOpen,
+    setIsShortcutsOpen,
+    setIsSettingsOpen,
+    setIsQueueOpen,
+    queue,
+    isOfflineMode
+  } = usePlayer();
 
   // Cleanup speech recognition on unmount
   useEffect(() => {
@@ -134,11 +163,23 @@ export default function Navbar({ activeTab, setActiveTab, onSearch, onBackToLand
   };
 
   const isElectron = typeof window !== 'undefined' && Boolean(window.electronAPI);
+  const [isMaximized, setIsMaximized] = useState(false);
+
+  useEffect(() => {
+    if (!isElectron || !window.electronAPI) return;
+    window.electronAPI.isMaximized?.().then(setIsMaximized).catch(() => {});
+    const unsubscribe = window.electronAPI.onWindowStateChange?.((state) => {
+      setIsMaximized(state.isMaximized);
+    });
+    return () => {
+      if (typeof unsubscribe === 'function') unsubscribe();
+    };
+  }, [isElectron]);
 
   return (
     <nav
       className={`navbar-container glass-panel ${isElectron ? 'electron-navbar-drag' : ''}`}
-      style={isElectron ? { WebkitAppRegion: 'drag', paddingRight: '140px' } : undefined}
+      style={isElectron ? { WebkitAppRegion: 'drag', paddingRight: '150px' } : undefined}
     >
       {/* Brand */}
       <div
@@ -146,11 +187,51 @@ export default function Navbar({ activeTab, setActiveTab, onSearch, onBackToLand
         onClick={() => setActiveTab('home')}
         style={{ WebkitAppRegion: 'no-drag' }}
       >
-        <div className="brand-icon">
-          <Disc size={22} className="spin-slow" />
+        <div className="brand-icon" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <img
+            src="/assets/dropify_logo.png"
+            alt="Dropify"
+            style={{ width: '28px', height: '28px', borderRadius: '7px', objectFit: 'cover', boxShadow: '0 2px 6px rgba(0,0,0,0.3)' }}
+          />
         </div>
         <span className="brand-name">DROPIFY</span>
         <span className="brand-tag">DSP</span>
+        <span
+          className="version-pill"
+          style={{
+            fontSize: '0.68rem',
+            padding: '2px 7px',
+            borderRadius: '9999px',
+            background: 'rgba(255, 255, 255, 0.08)',
+            border: '1px solid rgba(255, 255, 255, 0.15)',
+            color: 'var(--graphite-muted)',
+            fontFamily: 'var(--font-mono)',
+            fontWeight: 600,
+            letterSpacing: '0.04em'
+          }}
+        >
+          v2.0.2
+        </span>
+        {isOfflineMode && (
+          <span
+            className="gain-badge"
+            style={{
+              background: '#ef4444',
+              color: '#ffffff',
+              fontSize: '0.72rem',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '4px',
+              padding: '2px 8px',
+              borderRadius: '9999px',
+              fontWeight: 700
+            }}
+            title="Offline Playback Mode Enabled"
+          >
+            <WifiOff size={11} />
+            <span>Offline</span>
+          </span>
+        )}
         {onBackToLanding && !isElectron && (
           <button
             type="button"
@@ -313,11 +394,74 @@ export default function Navbar({ activeTab, setActiveTab, onSearch, onBackToLand
 
         <button
           className="btn-icon"
+          onClick={() => setIsQueueOpen(true)}
+          title="Up Next Queue"
+          style={{ position: 'relative' }}
+        >
+          <ListMusic size={18} />
+          {queue?.length > 0 && (
+            <span className="queue-badge-counter">{queue.length}</span>
+          )}
+        </button>
+
+        <button
+          className="btn-icon"
           onClick={() => setIsEqOpen(true)}
           title="Audiophile DSP & 10-Band EQ"
         >
           <Sliders size={18} />
         </button>
+
+        <button
+          className="btn-icon"
+          onClick={() => setIsSettingsOpen(true)}
+          title="Engine Settings (Quality, DSP, Offline, Aesthetics)"
+        >
+          <Settings size={18} />
+        </button>
+
+        {isElectron && (
+          <div
+            className="window-controls-group"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              marginLeft: '8px',
+              paddingLeft: '10px',
+              borderLeft: '2px dashed var(--paper-border-dashed)',
+              WebkitAppRegion: 'no-drag'
+            }}
+          >
+            <button
+              type="button"
+              className="btn-icon window-ctrl-btn"
+              onClick={() => window.electronAPI?.minimize()}
+              title="Minimize"
+              style={{ width: '34px', height: '34px' }}
+            >
+              <Minus size={14} />
+            </button>
+            <button
+              type="button"
+              className="btn-icon window-ctrl-btn"
+              onClick={() => window.electronAPI?.maximize()}
+              title={isMaximized ? 'Restore Down' : 'Maximize'}
+              style={{ width: '34px', height: '34px' }}
+            >
+              {isMaximized ? <Copy size={13} /> : <Square size={13} />}
+            </button>
+            <button
+              type="button"
+              className="btn-icon window-ctrl-btn close-btn"
+              onClick={() => window.electronAPI?.close()}
+              title="Close"
+              style={{ width: '34px', height: '34px' }}
+            >
+              <X size={14} />
+            </button>
+          </div>
+        )}
       </div>
     </nav>
   );
