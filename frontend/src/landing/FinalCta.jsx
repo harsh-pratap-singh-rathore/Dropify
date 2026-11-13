@@ -14,13 +14,13 @@ export default function FinalCta({ onLaunchWebPlayer }) {
           </h2>
           
           <p className="final-cta-subtitle">
-            “Your music. Your rules.” Join thousands of listeners enjoying ad-free streaming, rotating vinyl visuals, and synchronized lyrics on Android and Windows PC.
+            “Your music. Your rules.” Join thousands of listeners enjoying Remapped Bento stations, rotating vinyl showcases, and dedicated artist discographies on Android and Windows PC.
           </p>
 
           <div className="final-cta-buttons">
             <a href="#downloads" className="neo-btn neo-btn-primary">
               <Download size={18} />
-              <span>Get Dropify Free</span>
+              <span>Get Dropify v2.0.3.1 Free</span>
             </a>
 
             {onLaunchWebPlayer && (

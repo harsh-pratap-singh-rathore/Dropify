@@ -1,23 +1,71 @@
 import React from 'react';
-import { Sliders, Bell, Disc, Bookmark, Monitor, Radio } from 'lucide-react';
+import { Sliders, Bell, Disc, Bookmark, Monitor, Radio, LayoutGrid, User, Sparkles, Video, Palette, Database } from 'lucide-react';
 
 export default function FeatureGrid() {
   const features = [
     {
-      title: "2D Tactile Neobrutalism",
+      title: "Remapped 2x3 Bento Station Grid",
+      badge: "Android & Windows",
+      badgeClass: "badge-both",
+      icon: <LayoutGrid size={24} />,
+      desc: "Fast-resume home hub. Jump into Liked Songs, Circadian Daily Mix, Instant 10-Track Shuffle, Sound Notebooks, and latest listening sessions in a single tap.",
+      specs: ["2x3 Bento Grid", "Instant Shuffle", "Liked Vault"]
+    },
+    {
+      title: "Radar Spotlight Vinyl Billboard",
       badge: "Android & Windows",
       badgeClass: "badge-both",
       icon: <Disc size={24} />,
-      desc: "Distinctive paper-and-ink visual identity. Bold black outlines, warm ivory canvas, physical drop-shadows, and zero generic AI gradients or glassy slop.",
-      specs: ["Warm Canvas", "Tactile Press", "Clean Contrast"]
+      desc: "Daily featured track presented on a physical 2D record card with concentric vinyl groove rings, real-time rotating stylus, interactive genre badges, and playlist actions.",
+      specs: ["33⅓ RPM Physics", "Grooved Rings", "Genre Pills"]
     },
     {
-      title: "System Notification Like/Unlike",
-      badge: "Android Specific",
-      badgeClass: "badge-android",
-      icon: <Bell size={24} />,
-      desc: "Control your music and favorite tracks without unlocking your phone. Integrated Media3 notification with direct Like toggle across Samsung, Pixel, Xiaomi & OnePlus.",
-      specs: ["Media3 / ExoPlayer", "Lockscreen Art", "One-Tap Like"]
+      title: "Dedicated Artist Discographies",
+      badge: "Android & Windows",
+      badgeClass: "badge-both",
+      icon: <User size={24} />,
+      desc: "Search any artist (AUR, Arijit Singh, Coldplay, Diljit Dosanjh) to open an authentic 2D profile with verified badge, subscriber count, and pure artist catalog.",
+      specs: ["Pure Isolation", "Play All & Shuffle", "Artist Radio"]
+    },
+    {
+      title: "Smart Song-to-Artist Recommendation",
+      badge: "Android & Windows",
+      badgeClass: "badge-both",
+      icon: <Sparkles size={24} />,
+      desc: "Search for any song ('tu hai kahan') and Dropify instantly suggests the primary artist ('AUR') as an interactive pill above search results. Tap to jump straight to their hub.",
+      specs: ["Smart Pills", "Disambiguation", "One-Tap Catalog"]
+    },
+    {
+      title: "Same-Vibe Radio & Anti-Reupload Filter",
+      badge: "Android & Windows",
+      badgeClass: "badge-both",
+      icon: <Radio size={24} />,
+      desc: "Continuous radio algorithm inspired by Echo Music that seeds similar tracks and artists while strictly filtering out duplicate re-uploads of the exact same song.",
+      specs: ["Vibe Matching", "Anti-Reupload", "Infinite Stream"]
+    },
+    {
+      title: "1:1 In-Card Video & Ambient Aura",
+      badge: "Android & Windows",
+      badgeClass: "badge-both",
+      icon: <Video size={24} />,
+      desc: "Toggle seamlessly between rotating vinyl turntable artwork and 1:1 square music video, with vibrant atmospheric dynamic ambient lighting breathing behind.",
+      specs: ["1:1 Aspect Ratio", "Ambient Lighting", "Zero Lag Switch"]
+    },
+    {
+      title: "4-Mode Tactile Theme Engine",
+      badge: "Android & Windows",
+      badgeClass: "badge-both",
+      icon: <Palette size={24} />,
+      desc: "Switch between Dark, AMOLED Matte (#000000), Light Paper, and System Theme seamlessly with persistent preference storage and tactile 2D contrast.",
+      specs: ["AMOLED Matte", "Light Paper", "System Sync"]
+    },
+    {
+      title: "Stream Cache Manager & Offline Storage",
+      badge: "Android & Windows",
+      badgeClass: "badge-both",
+      icon: <Database size={24} />,
+      desc: "Inspect real-time cached streaming size in MB and clear temporary audio stream files with a single tap. User-downloaded offline tracks remain 100% safe.",
+      specs: ["Real-time Size", "One-Tap Evict", "Offline Protected"]
     },
     {
       title: "10-Band Graphic DSP Equalizer",
@@ -28,28 +76,12 @@ export default function FeatureGrid() {
       specs: ["10 Frequencies", "AutoEq Presets", "Real-Time Filter"]
     },
     {
-      title: "Custom Music Notebooks",
-      badge: "Android & Windows",
-      badgeClass: "badge-both",
-      icon: <Bookmark size={24} />,
-      desc: "Curate your personal listening journals. Organize tracks into custom 'Notebooks', maintain a dedicated Liked Songs vault, and enjoy instant Shuffle All.",
-      specs: ["Notebook Manager", "Liked Songs Vault", "Persistent Offline Store"]
-    },
-    {
-      title: "Taskbar Thumbar & Tray Mini-Player",
-      badge: "Windows Specific",
-      badgeClass: "badge-windows",
-      icon: <Monitor size={24} />,
-      desc: "Seamless Windows integration. Hover over your taskbar icon to skip or pause tracks via native Thumbar buttons, minimize to system tray, and use global media keys.",
-      specs: ["Taskbar Controls", "System Tray", "Global Media Keys"]
-    },
-    {
-      title: "Discord Rich Presence",
-      badge: "Windows Specific",
-      badgeClass: "badge-windows",
-      icon: <Radio size={24} />,
-      desc: "Showcase your taste on Discord. Dropify automatically broadcasts current track, artist, album art, and live listening elapsed time to your Discord status.",
-      specs: ["Rich Presence RPC", "Live Elapsed Time", "Album Artwork"]
+      title: "System Notification Like/Unlike",
+      badge: "Android Specific",
+      badgeClass: "badge-android",
+      icon: <Bell size={24} />,
+      desc: "Control your music and favorite tracks without unlocking your phone. Integrated Media3 notification with direct Like toggle across Samsung, Pixel, Xiaomi & OnePlus.",
+      specs: ["Media3 / ExoPlayer", "Lockscreen Art", "One-Tap Like"]
     }
   ];
 

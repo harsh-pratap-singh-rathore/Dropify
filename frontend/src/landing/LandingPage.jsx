@@ -5,6 +5,7 @@ import useDownloads from './useDownloads';
 
 import Navbar from './Navbar';
 import HeroSection from './HeroSection';
+import RemappedHomeShowcase from './RemappedHomeShowcase';
 import BrandPromise from './BrandPromise';
 import ProductExperience from './ProductExperience';
 import FeatureGrid from './FeatureGrid';
@@ -49,6 +50,9 @@ export default function LandingPage({ onLaunchWebPlayer }) {
 
       {/* Section 2: Hero Section */}
       <HeroSection onLaunchWebPlayer={onLaunchWebPlayer} downloadTracker={downloadTracker} />
+
+      {/* Section 2.5: Remapped Home Interactive Showcase (New in v2.0.3.1) */}
+      <RemappedHomeShowcase />
 
       {/* Section 3: Brand Promise (100% Free, 100% Ad-Free, Made for Music) */}
       <BrandPromise />

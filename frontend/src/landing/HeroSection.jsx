@@ -1,37 +1,44 @@
 import React, { useState } from 'react';
-import { Download, Sparkles, Disc, FileText, LayoutGrid, ArrowRight, ShieldCheck } from 'lucide-react';
+import { Download, Sparkles, Disc, FileText, LayoutGrid, ArrowRight, ShieldCheck, User, Video } from 'lucide-react';
 import screenshotTurntable from '../assets/brand/screenshot_turntable.jpg';
 import screenshotHome from '../assets/brand/screenshot_home.jpg';
 import screenshotLyrics from '../assets/brand/screenshot_lyrics.jpg';
 
 export default function HeroSection({ onLaunchWebPlayer, downloadTracker }) {
-  const [activeScreen, setActiveScreen] = useState('turntable'); // 'turntable' | 'home' | 'lyrics'
+  const [activeScreen, setActiveScreen] = useState('bento'); // 'bento' | 'turntable' | 'artists' | 'lyrics'
   const { stats, formatCount } = downloadTracker || {
     stats: { total: 1 },
     formatCount: (n) => `${n}+`
   };
 
   const screens = {
+    bento: {
+      image: screenshotHome,
+      title: "Remapped Bento Home",
+      alt: "Dropify Remapped Home Screen with 2x3 Bento Stations",
+      badge1: "⚡ 2x3 Bento Fast-Resume",
+      badge2: "💿 Vinyl Spotlight Billboard"
+    },
     turntable: {
       image: screenshotTurntable,
-      title: "Turntable Vinyl Engine",
-      alt: "Dropify Turntable Vinyl Screen",
-      badge1: "⚡ 320k Opus Stream",
-      badge2: "🎛️ 10-Band DSP Equalizer"
+      title: "Turntable Vinyl & 1:1 Video",
+      alt: "Dropify Turntable Vinyl and In-Card Video Screen",
+      badge1: "🎵 320k Opus Stream",
+      badge2: "🎥 1:1 In-Card Video & Glow"
     },
-    home: {
+    artists: {
       image: screenshotHome,
-      title: "Circadian Discovery",
-      alt: "Dropify Home & Soundscapes Screen",
-      badge1: "☕ Morning Coffee & Lo-Fi",
-      badge2: "⚡ Speed Dial 3x3 Grid"
+      title: "Artist Hub & Discographies",
+      alt: "Dropify Dedicated Artist Discographies Screen",
+      badge1: "🌟 Pure Discographies",
+      badge2: "💊 Song-to-Artist Pills"
     },
     lyrics: {
       image: screenshotLyrics,
       title: "Notebook Synced Lyrics",
-      alt: "Dropify Real-time Synced Lyrics Screen",
+      alt: "Dropify Real-time Synced Lyrics and Same-Vibe Radio",
       badge1: "📝 Paper-Ruled Stationery",
-      badge2: "✨ Highlighter Active Sync"
+      badge2: "📻 Same-Vibe Radio Engine"
     }
   };
 
@@ -45,28 +52,28 @@ export default function HeroSection({ onLaunchWebPlayer, downloadTracker }) {
           <div className="hero-content">
             <div className="hero-pill-badge">
               <span className="hero-dot"></span>
-              <span>SOUND UNIVERSE // VERSION 1.0.1 STABLE</span>
+              <span>DROPIFY V2.0.3.1 // REMAPPED ARCHITECTURE</span>
             </div>
 
             <h1 className="hero-heading">
               Your music. <br />
-              <span className="hero-highlight">Your rules.</span>
+              <span className="hero-highlight">Remapped & pure.</span>
             </h1>
 
             <div className="hero-quote-card">
               <p className="hero-quote-text">
-                “Discover a better way to listen. A clean, modern music experience designed around the music—not the interruptions.”
+                “Tactile 2D neobrutalism meets audiophile streaming. No ads, no paywalls, zero corporate clutter—just your music, your artist discographies, and your rules.”
               </p>
             </div>
 
             <p className="hero-description">
-              Dropify is a crafted, tactile music player for Android and Windows PC. 100% free and completely ad-free—no 30-second commercial interruptions, no subscription paywalls, and no corporate clutter. Just pure high-fidelity soundscapes, real-time synced lyrics, and a spinning turntable.
+              Dropify v2.0.3.1 delivers a completely remapped Home Screen with 2x3 Bento Quick-Play stations, an interactive physical Vinyl Billboard showcase, dedicated Artist Discographies, smart song-to-artist recommendations, and 1:1 in-card video with dynamic ambient aura.
             </p>
 
             <div className="hero-actions">
               <a href="#downloads" className="neo-btn neo-btn-primary">
                 <Download size={18} />
-                <span>Download Dropify (v1.0.1)</span>
+                <span>Download Dropify (v2.0.3.1)</span>
               </a>
 
               {onLaunchWebPlayer && (
@@ -139,20 +146,28 @@ export default function HeroSection({ onLaunchWebPlayer, downloadTracker }) {
             {/* Screen Selector Tabs */}
             <div className="screen-selector-tabs">
               <button
+                className={`screen-tab-btn ${activeScreen === 'bento' ? 'active' : ''}`}
+                onClick={() => setActiveScreen('bento')}
+              >
+                <LayoutGrid size={15} />
+                <span className="tab-label-full">Remapped Home</span>
+                <span className="tab-label-short">Home</span>
+              </button>
+              <button
                 className={`screen-tab-btn ${activeScreen === 'turntable' ? 'active' : ''}`}
                 onClick={() => setActiveScreen('turntable')}
               >
                 <Disc size={15} />
-                <span className="tab-label-full">Turntable Player</span>
-                <span className="tab-label-short">Turntable</span>
+                <span className="tab-label-full">Turntable & Video</span>
+                <span className="tab-label-short">Vinyl</span>
               </button>
               <button
-                className={`screen-tab-btn ${activeScreen === 'home' ? 'active' : ''}`}
-                onClick={() => setActiveScreen('home')}
+                className={`screen-tab-btn ${activeScreen === 'artists' ? 'active' : ''}`}
+                onClick={() => setActiveScreen('artists')}
               >
-                <LayoutGrid size={15} />
-                <span className="tab-label-full">Home & Mixes</span>
-                <span className="tab-label-short">Home</span>
+                <User size={15} />
+                <span className="tab-label-full">Artist Hub</span>
+                <span className="tab-label-short">Artists</span>
               </button>
               <button
                 className={`screen-tab-btn ${activeScreen === 'lyrics' ? 'active' : ''}`}

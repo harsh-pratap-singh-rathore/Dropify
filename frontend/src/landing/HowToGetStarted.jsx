@@ -10,7 +10,7 @@ export default function HowToGetStarted() {
     {
       num: "02",
       title: "Grab the Build",
-      desc: "Download the signed v1.0.1 package directly from our high-speed Vercel CDN or GitHub mirror."
+      desc: "Download the signed v2.0.3.1 package directly from our high-speed Vercel CDN or GitHub mirror."
     },
     {
       num: "03",

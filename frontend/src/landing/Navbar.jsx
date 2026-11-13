@@ -112,7 +112,7 @@ export default function Navbar({ onLaunchWebPlayer, theme: propTheme, toggleThem
             onClick={closeMobileMenu}
           >
             <Download size={16} />
-            <span>Download Dropify (v1.0.1)</span>
+            <span>Download Dropify (v2.0.3.1)</span>
           </a>
         </div>
       )}

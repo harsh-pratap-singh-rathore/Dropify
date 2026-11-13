@@ -3739,3 +3739,649 @@ html, body {
   border: 1px solid #22222E;
   color: #F4F4F6;
 }
+
+/* ==========================================================================
+   DROPIFY V2.0.3.1 — REMAPPED HOME INTERACTIVE SHOWCASE STYLES
+   Bento Quick-Play Grid, Radar Vinyl Billboard, Spotlight Artists & Top 5 Shelf
+   ========================================================================== */
+
+.remapped-home-section {
+  padding-top: 40px;
+  padding-bottom: 70px;
+}
+
+.remapped-stage-container {
+  padding: 30px;
+  position: relative;
+  border-radius: var(--radius-card);
+  margin-top: 20px;
+}
+
+.remapped-header-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding-bottom: 20px;
+  border-bottom: var(--border-medium);
+  margin-bottom: 26px;
+}
+
+.remapped-badge-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.remapped-badge-title {
+  font-family: var(--font-mono);
+  font-weight: 900;
+  font-size: 0.82rem;
+  letter-spacing: 0.05em;
+  color: var(--color-pink);
+}
+
+.remapped-version-pill {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  background: var(--color-yellow-light);
+  border: var(--border-thin);
+  color: #0E0E10;
+}
+
+[data-theme="dark"] .remapped-version-pill,
+.dark .remapped-version-pill {
+  background: rgba(255, 214, 0, 0.15);
+  border-color: rgba(255, 214, 0, 0.4);
+  color: #FFD600;
+}
+
+/* 2-Column Responsive Layout */
+.remapped-columns-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+  align-items: start;
+}
+
+@media (max-width: 960px) {
+  .remapped-columns-grid {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+}
+
+/* Left Column: Bento Grid */
+.bento-col-header {
+  margin-bottom: 20px;
+}
+
+.bento-col-tag {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  color: var(--color-cyan);
+  margin-bottom: 6px;
+}
+
+.bento-col-title {
+  font-size: 1.35rem;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  margin-bottom: 6px;
+  color: var(--color-text-main);
+}
+
+.bento-col-desc {
+  font-size: 0.88rem;
+  line-height: 1.45;
+  color: var(--color-text-secondary);
+}
+
+/* 2x3 Bento Stations Grid */
+.bento-stations-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+@media (max-width: 480px) {
+  .bento-stations-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.bento-station-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  border-radius: var(--radius-sm);
+  background: var(--color-card-muted);
+  border: var(--border-thin);
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+  user-select: none;
+  box-shadow: 2px 2px 0px var(--color-black);
+}
+
+.bento-station-card:hover {
+  transform: translate(-1.5px, -1.5px);
+  box-shadow: 3.5px 3.5px 0px var(--color-black);
+}
+
+.bento-station-card.active {
+  background: #FFFFFF;
+  border-color: var(--color-pink);
+  box-shadow: 3px 3px 0px var(--color-pink);
+}
+
+[data-theme="dark"] .bento-station-card,
+.dark .bento-station-card {
+  background: #12121A;
+  border-color: #2B2B38;
+  box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.8);
+}
+
+[data-theme="dark"] .bento-station-card.active,
+.dark .bento-station-card.active {
+  background: #181824;
+  border-color: var(--color-pink);
+  box-shadow: 3px 3px 0px var(--color-pink);
+}
+
+.bento-icon-box {
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 1.2px solid rgba(0, 0, 0, 0.15);
+}
+
+.bento-icon-crimson { background: rgba(255, 45, 85, 0.15); }
+.bento-icon-cyan    { background: rgba(0, 194, 255, 0.15); }
+.bento-icon-yellow  { background: rgba(255, 229, 0, 0.25); }
+.bento-icon-green   { background: rgba(16, 185, 129, 0.15); }
+.bento-icon-purple  { background: rgba(255, 94, 98, 0.15); }
+.bento-icon-teal    { background: rgba(0, 229, 255, 0.15); }
+
+.bento-station-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.bento-station-name {
+  font-weight: 800;
+  font-size: 0.88rem;
+  color: var(--color-text-main);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bento-station-meta {
+  font-size: 0.72rem;
+  color: var(--color-text-muted);
+}
+
+.bento-station-badge {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: var(--color-canvas);
+  border: 1px solid var(--color-black);
+  color: var(--color-text-secondary);
+}
+
+[data-theme="dark"] .bento-station-badge,
+.dark .bento-station-badge {
+  background: #0A0A0E;
+  border-color: #333344;
+}
+
+/* Spotlight Artists Shelf */
+.spotlight-artists-container {
+  padding-top: 14px;
+  border-top: var(--border-thin);
+}
+
+.spotlight-artists-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.spotlight-title {
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  color: var(--color-text-main);
+}
+
+.spotlight-sub {
+  font-size: 0.72rem;
+  color: var(--color-text-muted);
+}
+
+.spotlight-artists-scroll {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 10px;
+  scrollbar-width: thin;
+}
+
+.spotlight-artist-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: var(--radius-pill);
+  background: var(--color-card);
+  border: var(--border-thin);
+  cursor: pointer;
+  white-space: nowrap;
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: var(--color-text-main);
+  box-shadow: 1.5px 1.5px 0px var(--color-black);
+  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.spotlight-artist-pill:hover {
+  transform: translateY(-1.5px);
+  box-shadow: 2.5px 2.5px 0px var(--color-black);
+}
+
+.spotlight-artist-pill.active {
+  border-color: var(--color-pink);
+  background: var(--color-pink-light);
+  box-shadow: 2.5px 2.5px 0px var(--color-pink);
+}
+
+.artist-avatar-mini {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1.5px solid;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.artist-discography-preview-banner {
+  margin-top: 12px;
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  background: var(--color-card-muted);
+  border: var(--border-thin);
+}
+
+[data-theme="dark"] .artist-discography-preview-banner,
+.dark .artist-discography-preview-banner {
+  background: #111118;
+  border-color: #2B2B38;
+}
+
+.discography-badge-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.discography-pill {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 900;
+  color: var(--color-pink);
+  background: rgba(255, 45, 85, 0.12);
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 45, 85, 0.3);
+}
+
+.discography-artist-name {
+  font-weight: 900;
+  font-size: 0.88rem;
+  color: var(--color-text-main);
+}
+
+.discography-preview-text {
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+/* Right Column: Vinyl Billboard Showcase */
+.vinyl-billboard-card {
+  background: #0E0E12;
+  border: 2.5px solid #2B2B38;
+  border-radius: var(--radius-card);
+  padding: 24px;
+  box-shadow: 6px 6px 0px #000000;
+  color: #FFFFFF;
+  position: relative;
+  overflow: hidden;
+}
+
+.vinyl-billboard-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.radar-spotlight-tag {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  color: #FFE500;
+}
+
+.vinyl-toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: var(--radius-pill);
+  background: #FF2D55;
+  color: #FFFFFF;
+  border: 1.5px solid #FFFFFF;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 900;
+  cursor: pointer;
+  box-shadow: 2px 2px 0px #FFFFFF;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.vinyl-toggle-btn:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 3px 0px #FFFFFF;
+}
+
+/* Physical Vinyl Turntable Disc Stage */
+.vinyl-record-stage {
+  position: relative;
+  width: 220px;
+  height: 220px;
+  margin: 0 auto 20px auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.vinyl-disc-assembly {
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #25252D 0%, #15151B 50%, #08080C 100%);
+  border: 3px solid #3A3A4A;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.8), inset 0 0 10px rgba(255, 255, 255, 0.08);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.vinyl-disc-assembly.is-spinning {
+  animation: spinVinyl 6s linear infinite;
+}
+
+@keyframes spinVinyl {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.vinyl-outer-groove {
+  position: absolute;
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  border: 1px dashed rgba(255, 255, 255, 0.08);
+}
+
+.vinyl-groove-ring {
+  position: absolute;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.ring-1 { width: 150px; height: 150px; }
+.ring-2 { width: 120px; height: 120px; }
+.ring-3 { width: 90px; height: 90px; }
+
+.vinyl-center-label {
+  width: 66px;
+  height: 66px;
+  border-radius: 50%;
+  background: #FF2D55;
+  border: 2px solid #FFFFFF;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 2;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.5);
+}
+
+.vinyl-spindle-hole {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #0E0E12;
+  border: 1px solid #FFFFFF;
+  margin-bottom: 2px;
+}
+
+.vinyl-label-text {
+  font-family: var(--font-mono);
+  font-size: 0.55rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  color: #FFFFFF;
+}
+
+.vinyl-label-rpm {
+  font-size: 0.48rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+/* Stylus Tone Arm */
+.vinyl-stylus-arm {
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  width: 40px;
+  height: 90px;
+  pointer-events: none;
+  transform-origin: top right;
+  transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+  transform: rotate(-18deg);
+  z-index: 5;
+}
+
+.vinyl-stylus-arm.arm-on-record {
+  transform: rotate(8deg);
+}
+
+.stylus-pivot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #888899;
+  border: 2px solid #FFFFFF;
+  position: absolute;
+  top: 0;
+  right: 0;
+}
+
+.stylus-rod {
+  width: 3px;
+  height: 70px;
+  background: #C4C4D0;
+  position: absolute;
+  top: 10px;
+  right: 5px;
+  border-radius: 2px;
+}
+
+.stylus-cartridge {
+  width: 9px;
+  height: 14px;
+  background: #FF2D55;
+  border: 1px solid #FFFFFF;
+  position: absolute;
+  bottom: 8px;
+  right: 2px;
+  border-radius: 2px;
+}
+
+/* Track Metadata Details */
+.vinyl-meta-details {
+  border-top: 1.5px solid #2B2B38;
+  padding-top: 16px;
+}
+
+.vinyl-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.vinyl-song-title {
+  font-size: 1.25rem;
+  font-weight: 900;
+  margin: 0 0 2px 0;
+  color: #FFFFFF;
+}
+
+.vinyl-song-artist {
+  font-size: 0.82rem;
+  color: #A1A1AA;
+  margin: 0;
+}
+
+.vinyl-genre-badge {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #00E5FF;
+  background: rgba(0, 229, 255, 0.15);
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(0, 229, 255, 0.35);
+}
+
+/* Billboard Top 5 Shelf */
+.billboard-top5-shelf {
+  background: #14141C;
+  border: 1.5px solid #2B2B38;
+  border-radius: var(--radius-sm);
+  padding: 12px;
+}
+
+.shelf-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #222230;
+  margin-bottom: 8px;
+}
+
+.shelf-title {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  color: #FFE500;
+}
+
+.shelf-metric {
+  font-size: 0.68rem;
+  color: #71717A;
+}
+
+.shelf-track-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.shelf-track-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 6px;
+  border-radius: 6px;
+  transition: background 0.12s ease;
+}
+
+.shelf-track-row:hover {
+  background: #1E1E2A;
+}
+
+.shelf-rank-num {
+  font-family: var(--font-mono);
+  font-weight: 900;
+  font-size: 0.8rem;
+  color: #FF2D55;
+  width: 20px;
+}
+
+.shelf-track-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.shelf-track-title {
+  font-weight: 800;
+  font-size: 0.82rem;
+  color: #FFFFFF;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.shelf-track-artist {
+  font-size: 0.68rem;
+  color: #888899;
+}
+
+.shelf-track-plays {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #A1A1AA;
+}
+
+.shelf-track-time {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: #666677;
+}
+

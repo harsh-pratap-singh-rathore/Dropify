@@ -10,6 +10,10 @@ export default function FaqSection() {
       a: "Dropify is a crafted, ad-free music player available as a native Android app, a Windows desktop app, and an interactive web player. It combines high-definition streaming with a 2D tactile design system, rotating vinyl turntable, synchronized lyrics, and a 10-band graphic equalizer."
     },
     {
+      q: "What is new in Dropify v2.0.3.1?",
+      a: "Dropify v2.0.3.1 introduces a completely Remapped Home Screen with a 2x3 Bento Quick-Play Station Grid (Liked vault, Circadian daily mix, instant 10-track shuffle, and notebooks), a physical Radar Spotlight Vinyl Billboard, dedicated Artist Discographies (pure artist catalog isolation), smart Song-to-Artist recommendation pills, 1:1 in-card video with ambient glow, Same-Vibe continuous radio, and a 4-mode tactile Theme Hub."
+    },
+    {
       q: "Is Dropify truly 100% free with no ads?",
       a: "Yes. Dropify is completely free and contains no audio advertisements, commercial video banners, or paid subscription tiers. You get the full listening experience without interruptions."
     },
