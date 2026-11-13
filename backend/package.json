@@ -1,6 +1,6 @@
 {
   "name": "dropify-backend",
-  "version": "2.0.3",
+  "version": "2.0.3.1",
   "description": "Dropify backend streaming proxy and local taste engine reverse-engineered from Echo Music",
   "main": "server.js",
   "scripts": {

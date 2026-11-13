@@ -8,7 +8,13 @@ export default function ChecksumModal({ isOpen, onClose }) {
 
   const artifacts = [
     {
-      platform: "Android APK v2.0.3 (Latest Stable Release)",
+      platform: "Android APK v2.0.3.1 (Latest Stable Release)",
+      file: "dropify-v2.0.3.1.apk / app-release.apk",
+      size: "21,178,297 bytes (~20.2 MB)",
+      sha256: "D0A2C4BE8E8040B578EC18489E0FFBA4B38D069CF94D520D4249AB1E10EE7720"
+    },
+    {
+      platform: "Android APK v2.0.3 (Previous)",
       file: "dropify-v2.0.3.apk / app-release.apk",
       size: "21,145,529 bytes (~20.2 MB)",
       sha256: "AF0DE1480838865985C67748C5D9A6097483B7DB85EEABA95A6B136C441C0DC5"
